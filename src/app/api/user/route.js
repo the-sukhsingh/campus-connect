@@ -71,7 +71,7 @@ export async function POST(req) {
       role,
       isVerified,
       verificationMethod,
-      studentId: role !== 'student' ? `${timestamp}-${randomSuffix}` : null,
+      studentId:`${timestamp}-${randomSuffix}`,
       pendingApproval,
     });
     
