@@ -2,7 +2,7 @@
 
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -78,7 +78,7 @@ function MarkAttendancePage() {
   }, [user, classId]);
 
   // Fetch existing attendance data without initializing
-  const fetchExistingAttendance = useCallback(async () => {
+  const fetchExistingAttendance = async () => {
     try {
       const response = await fetch(
         `/api/attendance?action=get-attendance&uid=${user?.uid}&classId=${classId}&date=${attendanceDate}&subject=${encodeURIComponent(selectedSubject)}&initialize=false`
@@ -105,7 +105,7 @@ function MarkAttendancePage() {
     } catch (error) {
       console.error('Error fetching attendance data:', error);
     }
-  }, [user, classId, attendanceDate, selectedSubject]);
+  };
 
   // Initialize default attendance status for each student
   const getDefaultAttendanceRecords = () => {
@@ -116,7 +116,7 @@ function MarkAttendancePage() {
   };
 
   // Fetch previous attendance records
-  const fetchPreviousAttendance = useCallback(async () => {
+  const fetchPreviousAttendance = async () => {
     if (!user || !classId || !selectedSubject) return;
     
     try {
@@ -136,7 +136,7 @@ function MarkAttendancePage() {
     } finally {
       setLoadingPrevious(false);
     }
-  }, [user, classId, selectedSubject]);
+  };
 
   // Check if attendance record exists and its lock status without initializing
   useEffect(() => {
@@ -177,7 +177,7 @@ function MarkAttendancePage() {
     
     // Also fetch previous attendance records when subject changes
     fetchPreviousAttendance();
-  }, [user, classId, attendanceDate, selectedSubject, fetchExistingAttendance, fetchPreviousAttendance]);
+  }, [user, classId, attendanceDate, selectedSubject]);
 
   // Handle form submission
   const handleSubmit = async (e) => {

@@ -2,7 +2,7 @@
 
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -21,9 +21,8 @@ function TeachersManagementPage() {
   const [librarianSelections, setLibrarianSelections] = useState({});
 
   // Fetch college and teachers data
-  const fetchData = useCallback(async () => {
+  const fetchData = async () => {
     if (!user) return;
-
     try {
       setLoading(true);
 
@@ -93,13 +92,12 @@ function TeachersManagementPage() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [user, selectedDepartments, librarianSelections]);
+  };
 
   // Initial data fetch
   useEffect(() => {
-    if (!user) return;
     fetchData();
-  }, [user, fetchData]);
+  }, [user]);
 
   // Handle department selection change
   const handleDepartmentChange = (teacherId, department) => {

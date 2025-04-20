@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { withRoleProtection } from '@/utils/withRoleProtection';
@@ -13,7 +13,7 @@ function AssignedClassesPage() {
   const [attendanceSummaries, setAttendanceSummaries] = useState({});
   const [loadingSummaries, setLoadingSummaries] = useState(false);
 
-  const fetchAttendanceSummaries = useCallback(async (classList) => {
+  const fetchAttendanceSummaries = async (classList) => {
     try {
       setLoadingSummaries(true);
       
@@ -50,7 +50,7 @@ function AssignedClassesPage() {
     } finally {
       setLoadingSummaries(false);
     }
-  }, [user]);
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -82,7 +82,7 @@ function AssignedClassesPage() {
     };
 
     fetchAssignedClasses();
-  }, [user, fetchAttendanceSummaries]);
+  }, [user]);
   
  
 

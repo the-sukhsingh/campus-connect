@@ -2,7 +2,7 @@
 
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 
@@ -22,10 +22,10 @@ function MyBooksPage() {
     if (!user) return;
     
     fetchBorrowings();
-  }, [user, activeTab, currentPage,fetchBorrowings]);
+  }, [user, activeTab, currentPage]);
   
   // Fetch borrowings from API
-  const fetchBorrowings = useCallback( async () => {
+  const fetchBorrowings = async () => {
     try {
       setIsLoading(true);
       
@@ -52,7 +52,7 @@ function MyBooksPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [user, activeTab, currentPage]);
+  };
   
   // Request book return
   const handleReturnRequest = async (borrowingId) => {

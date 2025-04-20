@@ -2,7 +2,7 @@
 
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -22,7 +22,7 @@ function HodAnnouncementsPage() {
   });
 
   // Fetch all announcements in the college
-  const fetchAnnouncements = useCallback(async () => {
+  const fetchAnnouncements = async () => {
     if (!user) return;
 
     try {
@@ -46,12 +46,12 @@ function HodAnnouncementsPage() {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  };
 
   useEffect(() => {
     if (!user) return;
     fetchAnnouncements();
-  }, [user, fetchAnnouncements]);
+  }, [user]);
 
   // Handle form input changes
   const handleInputChange = (e) => {

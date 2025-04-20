@@ -2,7 +2,7 @@
 
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
-import { useState, useEffect, act, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import BookSearch from '@/components/BookSearch';
 
@@ -34,7 +34,7 @@ function BooksManagementPage() {
   });
   
   // Fetch books from API
-  const fetchBooks = useCallback( async () => {
+  const fetchBooks = async () => {
     if (!user) return;
     try {
       setIsLoading(true);
@@ -56,10 +56,10 @@ function BooksManagementPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [user, currentPage, searchQuery, searchField, selectedGenre]);
+  };
   
   // Fetch genres from API
-  const fetchGenres = useCallback(async () => {
+  const fetchGenres = async () => {
     try {
       const response = await fetch(
         `/api/library/books?action=get-genres&uid=${user?.uid}`
@@ -74,7 +74,7 @@ function BooksManagementPage() {
     } catch (err) {
       console.error('Error fetching genres:', err);
     }
-  }, [user]);
+  };
   
   // Fetch books and genres when component mounts
   useEffect(() => {
@@ -82,7 +82,7 @@ function BooksManagementPage() {
     
     fetchBooks();
     fetchGenres();
-  }, [user, currentPage, searchQuery, searchField, selectedGenre, fetchBooks, fetchGenres]);
+  }, [user, currentPage, searchQuery, searchField, selectedGenre]);
   
   // Handle form input changes
   const handleInputChange = (e) => {

@@ -2,7 +2,7 @@
 
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 function HodDashboard() {
@@ -16,7 +16,7 @@ function HodDashboard() {
   const router = useRouter();
 
   // Fetch college information and pending requests for the HOD
-  const fetchData = useCallback(async () => {
+  const fetchData = async () => {
     if (!user) return;
 
     try {
@@ -58,13 +58,13 @@ function HodDashboard() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [user]);
+  };
 
   // Initial data fetch
   useEffect(() => {
     if (!user) return;
     fetchData();
-  }, [user, fetchData]);
+  }, [user]);
 
   // Handle refresh action
   const handleRefresh = () => {

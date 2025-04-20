@@ -2,7 +2,7 @@
 
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -15,7 +15,7 @@ function AnnouncementsPage() {
   const [message, setMessage] = useState({ type: '', text: '' });
   
   // Function to fetch faculty's announcements
-  const fetchAnnouncements = useCallback(async () => {
+  const fetchAnnouncements = async () => {
     if (!user) return;
     
     try {
@@ -35,14 +35,14 @@ function AnnouncementsPage() {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  };
   
   // Load announcements on component mount
   useEffect(() => {
     if (user) {
       fetchAnnouncements();
     }
-  }, [user, fetchAnnouncements]);
+  }, [user]);
   
   // Handle announcement deletion
   const handleDelete = async (announcementId) => {

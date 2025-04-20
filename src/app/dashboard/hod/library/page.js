@@ -2,7 +2,7 @@
 
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect} from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -19,7 +19,7 @@ function LibraryManagementPage() {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Fetch college and librarians data
-  const fetchData = useCallback(async () => {
+  const fetchData = async () => {
     if (!user) return;
 
     try {
@@ -78,13 +78,13 @@ function LibraryManagementPage() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [user]);
+  };
 
   // Initial data fetch
   useEffect(() => {
     if (!user) return
     fetchData();
-  }, [user, fetchData]);
+  }, [user]);
 
   // Handle role update
   const handleRoleUpdate = async (userId, newRole) => {
