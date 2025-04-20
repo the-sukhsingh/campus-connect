@@ -63,7 +63,7 @@ function AttendancePage() {
           <div className="flex">
             <div className="ml-3">
               <p className="text-sm text-yellow-700">
-                You don't have any classes assigned yet. Please contact the administrator.
+                You don&apos;t have any classes assigned yet. Please contact the administrator.
               </p>
             </div>
           </div>

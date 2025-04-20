@@ -62,7 +62,7 @@ function CollegeManagementPage() {
     };
 
     fetchColleges();
-  }, [user]);
+  }, [user, selectedCollege]);
 
   // Fetch pending users when a college is selected
   useEffect(() => {

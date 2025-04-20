@@ -2,11 +2,9 @@
 
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
-import { useState, useEffect, act } from 'react';
+import { useState, useEffect, act, useCallback } from 'react';
 import Link from 'next/link';
 import BookSearch from '@/components/BookSearch';
-
-
 
 function BooksManagementPage() {
   const { user } = useAuth();
@@ -35,16 +33,9 @@ function BooksManagementPage() {
     publishedYear: undefined,
   });
   
-  // Fetch books and genres when component mounts
-  useEffect(() => {
-    if (!user) return;
-    
-    fetchBooks();
-    fetchGenres();
-  }, [user, currentPage]);
-  
   // Fetch books from API
-  const fetchBooks = async () => {
+  const fetchBooks = useCallback( async () => {
+    if (!user) return;
     try {
       setIsLoading(true);
       const response = await fetch(
@@ -65,10 +56,10 @@ function BooksManagementPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, currentPage, searchQuery, searchField, selectedGenre]);
   
   // Fetch genres from API
-  const fetchGenres = async () => {
+  const fetchGenres = useCallback(async () => {
     try {
       const response = await fetch(
         `/api/library/books?action=get-genres&uid=${user?.uid}`
@@ -83,7 +74,15 @@ function BooksManagementPage() {
     } catch (err) {
       console.error('Error fetching genres:', err);
     }
-  };
+  }, [user]);
+  
+  // Fetch books and genres when component mounts
+  useEffect(() => {
+    if (!user) return;
+    
+    fetchBooks();
+    fetchGenres();
+  }, [user, currentPage, searchQuery, searchField, selectedGenre, fetchBooks, fetchGenres]);
   
   // Handle form input changes
   const handleInputChange = (e) => {

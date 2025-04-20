@@ -118,7 +118,7 @@ function StudentDashboard() {
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
           </div>
         ) : enrolledClasses.length === 0 ? (
-          <p className="text-gray-500">You haven't joined any classes yet. Use the form below to join a class.</p>
+          <p className="text-gray-500">You haven&apos;t joined any classes yet. Use the form below to join a class.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {enrolledClasses.map((classItem) => (

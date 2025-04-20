@@ -174,7 +174,7 @@ function EditEventPage() {
       <div className="p-6">
         <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
           <p className="font-bold">Unauthorized</p>
-          <p>You don't have permission to edit this event. Only the event organizer or HOD can edit events.</p>
+          <p>You don&apos;t have permission to edit this event. Only the event organizer or HOD can edit events.</p>
         </div>
         <div className="mt-6">
           <Link

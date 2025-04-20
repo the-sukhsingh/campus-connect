@@ -2,7 +2,7 @@
 
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -77,6 +77,67 @@ function MarkAttendancePage() {
     fetchClassData();
   }, [user, classId]);
 
+  // Fetch existing attendance data without initializing
+  const fetchExistingAttendance = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `/api/attendance?action=get-attendance&uid=${user?.uid}&classId=${classId}&date=${attendanceDate}&subject=${encodeURIComponent(selectedSubject)}&initialize=false`
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch attendance data');
+      }
+
+      const data = await response.json();
+      
+      if (data.attendance) {
+        setAttendanceRecords(data.attendance.attendanceRecords || []);
+        setIsLocked(data.locked === true);
+        setRecordExists(data.exists === true);
+        
+        setMessage({ 
+          type: 'success', 
+          text: data.locked
+            ? `Loaded existing attendance record for ${selectedSubject} on this date. This record is locked and cannot be modified.`
+            : `Loaded existing attendance record for ${selectedSubject} on this date.` 
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching attendance data:', error);
+    }
+  }, [user, classId, attendanceDate, selectedSubject]);
+
+  // Initialize default attendance status for each student
+  const getDefaultAttendanceRecords = () => {
+    return students.map(student => ({
+      student: student._id,
+      status: 'absent'
+    }));
+  };
+
+  // Fetch previous attendance records
+  const fetchPreviousAttendance = useCallback(async () => {
+    if (!user || !classId || !selectedSubject) return;
+    
+    try {
+      setLoadingPrevious(true);
+      const response = await fetch(
+        `/api/attendance?action=get-previous-attendance&uid=${user?.uid}&classId=${classId}&subject=${encodeURIComponent(selectedSubject)}&limit=5`
+      );
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch previous attendance records');
+      }
+      
+      const data = await response.json();
+      setPreviousAttendance(data.previousAttendance || []);
+    } catch (error) {
+      console.error('Error fetching previous attendance records:', error);
+    } finally {
+      setLoadingPrevious(false);
+    }
+  }, [user, classId, selectedSubject]);
+
   // Check if attendance record exists and its lock status without initializing
   useEffect(() => {
     if (!user || !classId || !attendanceDate || !selectedSubject) return;
@@ -116,68 +177,7 @@ function MarkAttendancePage() {
     
     // Also fetch previous attendance records when subject changes
     fetchPreviousAttendance();
-  }, [user, classId, attendanceDate, selectedSubject]);
-
-  // Fetch existing attendance data without initializing
-  const fetchExistingAttendance = async () => {
-    try {
-      const response = await fetch(
-        `/api/attendance?action=get-attendance&uid=${user?.uid}&classId=${classId}&date=${attendanceDate}&subject=${encodeURIComponent(selectedSubject)}&initialize=false`
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch attendance data');
-      }
-
-      const data = await response.json();
-      
-      if (data.attendance) {
-        setAttendanceRecords(data.attendance.attendanceRecords || []);
-        setIsLocked(data.locked === true);
-        setRecordExists(data.exists === true);
-        
-        setMessage({ 
-          type: 'success', 
-          text: data.locked
-            ? `Loaded existing attendance record for ${selectedSubject} on this date. This record is locked and cannot be modified.`
-            : `Loaded existing attendance record for ${selectedSubject} on this date.` 
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching attendance data:', error);
-    }
-  };
-  
-  // Initialize default attendance status for each student
-  const getDefaultAttendanceRecords = () => {
-    return students.map(student => ({
-      student: student._id,
-      status: 'absent'
-    }));
-  };
-  
-  // Fetch previous attendance records
-  const fetchPreviousAttendance = async () => {
-    if (!user || !classId || !selectedSubject) return;
-    
-    try {
-      setLoadingPrevious(true);
-      const response = await fetch(
-        `/api/attendance?action=get-previous-attendance&uid=${user?.uid}&classId=${classId}&subject=${encodeURIComponent(selectedSubject)}&limit=5`
-      );
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch previous attendance records');
-      }
-      
-      const data = await response.json();
-      setPreviousAttendance(data.previousAttendance || []);
-    } catch (error) {
-      console.error('Error fetching previous attendance records:', error);
-    } finally {
-      setLoadingPrevious(false);
-    }
-  };
+  }, [user, classId, attendanceDate, selectedSubject, fetchExistingAttendance, fetchPreviousAttendance]);
 
   // Handle form submission
   const handleSubmit = async (e) => {

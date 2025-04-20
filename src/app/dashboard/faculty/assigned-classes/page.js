@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { withRoleProtection } from '@/utils/withRoleProtection';
@@ -13,39 +13,7 @@ function AssignedClassesPage() {
   const [attendanceSummaries, setAttendanceSummaries] = useState({});
   const [loadingSummaries, setLoadingSummaries] = useState(false);
 
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchAssignedClasses = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const response = await fetch(`/api/user/college/teachers?uid=${user?.uid}&action=assigned-classes`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch assigned classes');
-        }
-        
-        const data = await response.json();
-        setClasses(data.classes || []);
-        
-        // Fetch attendance summaries after getting classes
-        if (data.classes?.length > 0) {
-          fetchAttendanceSummaries(data.classes);
-        }
-      } catch (err) {
-        console.error('Error fetching assigned classes:', err);
-        setError(err.message || 'Failed to load assigned classes');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAssignedClasses();
-  }, [user]);
-  
-  const fetchAttendanceSummaries = async (classList) => {
+  const fetchAttendanceSummaries = useCallback(async (classList) => {
     try {
       setLoadingSummaries(true);
       
@@ -82,7 +50,41 @@ function AssignedClassesPage() {
     } finally {
       setLoadingSummaries(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchAssignedClasses = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await fetch(`/api/user/college/teachers?uid=${user?.uid}&action=assigned-classes`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch assigned classes');
+        }
+        
+        const data = await response.json();
+        setClasses(data.classes || []);
+        
+        // Fetch attendance summaries after getting classes
+        if (data.classes?.length > 0) {
+          fetchAttendanceSummaries(data.classes);
+        }
+      } catch (err) {
+        console.error('Error fetching assigned classes:', err);
+        setError(err.message || 'Failed to load assigned classes');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAssignedClasses();
+  }, [user, fetchAttendanceSummaries]);
+  
+ 
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -126,7 +128,7 @@ function AssignedClassesPage() {
           <div className="flex">
             <div className="ml-3">
               <p className="text-sm text-yellow-700">
-                You don't have any assigned classes yet. Please contact the class creator or administrator.
+                You don&apos;t have any assigned classes yet. Please contact the class creator or administrator.
               </p>
             </div>
           </div>

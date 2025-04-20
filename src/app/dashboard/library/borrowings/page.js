@@ -10,7 +10,7 @@ export default function BorrowingsListingPage() {
   const [borrowings, setBorrowings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState<'current' | 'history'>('current');
+  const [activeTab, setActiveTab] = useState('current');
   const [returnRequesting, setReturnRequesting] = useState(null);
 
   // Fetch borrowings
@@ -175,7 +175,7 @@ export default function BorrowingsListingPage() {
       ) : activeTab === 'current' ? (
         currentBorrowings.length === 0 ? (
           <div className="bg-white shadow rounded-lg p-6 text-center">
-            <p className="text-gray-500">You don't have any current borrowings.</p>
+            <p className="text-gray-500">You don&apos;t have any current borrowings.</p>
             <Link 
               href="/dashboard/library/books"
               className="mt-4 inline-block text-indigo-600 hover:text-indigo-900"
@@ -264,7 +264,7 @@ export default function BorrowingsListingPage() {
       ) : (
         borrowingHistory.length === 0 ? (
           <div className="bg-white shadow rounded-lg p-6 text-center">
-            <p className="text-gray-500">You don't have any borrowing history.</p>
+            <p className="text-gray-500">You don&apos;t have any borrowing history.</p>
           </div>
         ) : (
           <div className="bg-white shadow overflow-hidden rounded-lg">
@@ -334,7 +334,7 @@ export default function BorrowingsListingPage() {
             <div className="mt-2 text-sm text-blue-700">
               <ul className="list-disc pl-5 space-y-1">
                 <li>Books are typically issued for 14 days.</li>
-                <li>You can request a return from this page when you're ready to return the book.</li>
+                <li>You can request a return from this page when you&apos;re ready to return the book.</li>
                 <li>Return the physical book to the library after requesting a return.</li>
                 <li>Late returns may incur fines (₹10 per day).</li>
                 <li>Contact the librarian if you need assistance with your borrowings.</li>

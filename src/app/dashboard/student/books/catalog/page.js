@@ -2,7 +2,7 @@
 
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
 function BookCatalogPage() {
@@ -19,7 +19,7 @@ function BookCatalogPage() {
   const [view, setView] = useState('grid');
 
    // Fetch books from API
-   const fetchBooks = async () => {
+   const fetchBooks = useCallback( async () => {
     try {
       setIsLoading(true);
       
@@ -49,10 +49,10 @@ function BookCatalogPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, currentPage, searchTerm, selectedGenre]);
   
   // Fetch genres for filter dropdown
-  const fetchGenres = async () => {
+  const fetchGenres = useCallback(async () => {
     try {
       if (!user) return;
       
@@ -67,7 +67,7 @@ function BookCatalogPage() {
     } catch (err) {
       console.error('Error fetching genres:', err);
     }
-  };
+  }, [user]);
   
   // Fetch books on component mount and when dependencies change
   useEffect(() => {
@@ -75,7 +75,7 @@ function BookCatalogPage() {
     
     fetchBooks();
     fetchGenres();
-  }, [user, currentPage, searchTerm, selectedGenre]);
+  }, [user, currentPage, searchTerm, selectedGenre, fetchBooks, fetchGenres]);
   
  
   

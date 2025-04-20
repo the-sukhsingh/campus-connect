@@ -428,7 +428,7 @@ function EventDetailsPage() {
                   ) : (
                     <div>
                       <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 mb-3">
-                        <p className="text-sm">You're registered for this event!</p>
+                        <p className="text-sm">You&apos;re registered for this event!</p>
                       </div>
                       <button
                         onClick={handleCancelRegistration}

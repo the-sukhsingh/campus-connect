@@ -1,21 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-function ClassStudentsPage() {
+// Main component that uses searchParams
+function ClassStudentsContent() {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const classId = searchParams.get('id');
   
   const [classData, setClassData] = useState(null);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [subjects, setSubjects] = useState([]);
+  const classId = searchParams.get('id');
   
   useEffect(() => {
     if (!user || !classId) return;
@@ -163,7 +164,6 @@ function ClassStudentsPage() {
                               <div className="text-sm font-medium text-gray-900">
                                 {student.student.displayName || 'Unnamed Student'}
                               </div>
-                              
                             </div>
                           </div>
                         </td>
@@ -183,6 +183,28 @@ function ClassStudentsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// Loading UI for suspense
+function ClassStudentsLoading() {
+  return (
+    <div className="p-6">
+      <div className="flex justify-center items-center h-40">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    </div>
+  );
+}
+
+// Wrapper component that safely gets search params
+function ClassStudentsPage() {
+
+  
+  return (
+    <Suspense fallback={<ClassStudentsLoading />}>
+      <ClassStudentsContent />
+    </Suspense>
   );
 }
 

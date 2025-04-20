@@ -2,7 +2,7 @@
 
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -15,7 +15,7 @@ function AnnouncementsPage() {
   const [message, setMessage] = useState({ type: '', text: '' });
   
   // Function to fetch faculty's announcements
-  const fetchAnnouncements = async () => {
+  const fetchAnnouncements = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -35,14 +35,14 @@ function AnnouncementsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
   
   // Load announcements on component mount
   useEffect(() => {
     if (user) {
       fetchAnnouncements();
     }
-  }, [user]);
+  }, [user, fetchAnnouncements]);
   
   // Handle announcement deletion
   const handleDelete = async (announcementId) => {
@@ -136,7 +136,7 @@ function AnnouncementsPage() {
         </div>
       ) : announcements.length === 0 ? (
         <div className="bg-gray-100 rounded-lg shadow-sm p-8 text-center">
-          <p className="text-gray-600 mb-4">You haven't created any announcements yet.</p>
+          <p className="text-gray-600 mb-4">You haven&apos;t created any announcements yet.</p>
           <Link
             href="/dashboard/faculty/announcements/create"
             className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded transition-colors"

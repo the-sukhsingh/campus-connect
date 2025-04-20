@@ -2,7 +2,7 @@
 
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
 
@@ -20,15 +20,8 @@ function ReturnRequestsPage() {
   const [currentBorrowing, setCurrentBorrowing] = useState(null);
   const [fine, setFine] = useState(undefined);
   
-  // Fetch return requests when component mounts
-  useEffect(() => {
-    if (!user) return;
-    
-    fetchReturnRequests();
-  }, [user, currentPage]);
-  
   // Fetch return requests from API
-  const fetchReturnRequests = async () => {
+  const fetchReturnRequests = useCallback( async () => {
     try {
       setIsLoading(true);
       
@@ -50,7 +43,15 @@ function ReturnRequestsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  },[user, currentPage]);
+  
+  // Fetch return requests when component mounts
+  useEffect(() => {
+    if (!user) return;
+    
+    fetchReturnRequests();
+  }, [user, currentPage, fetchReturnRequests]);
+  
   
   // Open approval modal
   const openApproveModal = (borrowing) => {
