@@ -8,12 +8,17 @@ export async function POST(req) {
     await dbConnect();
     
     const data = await req.json();
+
+
+    const timestamp = Date.now().toString(36);
+    const randomSuffix = Math.random().toString(36).substring(2, 7);
     
     // Handle both standard requests and firebaseUser object format
     const firebaseUid = data.firebaseUid || data.firebaseUser?.uid;
     const email = data.email || data.firebaseUser?.email;
     const displayName = data.displayName || data.firebaseUser?.displayName;
     const role = data.role || 'user'; // Default role
+
     
     if (!firebaseUid) {
       return NextResponse.json({ 
@@ -66,6 +71,7 @@ export async function POST(req) {
       role,
       isVerified,
       verificationMethod,
+      studentId: role !== 'student' ? `${timestamp}-${randomSuffix}` : null,
       pendingApproval,
     });
     
