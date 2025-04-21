@@ -6,6 +6,7 @@ export const routePermissions = {
   '/dashboard/faculty': ['hod', 'faculty'],
   '/dashboard/student': ['hod', 'faculty', 'student'],
   '/dashboard/librarian': ['hod', 'librarian'],
+  '/dashboard/password-change': ['hod', 'faculty', 'student', 'librarian', 'admin'], // Allow all roles to access password change page
   // Add more protected routes as needed
 };
 
@@ -33,6 +34,11 @@ export function middleware(request) {
   // If authenticated, check role-based permissions for protected routes
   for (const [route, allowedRoles] of Object.entries(routePermissions)) {
     if (request.nextUrl.pathname.startsWith(route)) {
+      // Special handling for password change page - just check if user is authenticated
+      if (route === '/dashboard/password-change' && userSession) {
+        return NextResponse.next();
+      }
+      
       try {
         // Try to parse the session to get user role
         const userInfo = userSession ? JSON.parse(userSession) : null;

@@ -1,8 +1,7 @@
 import mongoose from 'mongoose';
 import dbConnect from '@/lib/dbConnect';
-import Class, { IFacultyAssignment } from '@/models/Class';
+import Class from '@/models/Class';
 import User from '@/models/User';
-import { generateUniqueId } from '@/utils/helpers';
 import CollegeModel from '@/models/College';
 import { getUserByFirebaseUid } from './userService';
 
@@ -21,7 +20,6 @@ export async function createClass(teacherId, collegeId, classData) {
       department: classData.department,
       semester: classData.semester,
       batch: classData.batch,
-      uniqueId: generateUniqueId(), // Generate a unique ID for the class
       college: collegeId,
       teacher: teacherId,
       facultyAssignments: [],
@@ -169,23 +167,6 @@ export async function getClassById(classId) {
     return classObj;
   } catch (error ) {
     console.error('Error getting class by ID:', error);
-    throw error;
-  }
-}
-
-// Get a class by its unique ID
-export async function getClassByUniqueId(uniqueId) {
-  try {
-    await dbConnect();
-    const classObj = await Class.findOne({ uniqueId });
-
-    if (!classObj) {
-      throw new Error('Class not found');
-    }
-
-    return classObj;
-  } catch (error ) {
-    console.error('Error getting class by unique ID:', error);
     throw error;
   }
 }
@@ -342,70 +323,6 @@ export async function removeFacultyAssignment(
   }
 }
 
-// Student requests to join a class
-export async function requestToJoinClass(studentId, classUniqueId) {
-  try {
-    await dbConnect();
-    
-    if (!mongoose.Types.ObjectId.isValid(studentId)) {
-      throw new Error('Invalid student ID');
-    }
-    
-    // Find the student
-    const student = await User.findById(studentId);
-    if (!student) {
-      throw new Error('Student not found');
-    }
-    
-    if (student.role !== 'student') {
-      throw new Error('Only students can join classes');
-    }
-    
-    // Find the class by its unique ID
-    const classObj = await getClassByUniqueId(classUniqueId);
-    if (!classObj) {
-      throw new Error('Class not found. Please check the class code.');
-    }
-    
-    // Check if student already requested to join
-    if (classObj.studentRequests.some((id) => id.toString() === studentId)) {
-      throw new Error('You have already requested to join this class. Please wait for approval.');
-    }
-    
-    // Check if student is already in the class
-    const existingStudent = classObj.students.find((s) => s.student.toString() === studentId);
-    if (existingStudent) {
-      if (existingStudent.status === 'pending') {
-        throw new Error('Your request to join this class is already pending.');
-      } else if (existingStudent.status === 'approved') {
-        throw new Error('You are already enrolled in this class.');
-      } else if (existingStudent.status === 'rejected') {
-        throw new Error('Your previous request was rejected. Please contact your teacher.');
-      }
-    }
-
-    student.class = classObj._id; // Set the class ID in the student document
-    student.collegeStatus = 'pending'; // Set college status to pending
-    student.isVerified = false; // Set isVerified to false
-    student.pendingApproval = true; // Set pending approval to true
-
-    // Add student to requests
-    classObj.studentRequests.push(new mongoose.Types.ObjectId(studentId));
-    
-    await student.save();
-    await classObj.save();
-    
-    return {
-      success: true,
-      message: 'Request to join class submitted successfully. Awaiting approval.',
-      classId: classObj._id
-    };
-  } catch (error ) {
-    console.error('Error requesting to join class:', error);
-    throw error;
-  }
-}
-
 // Get student requests for a class
 export async function getStudentRequestsForClass(classId, status) {
   try {
@@ -479,76 +396,6 @@ export async function getStudentRequestsForClass(classId, status) {
   }
 }
 
-// Update student status in a class (approve or reject)
-export async function updateStudentStatus(classId, studentId, status) {
-  try {
-    await dbConnect();
-    if (!mongoose.Types.ObjectId.isValid(classId) || !mongoose.Types.ObjectId.isValid(studentId)) {
-      throw new Error('Invalid IDs');
-    }
-
-    const classObj = await Class.findById(classId);
-    if (!classObj) {
-      throw new Error('Class not found');
-    }
-
-    // Find the student
-    const student = await User.findById(studentId);
-    if (!student) {
-      throw new Error('Student not found');
-    }
-
-    // Check if student is in the requests list
-    if (!classObj.studentRequests.some((id) => id.toString() === studentId)) {
-      throw new Error('Student has not requested to join this class');
-    }
-
-    if (status === 'approve') {
-      // Add student to the class with approved status
-      classObj.students.push({
-        student: new mongoose.Types.ObjectId(studentId),
-        status: 'approved',
-        joinRequestDate: new Date()
-      });
-      
-      // Add class to student's class
-      student.class = classObj._id;
-      student.collegeStatus = 'approved';
-      student.isVerified = true;
-      student.pendingApproval = false; // Set pending approval to false
-      
-    } else if (status === 'reject') {
-      // Add student to the class with rejected status
-      classObj.students.push({
-        student: new mongoose.Types.ObjectId(studentId),
-        status: 'rejected',
-        joinRequestDate: new Date()
-      });
-      // Do nothing to student's classes array
-    }
-
-    // Remove from requests either way
-    classObj.studentRequests = classObj.studentRequests.filter(
-      (id) => id.toString() !== studentId
-    );
-
-    await classObj.save();
-    await student.save();
-
-    return { 
-      success: true, 
-      classId, 
-      studentId, 
-      status,
-      message: status === 'approve' 
-        ? `${student.displayName} has been added to the class` 
-        : `${student.displayName}'s request has been rejected`
-    };
-  } catch (error) {
-    console.error('Error updating student status:', error);
-    throw error;
-  }
-}
 
 // Get all students in a class
 export async function getStudentsByClass(classId) {

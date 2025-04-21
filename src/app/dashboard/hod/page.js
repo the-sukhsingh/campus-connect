@@ -141,7 +141,6 @@ function HodDashboard() {
                   <p><span className="font-medium">College Name:</span> {collegeInfo.name}</p>
                   <p><span className="font-medium">College Code:</span> {collegeInfo.code}</p>
                   <p><span className="font-medium">Domain:</span> {collegeInfo.domain}</p>
-                  <p><span className="font-medium">Unique ID:</span> <span className="bg-gray-100 px-2 py-1 rounded font-mono text-sm">{collegeInfo.uniqueId}</span></p>
                 </div>
                 <div className="mt-6">
                   <button

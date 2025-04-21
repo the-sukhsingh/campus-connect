@@ -9,26 +9,28 @@ export default function UserInfoForm({ onComplete }) {
   const { user, dbUser, userRole, handleUserDataMemoized } = useAuth();
   const router = useRouter();
   
-  const [displayName, setDisplayName] = useState(dbUser?.displayName || '');
+  const [displayName, setDisplayName] = useState(dbUser?.displayName || user?.displayName || '');
   const [rollNo, setRollNo] = useState(dbUser?.rollNo || '');
   const [studentId, setStudentId] = useState(dbUser?.studentId || '');
   const [department, setDepartment] = useState(dbUser?.department || '');
   const [semester, setSemester] = useState(dbUser?.semester || '');
   const [batch, setBatch] = useState(dbUser?.batch || '');
+  const [role, setRole] = useState(dbUser?.role || 'student');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     // Populate form with existing user data when it becomes available
     if (dbUser) {
-      setDisplayName(dbUser.displayName || '');
+      setDisplayName(dbUser.displayName || user?.displayName || '');
       setRollNo(dbUser.rollNo || '');
       setStudentId(dbUser.studentId || '');
       setDepartment(dbUser.department || '');
       setSemester(dbUser.semester || '');
       setBatch(dbUser.batch || '');
+      setRole(dbUser.role || 'student');
     }
-  }, [dbUser]);
+  }, [dbUser, user]);
 
   const validateForm = () => {
     // For all users, display name is required
@@ -38,7 +40,7 @@ export default function UserInfoForm({ onComplete }) {
     }
 
     // For students, additional fields are required
-    if (userRole === 'student') {
+    if (role === 'student') {
       if (!rollNo.trim()) {
         setError('Roll Number is required');
         return false;
@@ -65,17 +67,18 @@ export default function UserInfoForm({ onComplete }) {
     setIsSubmitting(true);
 
     try {
-      const userData = { displayName };
+      const userData = { 
+        displayName,
+        role
+      };
 
       // Add role-specific fields
-      if (userRole === 'student') {
+      if (role === 'student') {
         userData.rollNo = rollNo;
         userData.studentId = studentId;
         userData.department = department;
         userData.semester = semester;
         userData.batch = batch;
-      } else if (userRole === 'faculty' || userRole === 'hod') {
-        // Faculty and HOD only need displayName
       }
 
       // Update user profile in the database
@@ -92,7 +95,7 @@ export default function UserInfoForm({ onComplete }) {
             onComplete();
           } else {
             // Redirect based on role
-            switch(userRole) {
+            switch(role) {
               case 'student':
                 router.push('/dashboard/student');
                 break;
@@ -100,6 +103,12 @@ export default function UserInfoForm({ onComplete }) {
                 router.push('/dashboard/faculty');
                 break;
               case 'hod':
+                router.push('/dashboard/hod');
+                break;
+              case 'librarian':
+                router.push('/dashboard/librarian');
+                break;
+              case 'admin':
                 router.push('/dashboard/admin');
                 break;
               default:
@@ -144,7 +153,26 @@ export default function UserInfoForm({ onComplete }) {
           />
         </div>
 
-        {userRole === 'student' && (
+        <div>
+          <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+            Role <span className="text-red-500">*</span>
+          </label>
+          <select
+            id="role"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            required
+            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          >
+            <option value="student">Student</option>
+            <option value="faculty">Faculty</option>
+            <option value="hod">Head of Department</option>
+            <option value="librarian">Librarian</option>
+            <option value="admin">Administrator</option>
+          </select>
+        </div>
+
+        {role === 'student' && (
           <>
             <div>
               <label htmlFor="rollNo" className="block text-sm font-medium text-gray-700 mb-1">

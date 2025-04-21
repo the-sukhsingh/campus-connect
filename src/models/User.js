@@ -1,7 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
 
-
-
 const UserSchema = new Schema({
   firebaseUid: {
     type: String,
@@ -64,23 +62,25 @@ const UserSchema = new Schema({
   },
   isVerified: {
     type: Boolean,
-    default: false,
+    default: true, // Changed default to true as we're auto-verifying users
   },
   verificationMethod: {
     type: String,
-    enum: ['domain', 'invite', 'hod', null],
+    enum: ['domain', 'invite', 'hod', 'faculty', null],
   },
-
   collegeStatus: {
     type: String,
-    enum: ['notlinked', 'pending', 'approved', 'rejected'],
+    enum: ['notlinked', 'linked', 'rejected'], // Changed 'pending' and 'approved' to just 'linked'
     default: 'notlinked',
     required: true,
   },
-
-  pendingApproval: {
+  passwordChanged: {
     type: Boolean,
-    default: true,
+    default: false, // Default to false for new users, requiring them to change password
+  },
+  isFirstLogin: {
+    type: Boolean,
+    default: true, // Default to true for new users
   }
 }, {
   timestamps: true,
@@ -90,21 +90,6 @@ const UserSchema = new Schema({
 // UserSchema.index({ college: 1, studentId: 1 }, { unique: true, sparse: true });
 // UserSchema.index({ college: 1, role: 1 });
 // UserSchema.index({ email: 1, college: 1 });
-
-// // Pre-save middleware to ensure studentId is unique within a college
-// UserSchema.pre('save', async function (next) {
-//   if (this.isModified('studentId') && this.studentId && this.college) {
-//     const exists = await mongoose.models.User?.findOne({
-//       college: this.college,
-//       studentId: this.studentId,
-//       _id: { $ne: this._id }
-//     });
-//     if (exists) {
-//       throw new Error('StudentId must be unique within a college');
-//     }
-//   }
-//   next();
-// });
 
 const UserModel = mongoose?.models?.User || mongoose.model('User', UserSchema);
 

@@ -9,23 +9,12 @@ import Link from 'next/link';
 export default function FacultyAuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [floatingLabels, setFloatingLabels] = useState({ email: false, password: false });
-  const { signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
+  const { signInWithEmail, signInWithGoogle } = useAuth();
   const router = useRouter();
-  
-  const [gradientAngle, setGradientAngle] = useState(135);
-  
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setGradientAngle(prev => (prev + 1) % 360);
-    }, 100);
-    
-    return () => clearInterval(interval);
-  }, []);
 
   const validateForm = () => {
     if (!email.trim()) {
@@ -34,10 +23,6 @@ export default function FacultyAuthPage() {
     }
     if (!password.trim()) {
       setError('Password is required');
-      return false;
-    }
-    if (isSignUp && password.length < 6) {
-      setError('Password must be at least 6 characters');
       return false;
     }
     return true;
@@ -69,35 +54,17 @@ export default function FacultyAuthPage() {
     setIsLoading(true);
     
     try {
-      if (isSignUp) {
-        const userCredential = await signUpWithEmail(email, password);
-        
-        await fetch('/api/user', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            firebaseUid: userCredential.user?.uid,
-            role: 'faculty',
-            email: email.toLowerCase(),
-            displayName: userCredential.user.displayName || email.split('@')[0],
-          }),
-        });
-        
-        router.push('/dashboard/faculty');
-      } else {
-        const userCredential = await signInWithEmail(email, password);
-        
-        const response = await fetch(`/api/user/firebase/${userCredential.user.uid}`);
-        const userData = await response.json();
-        
-        if (userData.role !== 'faculty') {
-          throw new Error('auth/wrong-role');
-        }
-        
-        router.push('/dashboard/faculty');
+      const userCredential = await signInWithEmail(email, password);
+      
+      // Verify if the user is a faculty member
+      const response = await fetch(`/api/user/firebase/${userCredential.user.uid}`);
+      const userData = await response.json();
+      
+      if (userData.role !== 'faculty') {
+        throw new Error('auth/wrong-role');
       }
+      
+      router.push('/dashboard/faculty');
     } catch (error) {
       if (error.message === 'auth/wrong-role') {
         setError('This account does not have faculty privileges. Please use the correct login page for your role.');
@@ -116,30 +83,22 @@ export default function FacultyAuthPage() {
     try {
       const result = await signInWithGoogle();
       
+      // Check if user already exists
       const userResponse = await fetch(`/api/user/firebase/${result.user.uid}`);
       const existingUser = await userResponse.json();
       
       if (existingUser && existingUser._id && existingUser.role !== 'faculty') {
         throw new Error('auth/wrong-role');
+      } else if (!existingUser || !existingUser._id) {
+        throw new Error('auth/no-account');
       }
-      
-      await fetch('/api/user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firebaseUid: result.user?.uid,
-          role: 'faculty',
-          email: result.user.email?.toLowerCase(),
-          displayName: result.user.displayName,
-        }),
-      });
       
       router.push('/dashboard/faculty');
     } catch (error) {
       if (error.message === 'auth/wrong-role') {
         setError('This Google account is already registered with a different role. Please use the correct login page for your role.');
+      } else if (error.message === 'auth/no-account') {
+        setError('Your account doesn\'t exist. Faculty accounts can only be created by HOD. Please contact your department head.');
       } else {
         setError(getReadableErrorMessage(error.message));
       }
@@ -159,54 +118,41 @@ export default function FacultyAuthPage() {
   };
 
   return (
-    <div 
-      className="min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden" 
-      style={{ 
-        background: `linear-gradient(${gradientAngle}deg, #166534 0%, #14532d 25%, #064e3b 50%, #0f766e 75%, #0e7490 100%)`
-      }}
-    >
-      <div className="absolute inset-0 overflow-hidden pointer-events-none shapes-container">
-        <div className="green-shape-1"></div>
-        <div className="green-shape-2"></div>
-        <div className="green-shape-3"></div>
-        <div className="green-shape-4"></div>
-        <div className="green-shape-5"></div>
-      </div>
-      
+    <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-800 to-green-700 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="light-beam light-beam-1"></div>
-        <div className="light-beam light-beam-2"></div>
+        <div className="absolute top-0 left-0 w-full h-full bg-pattern opacity-10"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-green-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
       </div>
       
       <div className="z-10 w-full max-w-md">
-        <div className="backdrop-filter backdrop-blur-lg bg-white/90 dark:bg-gray-900/90 rounded-2xl shadow-xl overflow-hidden transform transition-all hover:shadow-2xl border border-green-100 dark:border-green-900">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden backdrop-filter backdrop-blur-sm bg-opacity-95 dark:bg-opacity-80 transform transition-all hover:scale-[1.01] border border-green-200 dark:border-green-900">
           <div className="p-8">
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-20 h-20 mb-5 rounded-full bg-gradient-to-br from-green-500 to-emerald-700 shadow-lg">
+              <div className="inline-flex items-center justify-center w-20 h-20 mb-5 rounded-full bg-gradient-to-br from-green-600 to-green-800 shadow-lg">
                 <svg className="h-10 w-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
                 </svg>
               </div>
-              <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-500 dark:from-green-400 dark:to-emerald-300 mb-2">
+              <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-green-800 dark:from-green-400 dark:to-green-600 mb-2">
                 Faculty Portal
               </h1>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                {isSignUp 
-                  ? 'Create your faculty account to connect with students' 
-                  : 'Welcome back! Access your teaching resources'
-                }
+                Sign in to access your teaching dashboard
               </p>
-              
-              <div className="mt-4 inline-flex items-center justify-center bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full px-3 py-1 text-xs font-medium">
-                <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                </svg>
-                Secure faculty access
+              <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  <svg className="inline-block w-4 h-4 mr-1 -mt-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"></path>
+                  </svg>
+                  Faculty accounts can only be created by HODs
+                </p>
               </div>
             </div>
             
             {error && (
-              <div className="relative py-4 px-5 mb-6 text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-200 rounded-lg flex items-center overflow-hidden animate-fade-in">
+              <div className="relative py-4 px-5 mb-6 text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-200 rounded-lg flex items-center">
                 <div className="mr-4 flex-shrink-0">
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
@@ -232,7 +178,7 @@ export default function FacultyAuthPage() {
                   type="email"
                   autoComplete="email"
                   required
-                  className={`peer block w-full px-4 py-3 rounded-lg border ${error && error.includes('email') ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-transparent transition-all`}
+                  className={`peer block w-full px-4 py-3 rounded-lg border ${error && error.includes('email') ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-transparent transition-all`}
                   placeholder="Email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -257,9 +203,9 @@ export default function FacultyAuthPage() {
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
-                  autoComplete={isSignUp ? "new-password" : "current-password"}
+                  autoComplete="current-password"
                   required
-                  className={`peer block w-full px-4 py-3 rounded-lg border ${error && error.includes('password') ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-transparent pr-10 transition-all`}
+                  className={`peer block w-full px-4 py-3 rounded-lg border ${error && error.includes('password') ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-transparent pr-10 transition-all`}
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -295,31 +241,27 @@ export default function FacultyAuthPage() {
                 </button>
               </div>
 
-              {!isSignUp && (
-                <div className="flex items-center justify-end">
-                  <div className="text-sm">
-                    <Link href="#" className="font-medium text-green-600 hover:text-green-500 dark:text-green-400 dark:hover:text-green-300">
-                      Forgot your password?
-                    </Link>
-                  </div>
+              <div className="flex items-center justify-end">
+                <div className="text-sm">
+                  <Link href="#" className="font-medium text-green-600 hover:text-green-500 dark:text-green-400 dark:hover:text-green-300">
+                    Forgot your password?
+                  </Link>
                 </div>
-              )}
+              </div>
 
               <div>
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className={`group relative flex w-full justify-center rounded-lg px-4 py-3 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 overflow-hidden ${
+                  className={`group relative flex w-full justify-center rounded-lg px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 overflow-hidden ${
                     isLoading 
-                      ? 'bg-green-500 cursor-not-allowed' 
-                      : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700'
+                      ? 'bg-green-400 cursor-not-allowed' 
+                      : 'bg-gradient-to-r from-green-600 to-green-800 hover:from-green-700 hover:to-green-900'
                   }`}
                 >
-                  <span className="absolute right-0 top-0 w-12 h-full transform translate-x-12 -skew-x-12 bg-white opacity-20 group-hover:-translate-x-full ease-out duration-700"></span>
-                  
                   <span className="absolute inset-y-0 left-0 flex items-center pl-3">
                     <svg className="h-5 w-5 text-green-300 group-hover:text-green-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={isSignUp ? "M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" : "M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"} />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                     </svg>
                   </span>
                   {isLoading ? (
@@ -328,10 +270,10 @@ export default function FacultyAuthPage() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      {isSignUp ? 'Creating faculty account...' : 'Signing in...'}
+                      Signing in...
                     </>
                   ) : (
-                    <>{isSignUp ? 'Create faculty account' : 'Sign in as faculty'}</>
+                    <>Sign in as faculty</>
                   )}
                 </button>
               </div>
@@ -343,7 +285,7 @@ export default function FacultyAuthPage() {
                   <div className="w-full border-t border-gray-300 dark:border-gray-600" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400">Or continue with</span>
+                  <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">Or continue with</span>
                 </div>
               </div>
 
@@ -352,7 +294,7 @@ export default function FacultyAuthPage() {
                   type="button"
                   onClick={handleGoogleSignIn}
                   disabled={isLoading}
-                  className={`group relative flex w-full justify-center items-center rounded-lg bg-white dark:bg-gray-800 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors ${
+                  className={`group relative flex w-full justify-center items-center rounded-lg bg-white dark:bg-gray-700 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors ${
                     isLoading ? 'cursor-not-allowed opacity-70' : ''
                   }`}
                 >
@@ -366,20 +308,6 @@ export default function FacultyAuthPage() {
                 </button>
               </div>
             </div>
-
-            <div className="text-sm text-center mt-6">
-              <button 
-                type="button"
-                onClick={() => {
-                  setIsSignUp(!isSignUp);
-                  setError('');
-                }}
-                className="font-medium text-green-600 hover:text-green-500 dark:text-green-400 dark:hover:text-green-300 transition-colors"
-                disabled={isLoading}
-              >
-                {isSignUp ? 'Already have an account? Sign in' : 'Need an account? Sign up'}
-              </button>
-            </div>
             
             <div className="text-xs text-center mt-6 text-gray-500 dark:text-gray-400">
               <Link href="/auth" className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors flex justify-center items-center">
@@ -392,113 +320,16 @@ export default function FacultyAuthPage() {
           </div>
         </div>
       </div>
-      
+
       <style jsx>{`
         @keyframes float {
-          0% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-20px) rotate(5deg); }
-          100% { transform: translateY(0px) rotate(0deg); }
+          0% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+          100% { transform: translateY(0px); }
         }
-        
-        @keyframes float-reverse {
-          0% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-15px) rotate(-5deg); }
-          100% { transform: translateY(0px) rotate(0deg); }
-        }
-        
-        .green-shape-1 {
-          position: absolute;
-          width: 300px;
-          height: 300px;
-          top: -100px;
-          left: -100px;
-          background: radial-gradient(circle, rgba(52, 211, 153, 0.2) 0%, rgba(16, 185, 129, 0.1) 70%, transparent 100%);
-          border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
-          animation: float 15s ease-in-out infinite;
-        }
-        
-        .green-shape-2 {
-          position: absolute;
-          width: 400px;
-          height: 400px;
-          bottom: -150px;
-          right: -150px;
-          background: radial-gradient(circle, rgba(6, 95, 70, 0.2) 0%, rgba(4, 120, 87, 0.1) 70%, transparent 100%);
-          border-radius: 60% 40% 30% 70% / 50% 60% 30% 60%;
-          animation: float-reverse 18s ease-in-out infinite;
-        }
-        
-        .green-shape-3 {
-          position: absolute;
-          width: 200px;
-          height: 200px;
-          top: 30%;
-          right: 10%;
-          background: radial-gradient(circle, rgba(6, 78, 59, 0.15) 0%, rgba(5, 150, 105, 0.08) 70%, transparent 100%);
-          border-radius: 30% 70% 50% 50% / 50% 40% 60% 50%;
-          animation: float 20s ease-in-out infinite;
-        }
-        
-        .green-shape-4 {
-          position: absolute;
-          width: 250px;
-          height: 250px;
-          bottom: 20%;
-          left: 5%;
-          background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, rgba(52, 211, 153, 0.08) 70%, transparent 100%);
-          border-radius: 50% 50% 30% 70% / 60% 40% 70% 40%;
-          animation: float-reverse 25s ease-in-out infinite;
-        }
-        
-        .green-shape-5 {
-          position: absolute;
-          width: 180px;
-          height: 180px;
-          top: 20%;
-          left: 10%;
-          background: radial-gradient(circle, rgba(4, 120, 87, 0.15) 0%, rgba(6, 95, 70, 0.08) 70%, transparent 100%);
-          border-radius: 70% 30% 50% 50% / 40% 60% 40% 60%;
-          animation: float 22s ease-in-out infinite;
-        }
-        
-        .light-beam {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          opacity: 0.05;
-          pointer-events: none;
-          background: linear-gradient(45deg, transparent 45%, #ffffff 45%, #ffffff 55%, transparent 55%);
-        }
-        
-        .light-beam-1 {
-          transform: translateX(-50%) rotate(45deg) scale(2);
-          animation: move-beam-1 20s linear infinite;
-        }
-        
-        .light-beam-2 {
-          transform: translateX(50%) rotate(-45deg) scale(2);
-          animation: move-beam-2 30s linear infinite;
-        }
-        
-        @keyframes move-beam-1 {
-          0% { transform: translateX(-100%) rotate(45deg) scale(2); }
-          100% { transform: translateX(100%) rotate(45deg) scale(2); }
-        }
-        
-        @keyframes move-beam-2 {
-          0% { transform: translateX(100%) rotate(-45deg) scale(2); }
-          100% { transform: translateX(-100%) rotate(-45deg) scale(2); }
-        }
-        
-        @keyframes fade-in {
-          0% { opacity: 0; transform: translateY(-10px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-        
-        .animate-fade-in {
-          animation: fade-in 0.3s ease-out forwards;
+        .bg-pattern {
+          background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.15) 1px, transparent 0);
+          background-size: 20px 20px;
         }
       `}</style>
     </div>

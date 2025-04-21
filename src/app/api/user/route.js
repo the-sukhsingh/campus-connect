@@ -9,7 +9,6 @@ export async function POST(req) {
     
     const data = await req.json();
 
-
     const timestamp = Date.now().toString(36);
     const randomSuffix = Math.random().toString(36).substring(2, 7);
     
@@ -18,7 +17,6 @@ export async function POST(req) {
     const email = data.email || data.firebaseUser?.email;
     const displayName = data.displayName || data.firebaseUser?.displayName;
     const role = data.role || 'user'; // Default role
-
     
     if (!firebaseUid) {
       return NextResponse.json({ 
@@ -47,19 +45,13 @@ export async function POST(req) {
     // Check if the user's email domain matches a college
     const college = email ? await isEmailFromCollege(email) : null;
 
-    let isVerified = false;
+    let isVerified = true; // Auto-verify all users
     let verificationMethod = null;
-    let pendingApproval = false;
     let collegeId = null;
 
-    // If college found and it uses email domain verification
-    if (college && college.verificationMethods?.emailDomain) {
-      isVerified = true;
+    // If college found, associate user with it
+    if (college) {
       verificationMethod = 'domain';
-      collegeId = college._id;
-    } else if (college && college.verificationMethods?.adminApproval) {
-      // College requires admin approval
-      pendingApproval = true;
       collegeId = college._id;
     }
 
@@ -71,8 +63,8 @@ export async function POST(req) {
       role,
       isVerified,
       verificationMethod,
-      studentId:`${timestamp}-${randomSuffix}`,
-      pendingApproval,
+      studentId: `${timestamp}-${randomSuffix}`,
+      college: collegeId
     });
     
     await user.save();
@@ -108,7 +100,6 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
 
     const firebaseUid = searchParams.get('firebaseUid');
-
     const email = searchParams.get('email');
     
     if (!firebaseUid && !email) {
@@ -118,10 +109,7 @@ export async function GET(req) {
       }, { status: 400 });
     }
 
-    // If email is provided, convert it to lowercase
-
-    // email is in this format : email%40domain.com
-
+    // If email is provided, decode and convert it to lowercase
     const decodedEmail = decodeURIComponent(email || '');
     const emailToLower = decodedEmail.toLowerCase();
     

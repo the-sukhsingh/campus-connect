@@ -2,8 +2,6 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { 
-  // User, 
-  // UserCredential, 
   createUserWithEmailAndPassword, 
   onAuthStateChanged, 
   signInWithEmailAndPassword, 
@@ -14,16 +12,14 @@ import {
 import { auth } from '@/config/firebase';
 import { getUserByFirebaseUid, getUserByEmail } from '@/services/userServiceClient';
 
-
-
 // Define the context type
 const AuthContext = createContext({
   user: null,
   dbUser: null,
   userRole: null,
   userVerified: false,
-  pendingApproval: false,
   userCollege: null,
+  passwordChanged: null, // Add passwordChanged to context
   loading: true,
   error: null,
   handleUserDataMemoized: async () => {},
@@ -41,8 +37,8 @@ const AuthProvider = ({ children }) => {
   const [dbUser, setDbUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [userVerified, setUserVerified] = useState(false);
-  const [pendingApproval, setPendingApproval] = useState(false);
   const [userCollege, setUserCollege] = useState(null);
+  const [passwordChanged, setPasswordChanged] = useState(null); // Add passwordChanged state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -78,11 +74,13 @@ const AuthProvider = ({ children }) => {
         
         if (userData) {
           // User exists in database
+          console.log("User data received:", userData); // Debug log
           setDbUser(userData.user);
           setUserRole(userData.user.role);
           setUserVerified(userData.user.isVerified);
-          setPendingApproval(userData.user.pendingApproval);
           setUserCollege(userData.user.college || null);
+          // Set passwordChanged state explicitly, handle both undefined and null cases
+          setPasswordChanged(userData.user.passwordChanged !== undefined ? userData.user.passwordChanged : null);
         } else {
           
           // Try to save user to database with retry mechanism using API call
@@ -125,11 +123,13 @@ const AuthProvider = ({ children }) => {
           }
           
           if (newDbUser) {
+            console.log("New user created:", newDbUser); // Debug log
             setDbUser(newDbUser.user);
             setUserRole(newDbUser.user.role);
             setUserVerified(newDbUser.user.isVerified);
-            setPendingApproval(newDbUser.user.pendingApproval);
             setUserCollege(newDbUser.user.college || null);
+            // Set passwordChanged state explicitly for new users
+            setPasswordChanged(newDbUser.user.passwordChanged !== undefined ? newDbUser.user.passwordChanged : false);
           } else {
             console.error("Failed to save user to database after multiple attempts");
             throw new Error("Failed to create user in database");
@@ -140,8 +140,8 @@ const AuthProvider = ({ children }) => {
         setDbUser(null);
         setUserRole(null);
         setUserVerified(false);
-        setPendingApproval(false);
         setUserCollege(null);
+        setPasswordChanged(null); // Reset passwordChanged when logged out
       }
     } catch (err) {
       const error = err;
@@ -180,7 +180,7 @@ const AuthProvider = ({ children }) => {
       };
     } catch (err) {
       console.error("Error setting up auth listener:", err);
-      setError(err );
+      setError(err);
       setLoading(false);
     }
   }, [handleUserDataMemoized]);
@@ -192,7 +192,7 @@ const AuthProvider = ({ children }) => {
       const provider = new GoogleAuthProvider();
       return await signInWithPopup(auth, provider);
     } catch (err) {
-      const error = err ;
+      const error = err;
       console.error('Error signinwithgoogle:', error);
       setError(error);
       throw error;
@@ -204,7 +204,7 @@ const AuthProvider = ({ children }) => {
       setError(null);
       return await signInWithEmailAndPassword(auth, email, password);
     } catch (err) {
-      const error = err ;
+      const error = err;
       console.error('Error signinwithEmail:', error);
       setError(error);
       throw error;
@@ -216,7 +216,7 @@ const AuthProvider = ({ children }) => {
       setError(null);
       return await createUserWithEmailAndPassword(auth, email, password);
     } catch (err) {
-      const error = err ;
+      const error = err;
       console.error('Error signupwithEmail:', error);
       setError(error);
       throw error;
@@ -243,7 +243,6 @@ const AuthProvider = ({ children }) => {
       const data = await response.json();
       
       if (!response.ok) {
-        
         console.error('Error verifying invite code:', data.message || 'Verification failed');
         throw new Error(data.message || 'Verification failed');
       }
@@ -254,7 +253,7 @@ const AuthProvider = ({ children }) => {
       
       return data;
     } catch (err) {
-      const error = err ;
+      const error = err;
       console.error('Error verifying invite code:', error);
       setError(error);
       throw error;
@@ -293,7 +292,7 @@ const AuthProvider = ({ children }) => {
       
       return data;
     } catch (err) {
-      const error = err ;
+      const error = err;
       console.error('Error linking student with college:', error);
       setError(error);
       throw error;
@@ -306,7 +305,7 @@ const AuthProvider = ({ children }) => {
       await signOut(auth);
       // State cleanup is handled by the auth state change listener
     } catch (err) {
-      const error = err ;
+      const error = err;
       console.error('Error logging out:', error);
       setError(error);
       throw error;
@@ -318,8 +317,8 @@ const AuthProvider = ({ children }) => {
     dbUser,
     userRole,
     userVerified,
-    pendingApproval,
     userCollege,
+    passwordChanged, // Add passwordChanged to context value
     loading,
     error,
     handleUserDataMemoized,
@@ -337,7 +336,6 @@ const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 }
-
 
 // Create a hook to use the auth context
 export const useAuth = () => {

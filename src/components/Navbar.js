@@ -33,6 +33,8 @@ export default function Navbar() {
           { name: 'Dashboard', href: '/dashboard/student' },
           { name: 'Attendance', href: '/dashboard/student/attendance' },
           { name: 'Catalog', href: '/dashboard/student/books/catalog'},
+          { name: 'Rooms', href: '/dashboard/rooms' },
+          { name: 'Room Booking', href: '/dashboard/room-bookings' },
           { name: 'Books', href: '/dashboard/student/books/' },
           { name: 'Events', href: '/dashboard/student/events' }
         ];
@@ -41,6 +43,8 @@ export default function Navbar() {
           { name: 'Dashboard', href: '/dashboard/faculty' },
           { name: 'Announcements', href: '/dashboard/faculty/announcements' },
           { name: 'Assigned Classes', href: '/dashboard/faculty/assigned-classes' },
+          { name: 'Rooms', href: '/dashboard/rooms' },
+          { name: 'Room Booking', href: '/dashboard/room-bookings' },
           { name: 'Attendance', href: '/dashboard/faculty/attendance' },
           { name: 'Events', href: '/dashboard/events' }
         ];
@@ -50,6 +54,8 @@ export default function Navbar() {
           { name: 'Announcements', href: '/dashboard/hod/announcements' },
           { name: 'Classes', href: '/dashboard/hod/classes' },
           { name: 'College', href: '/dashboard/hod/college/manage' },
+          { name: 'Rooms', href: '/dashboard/rooms' },
+          { name: 'Room Booking', href: '/dashboard/room-bookings' },
           { name: 'Library', href: '/dashboard/hod/library' },
           { name: 'Teachers', href: '/dashboard/hod/teachers' },
           { name: 'Events', href: '/dashboard/events' }
@@ -59,6 +65,8 @@ export default function Navbar() {
           { name: 'Dashboard', href: '/dashboard/librarian' },
           { name: 'Books', href: '/dashboard/librarian/books' },
           { name: 'Catalog', href: '/dashboard/student/books/catalog'},
+          { name: 'Rooms', href: '/dashboard/rooms' },
+          { name: 'Room Booking', href: '/dashboard/room-bookings' },
           { name: 'Lend', href: '/dashboard/librarian/lend' },
           { name: 'Returns', href: '/dashboard/librarian/returns' },
           { name: 'Events', href: '/dashboard/events' }
@@ -106,10 +114,13 @@ export default function Navbar() {
               <p className="text-sm">Loading...</p>
             ) : user ? (
               <div className="hidden md:flex items-center gap-4">
-                <p className="text-sm">
-                  {dbUser?.role && <span className="bg-blue-600 px-2 py-1 rounded-md mr-2">{dbUser.role}</span>}
-                  {user.displayName || user.email}
-                </p>
+                
+                <Link
+                  href="/dashboard/password-change"
+                  className="px-3 py-2 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors"
+                >
+                  Change Password
+                </Link>
                 <button
                   onClick={handleSignOut}
                   className="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
@@ -178,12 +189,21 @@ export default function Navbar() {
               </Link>
             ))}
             {user && (
-              <button
-                onClick={handleSignOut}
-                className="block w-full text-left px-3 py-2 rounded-md text-sm font-medium text-red-300 hover:bg-gray-700 hover:text-white"
-              >
-                Sign out
-              </button>
+              <>
+                <Link
+                  href="/dashboard/password-change"
+                  className="block px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Change Password
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  className="block w-full text-left px-3 py-2 rounded-md text-sm font-medium text-red-300 hover:bg-gray-700 hover:text-white"
+                >
+                  Sign out
+                </button>
+              </>
             )}
           </div>
         </div>

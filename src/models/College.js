@@ -39,14 +39,6 @@ const CollegeSchema = new Schema({
     type: [mongoose.Types.ObjectId],
     ref: 'Class',
   },
-  uniqueId: {
-    type: String,
-    required: true,
-    unique: true,
-    default: () => {
-      return Math.random().toString(36).substring(2, 10); // Generate a random unique ID
-    }
-  },
   verificationMethods: {
     emailDomain: {
       type: Boolean,

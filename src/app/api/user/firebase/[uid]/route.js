@@ -13,7 +13,26 @@ export async function GET(request, { params }) {
       );
     }
     
-    return NextResponse.json(user);
+    // Format the response properly to include all user fields
+    return NextResponse.json({
+      _id: user._id,
+      email: user.email,
+      displayName: user.displayName,
+      role: user.role,
+      firebaseUid: user.firebaseUid,
+      college: user.college,
+      isVerified: user.isVerified,
+      isFirstLogin: user.isFirstLogin,
+      passwordChanged: user.passwordChanged,
+      // Include all other relevant fields
+      department: user.department,
+      rollNo: user.rollNo,
+      studentId: user.studentId,
+      semester: user.semester,
+      batch: user.batch,
+      collegeStatus: user.collegeStatus,
+      verificationMethod: user.verificationMethod,
+    });
   } catch (error) {
     return NextResponse.json(
       { error: error.message || 'Failed to fetch user' },

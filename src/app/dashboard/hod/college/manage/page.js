@@ -81,60 +81,6 @@ function CollegeManagePage() {
     }
   };
 
-  // Generate a new unique ID
-  const handleGenerateNewId = async () => {
-    if (!user || !collegeInfo) return;
-    
-    try {
-      setIsSubmitting(true);
-      
-      // Create a 6-character alphanumeric code
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let newUniqueId = '';
-      for (let i = 0; i < 6; i++) {
-        newUniqueId += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      
-      const response = await fetch('/api/user/college', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firebaseUid: user?.uid,
-          collegeId: collegeInfo._id,
-          updates: {
-            uniqueId: newUniqueId
-          }
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update college ID');
-      }
-      
-      const data = await response.json();
-      setCollegeInfo(data.college);
-      
-      setMessage({
-        type: 'success',
-        text: 'College ID updated successfully!'
-      });
-      
-      // Clear the message after 3 seconds
-      setTimeout(() => {
-        setMessage({ type: '', text: '' });
-      }, 3000);
-    } catch (error) {
-      setMessage({
-        type: 'error',
-        text: error.message || 'Failed to update college ID'
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -460,65 +406,7 @@ function CollegeManagePage() {
             </div>
           </div>
 
-          {/* College Unique ID Section */}
-          <div className="px-6 py-4 border-t border-gray-200">
-            <h3 className="text-lg font-medium mb-4">College Unique ID</h3>
-            <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">This unique ID is used by teachers to join your college:</p>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-lg font-mono font-bold text-gray-800 bg-gray-100 px-3 py-1 rounded border border-gray-300">
-                      {collegeInfo.uniqueId}
-                    </span>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(collegeInfo.uniqueId);
-                        setMessage({
-                          type: 'success',
-                          text: 'College ID copied to clipboard!'
-                        });
-                        setTimeout(() => {
-                          setMessage({ type: '', text: '' });
-                        }, 3000);
-                      }}
-                      className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                      title="Copy to clipboard"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-                <button
-                  onClick={handleGenerateNewId}
-                  disabled={isSubmitting}
-                  className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none ${
-                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Generating...
-                    </>
-                  ) : (
-                    'Generate New ID'
-                  )}
-                </button>
-              </div>
-              <p className="mt-3 text-xs text-gray-500">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline-block mr-1 text-yellow-500" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                </svg>
-                Generating a new ID will invalidate the previous ID. Teachers who haven&apos;t joined yet will need the new ID.
-              </p>
-            </div>
-          </div>
+          
         </div>
       )}
     </div>

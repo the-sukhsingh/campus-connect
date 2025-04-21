@@ -160,105 +160,7 @@ function ClassesManagementPage() {
     }
   };
 
-  // Handle viewing student requests for a specific class
-  const handleViewRequests = async (classId) => {
-    if (!user || !classId) return;
 
-    try {
-      setLoading(true);
-      setSelectedClass(classId);
-
-      const response = await fetch(`/api/user/teacher/classes/students?uid=${user?.uid}&classId=${classId}&status=pending`);
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch student requests');
-      }
-
-      const data = await response.json();
-
-      // Update to use the correct property name from the API response
-      setPendingRequests(data?.students || []);
-
-    } catch (error ) {
-      console.error('Error fetching student requests:', error);
-      setMessage({
-        type: 'error',
-        text: 'Failed to load student requests. Please try again later.'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle approving or rejecting a student request
-  const handleStudentAction = async (studentId, classId, action) => {
-    if (!user || !studentId || !classId) return;
-
-    try {
-      setIsSubmitting(true);
-
-      const response = await fetch('/api/user/teacher/classes/students', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firebaseUid: user?.uid,
-          classId,
-          studentId,
-          action
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Failed to ${action} student`);
-      }
-
-      // Update the pending requests list
-      setPendingRequests(prev => prev.filter(request => request._id !== studentId));
-
-      // Update the classes list to reflect the new student count
-      setClasses(prev => prev.map(c => {
-        if (c._id === classId) {
-          const updatedClass = { ...c };
-          if (action === 'approve') {
-            // Find the student in the pending list and move to approved
-            const approvedStudent = pendingRequests.find(s => s._id === studentId);
-            if (approvedStudent) {
-              updatedClass.students = [
-                ...updatedClass.students.filter(s => s._id !== studentId),
-                { ...approvedStudent, status: 'approved' }
-              ];
-            }
-          } else {
-            // Remove the student from the class
-            updatedClass.students = updatedClass?.students.filter(s => s._id !== studentId) || [];
-          }
-          return updatedClass;
-        }
-        return c;
-      }));
-
-      setMessage({
-        type: 'success',
-        text: `Student ${action === 'approve' ? 'approved' : 'rejected'} successfully!`
-      });
-
-      // Clear the message after 3 seconds
-      setTimeout(() => {
-        setMessage({ type: '', text: '' });
-      }, 3000);
-
-    } catch (error) {
-      setMessage({
-        type: 'error',
-        text: error.message || `Failed to ${action} student. Please try again.`
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -272,21 +174,9 @@ function ClassesManagementPage() {
 
   // Count students by status
   const getStudentCountsByStatus = (classItem) => {
-    const counts = {
-      approved: 0,
-      pending: 0,
-      total: classItem.students?.length || 0
-    };
+    const total = classItem?.students?.length || 0;
 
-    classItem.students?.forEach(student => {
-      if (student.status === 'approved') counts.approved++;
-      if (student.status === 'pending') counts.pending++;
-    });
-    classItem.studentRequests?.forEach(() => {
-      counts.pending++;
-    });
-
-    return counts;
+    return total
   };
 
   // Copy class ID to clipboard
@@ -618,9 +508,7 @@ function ClassesManagementPage() {
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Class
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Unique ID
-                      </th>
+                      
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Students
                       </th>
@@ -636,68 +524,37 @@ function ClassesManagementPage() {
                     {classes.map((classItem) => {
                       const studentCounts = getStudentCountsByStatus(classItem);
                       return (
-                        <tr key={classItem._id}>
+                        <tr key={classItem?._id}>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">
-                              {classItem.name}
+                              {classItem?.name}
                             </div>
                             <div className="text-sm text-gray-500">
-                              {`${classItem.course} | ${classItem.department} | ${classItem.semester}`}
+                              {`${classItem?.course} | ${classItem?.department} | ${classItem?.semester}`}
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center space-x-2">
-                              <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">
-                                {classItem.uniqueId}
-                              </span>
-                              <button
-                                onClick={() => copyClassId(classItem.uniqueId)}
-                                className="text-gray-500 hover:text-gray-700"
-                                title="Copy to clipboard"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                  <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z" />
-                                  <path d="M3 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2a1 1 0 110 2h-2v-2z" />
-                                </svg>
-                              </button>
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1">
-                              Share this ID with students to let them join
-                            </div>
-                          </td>
+                          
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex flex-col">
                               <span className="text-sm text-gray-900">
-                                {studentCounts.approved} approved
+                              {`${studentCounts} student`+(studentCounts > 1 ? 's' : '')}
                               </span>
-                              {studentCounts.pending > 0 && (
-                                <span className="text-xs px-2 py-0.5 mt-1 bg-yellow-100 text-yellow-800 rounded-full inline-block">
-                                  {studentCounts.pending} pending
-                                </span>
-                              )}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {formatDate(classItem.createdAt)}
+                            {formatDate(classItem?.createdAt)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div className="flex flex-col space-y-2">
-                              {studentCounts.pending > 0 && (
-                                <button
-                                  onClick={() => handleViewRequests(classItem._id)}
-                                  className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none"
-                                >
-                                  View Requests ({studentCounts.pending})
-                                </button>
-                              )}
+                              
                               <Link
-                                href={`/dashboard/faculty/classes/manage?classId=${classItem._id}`}
+                                href={`/dashboard/faculty/classes/manage?classId=${classItem?._id}`}
                                 className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none"
                               >
                                 Manage Faculty
                               </Link>
                               <Link
-                                href={`/dashboard/faculty/classes/manage-students?classId=${classItem._id}`}
+                                href={`/dashboard/faculty/classes/manage-students?classId=${classItem?._id}`}
                                 className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none"
                               >
                                 Manage Students

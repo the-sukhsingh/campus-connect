@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getUserByFirebaseUid } from '@/services/userService';
-import { getClassById, getStudentRequestsForClass, updateStudentStatus } from '@/services/classService';
+import { getClassById, updateStudentStatus } from '@/services/classService';
 
 // GET: Fetch pending student requests for a class
 export async function GET(request) {

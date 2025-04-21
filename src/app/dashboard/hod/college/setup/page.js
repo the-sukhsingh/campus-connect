@@ -6,16 +6,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-// Generate a random unique ID for the college
-const generateUniqueId = () => {
-  // Create a 6-character alphanumeric code
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let result = '';
-  for (let i = 0; i < 6; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-};
+
 
 function CollegeSetupPage() {
   const { user } = useAuth();
@@ -31,7 +22,6 @@ function CollegeSetupPage() {
     code: '',
     domain: '',
     departments: '',
-    uniqueId: generateUniqueId(),
   });
 
   // Check if HOD already has a college
@@ -72,14 +62,7 @@ function CollegeSetupPage() {
       [name]: value
     }));
   };
-
-  // Generate a new unique ID
-  const handleGenerateNewId = () => {
-    setFormData(prev => ({
-      ...prev,
-      uniqueId: generateUniqueId()
-    }));
-  };
+ 
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -122,7 +105,6 @@ function CollegeSetupPage() {
             code: formData.code,
             domain: formData.domain || '',  // Provide empty string if domain is not filled
             departments: departments,
-            uniqueId: formData.uniqueId,
             hodId: user?.uid,  // Include hodId field for the College model
             verificationMethods: {
               emailDomain: !!formData.domain,  // Enable domain verification only if domain is provided
@@ -270,32 +252,7 @@ function CollegeSetupPage() {
               />
             </div>
 
-            {/* Unique ID */}
-            <div>
-              <label htmlFor="uniqueId" className="block text-sm font-medium text-gray-700 mb-2">
-                Unique College ID
-              </label>
-              <div className="flex">
-                <input
-                  id="uniqueId"
-                  name="uniqueId"
-                  type="text"
-                  readOnly
-                  value={formData.uniqueId}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50"
-                />
-                <button
-                  type="button"
-                  onClick={handleGenerateNewId}
-                  className="ml-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none"
-                >
-                  Generate New
-                </button>
-              </div>
-              <p className="mt-2 text-sm text-gray-500">
-                This unique ID will be used by teachers to join your college. It is automatically generated for security.
-              </p>
-            </div>
+
           </div>
 
           <div className="mt-8">

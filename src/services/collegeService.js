@@ -2,7 +2,6 @@ import dbConnect from '@/lib/dbConnect';
 import College from '@/models/College';
 import UserModel from '@/models/User';
 import mongoose from 'mongoose';
-import { generateUniqueId } from '@/utils/helpers';
 
 export async function getAllColleges() {
   try {
@@ -115,7 +114,6 @@ export async function createCollege(collegeData, hodId) {
       domain: collegeData.domain,
       departments: collegeData.departments || [],
       hodId: collegeData.hodId || hodId, // Use provided hodId or fallback to the parameter
-      uniqueId: collegeData.uniqueId || generateUniqueId(),
       verificationMethods: collegeData.verificationMethods || {
         emailDomain: true,
         inviteCode: false,
@@ -223,20 +221,6 @@ export async function getCollegeVerificationMethods(id) {
   }
 }
 
-// Get college by unique ID (for teacher registration)
-export async function getCollegeByUniqueId(uniqueId) {
-  try {
-    await dbConnect();
-    const college = await College.findOne({ 
-      uniqueId, 
-      active: true 
-    });
-    return college;
-  } catch (error ) {
-    console.error('Error fetching college by unique ID:', error);
-    throw error;
-  }
-}
 
 // Register as a HOD (pending admin approval)
 export async function registerHOD(userId, collegeId, department) {
@@ -281,69 +265,6 @@ export async function registerHOD(userId, collegeId, department) {
   }
 }
 
-// Register a teacher with a college (pending HOD approval)
-export async function registerTeacher(teacherId, collegeUniqueId) {
-  try {
-    await dbConnect();
-    if (!mongoose.Types.ObjectId.isValid(teacherId)) {
-      throw new Error('Invalid teacher ID');
-    }
-    
-    // Find the college
-    const college = await getCollegeByUniqueId(collegeUniqueId);
-    if (!college) {
-      throw new Error('College not found. Invalid college ID.');
-    }
-    
-    // Find the teacher
-    const teacher = await UserModel.findById(teacherId);
-    if (!teacher) {
-      throw new Error('Teacher not found');
-    }
-    
-    // Check if teacher already registered with this college
-    if (teacher.college) {
-      const existingCollege = await College.findById(teacher.college);
-      if (existingCollege) {
-        if (existingCollege._id.toString() === college._id.toString()) {
-          if (teacher.collegeStatus === 'pending') {
-            throw new Error('Your request to join this college is already pending approval.');
-          } else if (teacher.collegeStatus === 'approved') {
-            throw new Error('You are already a member of this college.');
-          } else if (teacher.collegeStatus === 'rejected') {
-            throw new Error('Your request to join this college was rejected. Please contact the HOD.');
-          }
-        } else {
-          throw new Error('You are already associated with another college.');
-        }
-      }
-    }
-    
-    college.pendingApproval = college.pendingApproval || [];
-
-    // Add teacher to pending teachers list
-    if (!college.pendingApproval.includes(teacher._id)) {
-      college.pendingApproval.push(teacher._id);
-    }
-    
-    // Associate teacher with college as pending
-    teacher.college = college._id;
-    teacher.pendingApproval = true; // Requires HOD approval
-    teacher.collegeStatus = 'pending'; // Set status to pending
-
-    await college.save();
-    await teacher.save();
-    
-    return {
-      success: true,
-      message: 'Teacher registration submitted. Waiting for HOD approval.',
-      teacher
-    };
-  } catch (error ) {
-    console.error('Error registering teacher with college:', error);
-    throw error;
-  }
-}
 
 // Get all teachers by college (approved only)
 export async function getTeachersByCollege(collegeId) {
@@ -387,147 +308,6 @@ export async function getTeachersByCollege(collegeId) {
   }
 }
 
-// Get pending teacher requests for a college
-export async function getPendingTeachersByCollege(collegeId) {
-  try {
-    await dbConnect();
-    if (!mongoose.Types.ObjectId.isValid(collegeId)) {
-      throw new Error('Invalid college ID');
-    }
-
-
-    const college = await College.findById(collegeId)
-
-
-
-    if (!college) {
-      throw new Error('College not found');
-    }
-
-    const pendingTeachersIds = college.pendingApproval || [];
-      
-    let pendingTeachers = [];
-
-    for (const teacherId of pendingTeachersIds) {
-      const teacher = await UserModel.findById(teacherId)
-        .select('displayName email department createdAt')
-        .lean();
-      if (teacher) {
-        pendingTeachers.push(teacher);
-      }
-    }
-
-    
-    return pendingTeachers;
-  } catch (error ) {
-    console.error('Error fetching pending teachers:', error);
-    throw error;
-  }
-}
-
-// Update teacher's status in a college (approve or reject)
-export async function updateTeacherStatus(
-  collegeId,
-  teacherId,
-  status,
-  department,
-  isLibrarian
-) {
-  try {
-    await dbConnect();
-    if (!mongoose.Types.ObjectId.isValid(collegeId) || !mongoose.Types.ObjectId.isValid(teacherId)) {
-      throw new Error('Invalid IDs');
-    }
-    
-    // Verify college exists
-    const college = await College.findById(collegeId);
-    if (!college) {
-      throw new Error('College not found');
-    }
-    
-    // Find the teacher
-    const teacher = await UserModel.findById(teacherId);
-    if (!teacher) {
-      throw new Error('Teacher not found');
-    }
-    
-    // Check if teacher is associated with this college
-    if (!teacher.college || teacher.college.toString() !== collegeId) {
-      throw new Error('Teacher is not associated with this college');
-    }
-    
-    // Update teacher status
-    if (status === 'approve') {
-      // Validate department if approving
-      if (department) {
-        if (college.departments && college.departments.length > 0 && !college.departments.includes(department)) {
-          throw new Error('Invalid department for this college');
-        }
-        teacher.department = department; // Set the department
-      }
-      
-      teacher.pendingApproval = false; // Remove pending approval status
-      teacher.collegeStatus = 'approved'; // Set status to approved
-      teacher.isVerified = true; // Mark as verified
-      
-      // Set role as librarian if requested
-      if (isLibrarian === true) {
-        teacher.role = 'librarian';
-      } else {
-        teacher.role = 'faculty';
-      }
-      
-      college.verifiedTeachers = college.verifiedTeachers || [];
-      if (!college.verifiedTeachers.includes(teacher._id)) {
-        college.verifiedTeachers.push(teacher._id); // Add to verified teachers
-      }
-      // Remove from pending teachers list
-      college.pendingApproval = college.pendingApproval.filter((id) => id.toString() !== teacherId);
-    } else if (status === 'reject') {
-      teacher.pendingApproval = false; // Remove pending approval status
-      teacher.collegeStatus = 'rejected'; // Set status to rejected
-      teacher.college = null; // Remove college association
-      // Remove from pending teachers list
-      college.pendingApproval = college.pendingApproval.filter((id) => id.toString() !== teacherId);
-    }
-    
-    await college.save();
-    await teacher.save();
-    
-    return { 
-      success: true, 
-      teacherId, 
-      status, 
-      department: teacher.department,
-      role: teacher.role 
-    };
-  } catch (error ) {
-    console.error('Error updating teacher status:', error);
-    throw error;
-  }
-}
-
-// Get pending teacher approvals for a HOD
-export async function getPendingTeachersForHOD(collegeId) {
-  try {
-    await dbConnect();
-    
-    if (!mongoose.Types.ObjectId.isValid(collegeId)) {
-      throw new Error('Invalid college ID');
-    }
-    
-    const pendingTeachers = await UserModel.find({
-      college: new mongoose.Types.ObjectId(collegeId),
-      role: 'teacher',
-      pendingApproval: true
-    }).select('displayName email department createdAt');
-    
-    return pendingTeachers;
-  } catch (error ) {
-    console.error('Error fetching pending teachers:', error);
-    throw error;
-  }
-}
 
 export async function getCollegeByUser(userId) {
   try {

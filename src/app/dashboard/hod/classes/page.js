@@ -91,8 +91,7 @@ function ClassesManagePage() {
         classItem.semester.toLowerCase().includes(query) ||
         classItem.department.toLowerCase().includes(query) ||
         classItem.teacher.displayName.toLowerCase().includes(query) ||
-        classItem.teacher.email.toLowerCase().includes(query) ||
-        classItem.uniqueId.toLowerCase().includes(query)
+        classItem.teacher.email.toLowerCase().includes(query)
       );
     }
     
@@ -232,9 +231,7 @@ function ClassesManagePage() {
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Teacher
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Unique ID
-                      </th>
+                      
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Students
                       </th>
@@ -271,11 +268,7 @@ function ClassesManagePage() {
                             {classItem.teacher?.email}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap font-mono">
-                          <div className="text-xs text-gray-900 bg-gray-100 px-2 py-1 rounded">
-                            {classItem.uniqueId}
-                          </div>
-                        </td>
+                        
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           <div className="text-sm text-gray-900">
                             {

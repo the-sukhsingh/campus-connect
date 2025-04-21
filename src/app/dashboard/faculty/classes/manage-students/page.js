@@ -28,6 +28,23 @@ function ManageStudentsPage() {
     newBatch: '',
   });
 
+  // Add state for Add Student functionality
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newStudentData, setNewStudentData] = useState({
+    email: '',
+    displayName: '',
+    rollNo: '',
+    studentId: '',
+  });
+  const [validationErrors, setValidationErrors] = useState({});
+  
+  // Add state for bulk student addition
+  const [addMode, setAddMode] = useState('single'); // 'single' or 'bulk'
+  const [bulkStudents, setBulkStudents] = useState([
+    { email: '', displayName: '', rollNo: '', studentId: '' }
+  ]);
+  const [bulkValidationErrors, setBulkValidationErrors] = useState([{}]);
+
   useEffect(() => {
     if (!user || !classId) return;
 
@@ -274,6 +291,268 @@ function ManageStudentsPage() {
     }
   };
 
+  // Handle opening the add student modal
+  const openAddStudentModal = () => {
+    setNewStudentData({
+      email: '',
+      displayName: '',
+      rollNo: '',
+      studentId: ''
+    });
+    setValidationErrors({});
+    setShowAddModal(true);
+  };
+
+  // Handle input change for new student form
+  const handleStudentInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewStudentData({
+      ...newStudentData,
+      [name]: value
+    });
+    
+    // Clear validation error when field is edited
+    if (validationErrors[name]) {
+      setValidationErrors({
+        ...validationErrors,
+        [name]: ''
+      });
+    }
+  };
+
+  // Validate the new student form
+  const validateStudentForm = () => {
+    const errors = {};
+    
+    if (!newStudentData.email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(newStudentData.email)) {
+      errors.email = 'Please enter a valid email address';
+    }
+    
+    if (!newStudentData.displayName.trim()) {
+      errors.displayName = 'Name is required';
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Handle creating a new student account
+  const handleCreateStudent = async (e) => {
+    e.preventDefault();
+    
+    if (!validateStudentForm()) {
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      const response = await fetch('/api/user/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          creatorUid: user?.uid,
+          creatorRole: 'faculty',
+          userData: {
+            email: newStudentData.email.toLowerCase(),
+            displayName: newStudentData.displayName,
+            role: 'student',
+            rollNo: newStudentData.rollNo || '',
+            classId: classId,
+            studentId: newStudentData.studentId || '',
+            // If class has college info, add it to the student
+            collegeId: classData?.college?._id || undefined,
+          }
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create student account');
+      }
+      
+      const data = await response.json();
+      
+      // Refresh the student list with newly created student
+      if (data.user) {
+        // Need to refresh class data to get updated student list with correct format
+        const refreshResponse = await fetch(`/api/user/teacher/classes/${classId}?uid=${user?.uid}`);
+        const refreshData = await refreshResponse.json();
+        
+        if (refreshResponse.ok) {
+          setClassData(refreshData.class);
+          
+          if (refreshData.class && refreshData.class.students) {
+            const approved = refreshData.class.students.filter((s) => s.status === 'approved');
+            const pending = refreshData.class.students.filter((s) => s.status === 'pending');
+
+            setApprovedStudents(approved);
+            setPendingStudents(pending);
+          }
+        }
+      }
+      
+      // Close the modal and reset form
+      setShowAddModal(false);
+      setNewStudentData({
+        email: '',
+        displayName: '',
+        rollNo: '',
+      });
+      
+      // Show success message
+      setMessage({
+        type: 'success',
+        text: `Student account created successfully! An email with login instructions has been sent to ${newStudentData.email}.`
+      });
+      
+      // Clear the message after 5 seconds
+      setTimeout(() => {
+        setMessage({ type: '', text: '' });
+      }, 5000);
+      
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error.message || 'Error creating student account. Please try again.'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle bulk student input change
+  const handleBulkStudentChange = (index, field, value) => {
+    const updatedStudents = [...bulkStudents];
+    updatedStudents[index][field] = value;
+    setBulkStudents(updatedStudents);
+
+    // Clear validation error when field is edited
+    if (bulkValidationErrors[index]?.[field]) {
+      const updatedErrors = [...bulkValidationErrors];
+      updatedErrors[index][field] = '';
+      setBulkValidationErrors(updatedErrors);
+    }
+  };
+
+  // Add a new row for bulk student input
+  const addBulkStudentRow = () => {
+    setBulkStudents([...bulkStudents, { email: '', displayName: '', rollNo: '', studentId: '' }]);
+    setBulkValidationErrors([...bulkValidationErrors, {}]);
+  };
+
+  // Remove a row from bulk student input
+  const removeBulkStudentRow = (index) => {
+    const updatedStudents = bulkStudents.filter((_, i) => i !== index);
+    const updatedErrors = bulkValidationErrors.filter((_, i) => i !== index);
+    setBulkStudents(updatedStudents);
+    setBulkValidationErrors(updatedErrors);
+  };
+
+  // Validate bulk student form
+  const validateBulkStudentForm = () => {
+    const errors = bulkStudents.map((student) => {
+      const studentErrors = {};
+      if (!student.email.trim()) {
+        studentErrors.email = 'Email is required';
+      } else if (!/\S+@\S+\.\S+/.test(student.email)) {
+        studentErrors.email = 'Please enter a valid email address';
+      }
+      if (!student.displayName.trim()) {
+        studentErrors.displayName = 'Name is required';
+      }
+      return studentErrors;
+    });
+
+    setBulkValidationErrors(errors);
+    return errors.every((error) => Object.keys(error).length === 0);
+  };
+
+  // Handle creating bulk student accounts
+  const handleCreateBulkStudents = async (e) => {
+    e.preventDefault();
+
+    if (!validateBulkStudentForm()) {
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const response = await fetch('/api/user/create-bulk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          creatorUid: user?.uid,
+          creatorRole: 'faculty',
+          students: bulkStudents.map((student) => ({
+            email: student.email.toLowerCase(),
+            displayName: student.displayName,
+            role: 'student',
+            rollNo: student.rollNo || '',
+            studentId: student.studentId || '',
+            classId: classId,
+            ...(classData?.collegeId && { collegeId: classData.collegeId }),
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create student accounts');
+      }
+
+      const data = await response.json();
+
+      // Refresh the student list with newly created students
+      if (data.users) {
+        const refreshResponse = await fetch(`/api/user/teacher/classes/${classId}?uid=${user?.uid}`);
+        const refreshData = await refreshResponse.json();
+
+        if (refreshResponse.ok) {
+          setClassData(refreshData.class);
+
+          if (refreshData.class && refreshData.class.students) {
+            const approved = refreshData.class.students.filter((s) => s.status === 'approved');
+            const pending = refreshData.class.students.filter((s) => s.status === 'pending');
+
+            setApprovedStudents(approved);
+            setPendingStudents(pending);
+          }
+        }
+      }
+
+      // Close the modal and reset form
+      setShowAddModal(false);
+      setBulkStudents([{ email: '', displayName: '', rollNo: '', studentId: '' }]);
+      setBulkValidationErrors([{}]);
+
+      // Show success message
+      setMessage({
+        type: 'success',
+        text: `Bulk student accounts created successfully! Emails with login instructions have been sent.`,
+      });
+
+      // Clear the message after 5 seconds
+      setTimeout(() => {
+        setMessage({ type: '', text: '' });
+      }, 5000);
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error.message || 'Error creating bulk student accounts. Please try again.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="p-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
@@ -402,6 +681,12 @@ function ManageStudentsPage() {
                     {showUpgradeForm ? 'Cancel' : `Upgrade ${selectedStudents.length} Student${selectedStudents.length !== 1 ? 's' : ''}`}
                   </button>
                 )}
+                <button
+                  onClick={openAddStudentModal}
+                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none"
+                >
+                  Add Student
+                </button>
               </div>
             </div>
 
@@ -567,6 +852,249 @@ function ManageStudentsPage() {
                   </tbody>
                 </table>
               </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Add Student Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-3xl">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-medium text-gray-900">Add New Student</h3>
+              
+              {/* Toggle between single and bulk add */}
+              <div className="mt-3 flex border border-gray-200 rounded-md overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setAddMode('single')}
+                  className={`flex-1 py-2 px-4 text-sm font-medium ${
+                    addMode === 'single' 
+                      ? 'bg-indigo-600 text-white' 
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Add Single Student
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAddMode('bulk')}
+                  className={`flex-1 py-2 px-4 text-sm font-medium ${
+                    addMode === 'bulk' 
+                      ? 'bg-indigo-600 text-white' 
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Bulk Add Students
+                </button>
+              </div>
+            </div>
+            
+            {/* Single Student Form */}
+            {addMode === 'single' && (
+              <form onSubmit={handleCreateStudent} className="px-6 py-4 space-y-4">
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={newStudentData.email}
+                    onChange={handleStudentInputChange}
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+                      validationErrors.email ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="e.g., student@example.com"
+                  />
+                  {validationErrors.email && (
+                    <p className="mt-1 text-sm text-red-500">{validationErrors.email}</p>
+                  )}
+                </div>
+                <div>
+                  <label htmlFor="displayName" className="block text-sm font-medium text-gray-700">
+                    Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="displayName"
+                    name="displayName"
+                    value={newStudentData.displayName}
+                    onChange={handleStudentInputChange}
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+                      validationErrors.displayName ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="e.g., John Doe"
+                  />
+                  {validationErrors.displayName && (
+                    <p className="mt-1 text-sm text-red-500">{validationErrors.displayName}</p>
+                  )}
+                </div>
+                <div>
+                  <label htmlFor="rollNo" className="block text-sm font-medium text-gray-700">
+                    Roll No *
+                  </label>
+                  <input
+                    type="text"
+                    id="rollNo"
+                    name="rollNo"
+                    value={newStudentData.rollNo}
+                    onChange={handleStudentInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="e.g., 12345"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="studentId" className="block text-sm font-medium text-gray-700">
+                    Student ID (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    id="studentId"
+                    name="studentId"
+                    value={newStudentData.studentId}
+                    onChange={handleStudentInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="e.g., 12345"
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className={`px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none ${
+                      isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    {isSubmitting ? 'Creating...' : 'Add Student'}
+                  </button>
+                </div>
+              </form>
+            )}
+            
+            {/* Bulk Students Form */}
+            {addMode === 'bulk' && (
+              <form onSubmit={handleCreateBulkStudents} className="px-6 py-4 space-y-4">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name*</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email*</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roll No*</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
+                        <th className="px-2 py-3 w-10"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {bulkStudents.map((student, index) => (
+                        <tr key={index}>
+                          <td className="px-2 py-2">
+                            <input
+                              type="text"
+                              value={student.displayName}
+                              onChange={(e) => handleBulkStudentChange(index, 'displayName', e.target.value)}
+                              className={`w-full px-2 py-1 border rounded-md text-sm ${
+                                bulkValidationErrors[index]?.displayName ? 'border-red-500' : 'border-gray-300'
+                              }`}
+                              placeholder="Full Name"
+                            />
+                            {bulkValidationErrors[index]?.displayName && (
+                              <p className="mt-1 text-xs text-red-500">{bulkValidationErrors[index].displayName}</p>
+                            )}
+                          </td>
+                          <td className="px-2 py-2">
+                            <input
+                              type="email"
+                              value={student.email}
+                              onChange={(e) => handleBulkStudentChange(index, 'email', e.target.value)}
+                              className={`w-full px-2 py-1 border rounded-md text-sm ${
+                                bulkValidationErrors[index]?.email ? 'border-red-500' : 'border-gray-300'
+                              }`}
+                              placeholder="Email"
+                            />
+                            {bulkValidationErrors[index]?.email && (
+                              <p className="mt-1 text-xs text-red-500">{bulkValidationErrors[index].email}</p>
+                            )}
+                          </td>
+                          <td className="px-2 py-2">
+                            <input
+                              type="text"
+                              value={student.rollNo}
+                              onChange={(e) => handleBulkStudentChange(index, 'rollNo', e.target.value)}
+                              className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
+                              placeholder="Roll No"
+                            />
+                          </td>
+                          <td className="px-2 py-2">
+                            <input
+                              type="text"
+                              value={student.studentId}
+                              onChange={(e) => handleBulkStudentChange(index, 'studentId', e.target.value)}
+                              className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
+                              placeholder="Optional"
+                            />
+                          </td>
+                          <td className="px-2 py-2">
+                            {bulkStudents.length > 1 && (
+                              <button 
+                                type="button"
+                                onClick={() => removeBulkStudentRow(index)}
+                                className="text-red-600 hover:text-red-900"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                  <button
+                    type="button"
+                    onClick={addBulkStudentRow}
+                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                    </svg>
+                    Add Row
+                  </button>
+                  
+                  <div className="flex space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddModal(false)}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className={`px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none ${
+                        isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      {isSubmitting ? 'Creating...' : 'Add Students'}
+                    </button>
+                  </div>
+                </div>
+              </form>
             )}
           </div>
         </div>

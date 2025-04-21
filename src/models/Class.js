@@ -68,12 +68,7 @@ const ClassSchema = new Schema({
     required: false,
     trim: true
   },
-  uniqueId: {
-    type: String,
-    required: true,
-    unique: true,
-    default: () => Math.random().toString(36).substring(2, 8).toUpperCase() // Generate random unique ID
-  },
+
   college: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'College',
@@ -102,9 +97,5 @@ const ClassSchema = new Schema({
   timestamps: true
 });
 
-// Create compound indexes for better query performance
-// ClassSchema.index({ college: 1, department: 1 });
-// ClassSchema.index({ teacher: 1 });
-// ClassSchema.index({ uniqueId: 1 });
 
 export default mongoose.models.Class || mongoose.model('Class', ClassSchema);
