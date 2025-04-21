@@ -623,7 +623,7 @@ export default function RoomDetailPage() {
                         Booking Process
                       </h4>
                       <p className="mt-1 text-xs text-yellow-700">
-                        Your booking request will need to be approved by an administrator before it's confirmed. You'll receive a notification when your request is processed.
+                        Your booking request will need to be approved by an administrator before it&apos;s confirmed. You&apos;ll receive a notification when your request is processed.
                       </p>
                     </div>
                     

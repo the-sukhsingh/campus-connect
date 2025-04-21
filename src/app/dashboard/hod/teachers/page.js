@@ -626,7 +626,7 @@ function TeachersManagementPage() {
                     </div>
                     <div className="ml-3">
                       <p className="text-sm text-yellow-700">
-                        A temporary password will be generated and sent to the faculty member's email address.
+                        A temporary password will be generated and sent to the faculty member&apos;s email address.
                       </p>
                     </div>
                   </div>

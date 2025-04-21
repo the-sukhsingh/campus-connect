@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import withRoleProtection from '@/utils/withRoleProtection';
+import {withRoleProtection} from '@/utils/withRoleProtection';
 
 const EditRoomPage = ({ params }) => {
   const { id: roomId } = params;
