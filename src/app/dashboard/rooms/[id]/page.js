@@ -783,7 +783,7 @@ export default function RoomDetailPage() {
                     Approval Required
                   </h4>
                   <p className="mt-1 text-xs text-yellow-700">
-                    Your booking request will need approval before it's confirmed. You'll receive a notification when processed.
+                    Your booking request will need approval before it&apos;s confirmed. You&apos;ll receive a notification when processed.
                   </p>
                 </div>
 
