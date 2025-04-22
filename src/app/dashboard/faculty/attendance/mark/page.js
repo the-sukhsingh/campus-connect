@@ -122,7 +122,7 @@ function MarkAttendancePage() {
     try {
       setLoadingPrevious(true);
       const response = await fetch(
-        `/api/attendance?action=get-previous-attendance&uid=${user?.uid}&classId=${classId}&subject=${encodeURIComponent(selectedSubject)}&limit=5`
+        `/api/attendance?action=get-previous-attendance&uid=${user?.uid}&classId=${classId}&subject=${encodeURIComponent(selectedSubject)}`
       );
       
       if (!response.ok) {
@@ -227,6 +227,9 @@ function MarkAttendancePage() {
       const recordsToSubmit = attendanceRecords.length > 0 ? 
         attendanceRecords : 
         getDefaultAttendanceRecords();
+
+      // console.log("Records to submit: ", recordsToSubmit);
+      // return;
       
       const response = await fetch('/api/attendance', {
         method: 'POST',
@@ -274,6 +277,7 @@ function MarkAttendancePage() {
 
   // Update student status
   const updateStudentStatus = (studentId, status) => {
+    console.log("Updating status for student: ", studentId, " to ", status);
     if (isLocked || recordExists) {
       setMessage({
         type: 'error',
@@ -288,6 +292,9 @@ function MarkAttendancePage() {
         record => record?.student?._id === studentId || record.student === studentId
       );
       
+      console.log("StudentRecordIndex",studentRecordIndex)
+
+
       // Create a copy of the current records
       const updatedRecords = [...prevRecords];
       
@@ -304,6 +311,7 @@ function MarkAttendancePage() {
           status
         });
       }
+      console.log("Updated Records: ", updatedRecords);
       
       return updatedRecords;
     });
@@ -502,10 +510,10 @@ function MarkAttendancePage() {
                               <div className="flex flex-wrap gap-2">
                                 <button
                                   type="button"
-                                  onClick={() => updateStudentStatus(student._id, 'present')}
+                                  onClick={() => updateStudentStatus(student.student._id, 'present')}
                                   disabled={isLocked || recordExists}
                                   className={`inline-flex items-center px-3 py-1.5 border rounded-md text-sm font-medium focus:outline-none ${
-                                    getStudentStatus(student._id) === 'present'
+                                    getStudentStatus(student.student._id) === 'present'
                                       ? 'bg-green-100 text-green-800 border-green-300'
                                       : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                                   } ${(isLocked || recordExists) ? 'opacity-60 cursor-not-allowed' : ''}`}
@@ -514,10 +522,10 @@ function MarkAttendancePage() {
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => updateStudentStatus(student._id, 'absent')}
+                                  onClick={() => updateStudentStatus(student.student._id, 'absent')}
                                   disabled={isLocked || recordExists}
                                   className={`inline-flex items-center px-3 py-1.5 border rounded-md text-sm font-medium focus:outline-none ${
-                                    getStudentStatus(student._id) === 'absent'
+                                    getStudentStatus(student.student._id) === 'absent'
                                       ? 'bg-red-100 text-red-800 border-red-300'
                                       : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                                   } ${(isLocked || recordExists) ? 'opacity-60 cursor-not-allowed' : ''}`}
@@ -526,10 +534,10 @@ function MarkAttendancePage() {
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => updateStudentStatus(student._id, 'late')}
+                                  onClick={() => updateStudentStatus(student.student._id, 'late')}
                                   disabled={isLocked || recordExists}
                                   className={`inline-flex items-center px-3 py-1.5 border rounded-md text-sm font-medium focus:outline-none ${
-                                    getStudentStatus(student._id) === 'late'
+                                    getStudentStatus(student.student._id) === 'late'
                                       ? 'bg-yellow-100 text-yellow-800 border-yellow-300'
                                       : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                                   } ${(isLocked || recordExists) ? 'opacity-60 cursor-not-allowed' : ''}`}
@@ -544,6 +552,48 @@ function MarkAttendancePage() {
                     </table>
                   </div>
                 </>
+              )}
+
+              {/* Attendance Summary Table */}
+              {students.length > 0 && selectedSubject && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">Attendance Summary</h3>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full bg-white border border-gray-200">
+                      <thead>
+                        <tr>
+                          <th className="py-2 px-4 border-b text-center bg-gray-50">Total Students</th>
+                          <th className="py-2 px-4 border-b text-center bg-green-50 text-green-800">Present</th>
+                          <th className="py-2 px-4 border-b text-center bg-red-50 text-red-800">Absent</th>
+                          <th className="py-2 px-4 border-b text-center bg-yellow-50 text-yellow-800">Late</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="py-3 px-4 border-b text-center font-medium">{students.length}</td>
+                          <td className="py-3 px-4 border-b text-center font-medium text-green-700">
+                            {attendanceRecords.filter(record => record.status === 'present').length}
+                            <span className="text-sm text-gray-500 ml-1">
+                              ({Math.round((attendanceRecords.filter(record => record.status === 'present').length / students.length) * 100)}%)
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 border-b text-center font-medium text-red-700">
+                            {attendanceRecords.filter(record => record.status === 'absent').length}
+                            <span className="text-sm text-gray-500 ml-1">
+                              ({Math.round((attendanceRecords.filter(record => record.status === 'absent').length / students.length) * 100)}%)
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 border-b text-center font-medium text-yellow-700">
+                            {attendanceRecords.filter(record => record.status === 'late').length}
+                            <span className="text-sm text-gray-500 ml-1">
+                              ({Math.round((attendanceRecords.filter(record => record.status === 'late').length / students.length) * 100)}%)
+                            </span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               )}
 
               <div className="mt-6 flex justify-between">
@@ -595,7 +645,7 @@ function MarkAttendancePage() {
             >
               <path
                 fillRule="evenodd"
-                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a 1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
                 clipRule="evenodd"
               />
             </svg>
@@ -609,69 +659,110 @@ function MarkAttendancePage() {
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
               </div>
             ) : previousAttendance.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {previousAttendance.map((record) => {
-                  const presentCount = getAttendanceStatusCount(record.attendanceRecords, 'present');
-                  const absentCount = getAttendanceStatusCount(record.attendanceRecords, 'absent');
-                  const lateCount = getAttendanceStatusCount(record.attendanceRecords, 'late');
-                  const totalStudents = record.attendanceRecords.length;
-                  const attendanceRate = Math.round(((presentCount + lateCount) / totalStudents) * 100);
-                  
-                  return (
-                    <div 
-                      key={record._id}
-                      className="border rounded-lg overflow-hidden transition-transform hover:shadow-lg"
-                    >
-                      <div className="bg-gray-50 p-4 border-b">
-                        <h3 className="font-semibold">{formatDate(record.date)}</h3>
-                        <p className="text-sm text-gray-600">{record.subject}</p>
-                      </div>
-                      <div className="p-4">
-                        <div className="mb-4">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm font-medium text-gray-700">Attendance Rate: {attendanceRate}%</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2.5">
-                            <div 
-                              className={`h-2.5 rounded-full ${
-                                attendanceRate > 75 
-                                  ? 'bg-green-600' 
-                                  : attendanceRate > 50 
-                                    ? 'bg-yellow-400' 
-                                    : 'bg-red-600'
-                              }`} 
-                              style={{ width: `${attendanceRate}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-3 gap-2 text-center">
-                          <div className="bg-green-50 p-2 rounded">
-                            <p className="text-lg font-bold text-green-700">{presentCount}</p>
-                            <p className="text-xs text-green-600">Present</p>
-                          </div>
-                          <div className="bg-yellow-50 p-2 rounded">
-                            <p className="text-lg font-bold text-yellow-700">{lateCount}</p>
-                            <p className="text-xs text-yellow-600">Late</p>
-                          </div>
-                          <div className="bg-red-50 p-2 rounded">
-                            <p className="text-lg font-bold text-red-700">{absentCount}</p>
-                            <p className="text-xs text-red-600">Absent</p>
-                          </div>
-                        </div>
-                        
-                        {/* Always show lock indicator for previous records */}
-                        <div className="mt-4 flex items-center text-xs text-orange-700">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                          </svg>
-                          Locked Record
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="mb-6">
+              {/* Status Legend */}
+              <div className="text-sm mb-4 flex flex-wrap gap-4">
+                <span className="inline-flex items-center">
+                  <span className="h-3 w-3 rounded-full bg-green-500 mr-1"></span>
+                  Present
+                </span>
+                <span className="inline-flex items-center">
+                  <span className="h-3 w-3 rounded-full bg-red-500 mr-1"></span>
+                  Absent
+                </span>
+                <span className="inline-flex items-center">
+                  <span className="h-3 w-3 rounded-full bg-yellow-500 mr-1"></span>
+                  Late
+                </span>
               </div>
+            
+              {/* Attendance Table */}
+              <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+                <table className="min-w-full text-sm text-left">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 border-r text-xs font-semibold uppercase tracking-wider text-gray-600">
+                        Student Name
+                      </th>
+                      <th className="px-4 py-3 border-r text-xs font-semibold uppercase tracking-wider text-gray-600">
+                        Roll No.
+                      </th>
+                      {previousAttendance.map((record) => (
+                        <th
+                          key={record._id}
+                          className="px-2 py-3 border-r text-center text-xs font-semibold uppercase tracking-wider text-gray-600"
+                        >
+                          <div className="whitespace-nowrap">
+                            {new Date(record.date).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </div>
+                          <div className="text-xxs mt-1 font-normal">{record.subject}</div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-100">
+                    {students.map((student) => (
+                      <tr key={student._id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 border-r font-medium text-gray-900 whitespace-nowrap">
+                          {student.student.displayName || 'Unnamed Student'}
+                        </td>
+                        <td className="px-4 py-3 border-r text-gray-600 whitespace-nowrap">
+                          {student.student.rollNo}
+                        </td>
+                        {previousAttendance.map((record) => {
+                          const studentRecord = record.attendanceRecords.find(
+                            (rec) => rec.student._id === student.student._id
+                          );
+            
+                          const status = studentRecord ? studentRecord.status : 'absent';
+            
+                          let statusColor, statusSymbol;
+                          switch (status) {
+                            case 'present':
+                              statusColor = 'bg-green-500';
+                              statusSymbol = 'P';
+                              break;
+                            case 'absent':
+                              statusColor = 'bg-red-500';
+                              statusSymbol = 'A';
+                              break;
+                            case 'late':
+                              statusColor = 'bg-yellow-500';
+                              statusSymbol = 'L';
+                              break;
+                            default:
+                              statusColor = 'bg-gray-300';
+                              statusSymbol = '?';
+                          }
+            
+                          return (
+                            <td
+                              key={record._id + student._id}
+                              className="p-3 border-r text-center"
+                            >
+                              <span
+                                className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-white text-xs font-semibold ${statusColor}`}
+                              >
+                                {statusSymbol}
+                              </span>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            
+              {/* Footer Info */}
+              <div className="mt-4 text-sm text-gray-500">
+                Showing attendance records for the last {previousAttendance.length} days for <span className="font-medium">{selectedSubject}</span>.
+              </div>
+            </div>
+            
             ) : (
               <div className="text-center py-8 text-gray-500">
                 No previous attendance records found for this subject.

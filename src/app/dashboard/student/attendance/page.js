@@ -52,6 +52,7 @@ function StudentAttendancePage() {
 
         const data = await response.json();
         setAttendanceRecords(data.attendanceRecords || []);
+        console.log("Attendance Records:", data.attendanceRecords);
 
       } catch (error ) {
         console.error('Error fetching attendance records:', error);
@@ -91,12 +92,7 @@ function StudentAttendancePage() {
             View and track your attendance records
           </p>
         </div>
-        <Link
-          href="/dashboard/student"
-          className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded transition-colors"
-        >
-          Back to Dashboard
-        </Link>
+        
       </div>
 
       {error && (

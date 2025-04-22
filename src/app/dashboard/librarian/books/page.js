@@ -247,12 +247,7 @@ function BooksManagementPage() {
           <h1 className="text-2xl font-bold">Books Management</h1>
           <p className="text-gray-600 mt-1">Add, update, or delete books in the library</p>
         </div>
-        <Link
-          href="/dashboard/librarian"
-          className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded transition-colors"
-        >
-          Back to Dashboard
-        </Link>
+        
       </div>
 
       {error && (

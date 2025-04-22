@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { 
   createAnnouncement, 
   getAnnouncementsByFaculty,
-  getAnnouncementsByCollege, 
+  getAnnouncementsByCollege,
+  getAnnouncementsByClass, 
   getAllAnnouncements, 
   getAnnouncementById,
   deleteAnnouncement, 
@@ -10,6 +11,7 @@ import {
   cleanupExpiredAnnouncements
 } from '@/services/announcementService';
 import { getUserByFirebaseUid } from '@/services/userService';
+import { getClassById } from '@/services/classService';
 
 export async function GET(request) {
   try {
@@ -19,13 +21,34 @@ export async function GET(request) {
     const firebaseUid = searchParams.get('uid');
     const announcementId = searchParams.get('id');
     const collegeId = searchParams.get('collegeId');
+    const classId = searchParams.get('classId');
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')) : 10;
     
     // Automatically cleanup expired announcements
     await cleanupExpiredAnnouncements();
     
-    // For all announcements, we don't need to check user
+    // For all announcements, we may still need to check user for college filtering
     if (action === 'get-all') {
+      // If firebaseUid is provided, filter by the user's college and classes
+      if (firebaseUid) {
+        const dbUser = await getUserByFirebaseUid(firebaseUid);
+        if (!dbUser) {
+          return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        }
+
+        // Get announcements filtered by user's role and assigned classes
+        const announcements = await getAllAnnouncements(
+          limit, 
+          dbUser.college ? dbUser.college.toString() : null, 
+          dbUser._id.toString(),
+          dbUser.role
+        );
+        
+        return NextResponse.json({ announcements });
+      }
+      
+      // If no user ID, return without user-specific filtering
+      // This fallback is typically used for non-authenticated pages
       const announcements = await getAllAnnouncements(limit);
       return NextResponse.json({ announcements });
     }
@@ -54,6 +77,11 @@ export async function GET(request) {
       const announcements = await getAnnouncementsByCollege(collegeIdToUse);
       return NextResponse.json({ announcements });
     }
+    else if (action === 'get-class-announcements' && classId) {
+      // Get announcements for a specific class
+      const announcements = await getAnnouncementsByClass(classId);
+      return NextResponse.json({ announcements });
+    }
     else if (action === 'get-by-id' && announcementId) {
       // Get a specific announcement by ID
       const announcement = await getAnnouncementById(announcementId);
@@ -75,7 +103,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { firebaseUid, action, announcement, announcementId } = body;
+    const { firebaseUid, action, announcement, announcementId, classId } = body;
     
     if (!firebaseUid) {
       return NextResponse.json(
@@ -105,6 +133,31 @@ export async function POST(request) {
           { status: 400 }
         );
       }
+
+      // Check if this is a class-specific announcement
+      let targetClassId = null;
+      if (classId) {
+        // Verify that the user is assigned to this class
+        const classObj = await getClassById(classId);
+        if (!classObj) {
+          return NextResponse.json({ error: 'Class not found' }, { status: 404 });
+        }
+
+        // Check if user is the class teacher or has a faculty assignment
+        const isTeacher = classObj.teacher.toString() === dbUser._id.toString();
+        const isAssigned = classObj.facultyAssignments?.some(
+          assignment => assignment.faculty.toString() === dbUser._id.toString()
+        );
+
+        if (!isTeacher && !isAssigned && !isHod) {
+          return NextResponse.json(
+            { error: 'You are not authorized to create announcements for this class' }, 
+            { status: 403 }
+          );
+        }
+
+        targetClassId = classId;
+      }
       
       // Create new announcement
       const newAnnouncement = await createAnnouncement({
@@ -112,6 +165,7 @@ export async function POST(request) {
         content: announcement.content,
         createdBy: dbUser._id.toString(),
         collegeId: dbUser.college || null,
+        classId: targetClassId,
         expiryDate: announcement.expiryDate || undefined
       });
       
@@ -135,6 +189,7 @@ export async function POST(request) {
         {
           title: announcement.title,
           content: announcement.content,
+          classId: announcement.classId, // Allow updating the class ID
           expiryDate: announcement.expiryDate
         },
         isHod

@@ -9,6 +9,7 @@ import {
   approveBookReturn
 } from '@/services/bookBorrowingService';
 import { getUserByFirebaseUid } from '@/services/userService';
+import BookBorrowing from '@/models/BookBorrowing';
 
 export async function GET(request) {
   try {
@@ -71,6 +72,19 @@ export async function GET(request) {
       // Get all borrowings for librarians
       const query = status ? { status } : {};
       const result = await getBorrowings(query, page, limit);
+      return NextResponse.json(result);
+    }
+    else if (action === 'count-current' && dbUser){
+      // Count current borrowings for the user
+      const total = await BookBorrowing.countDocuments({
+        student: dbUser._id,
+        status: 'borrowed'
+      });
+      return NextResponse.json({ count: total });
+    }
+    else if (action === 'get-borrowed-books' && dbUser) {
+
+      const result = await getBorrowings({ user: dbUser._id, status: 'borrowed' });
       return NextResponse.json(result);
     }
     

@@ -1,6 +1,7 @@
 import dbConnect from '@/lib/dbConnect';
 import Announcement, { IAnnouncement } from '@/models/Announcement';
 import { Types } from 'mongoose';
+import Class from '@/models/Class';
 
 // Create a new announcement
 export async function createAnnouncement(announcementData) {
@@ -16,28 +17,122 @@ export async function createAnnouncement(announcementData) {
 }
 
 // Get all announcements (for homepage and general viewing)
-export async function getAllAnnouncements(limit = 10) {
+export async function getAllAnnouncements(limit = 10, collegeId = null, userId = null, userRole = null) {
   try {
     await dbConnect();
     
     const currentDate = new Date();
     
-    const announcements = await Announcement.find({
-      // Only show announcements that have not expired
+    // Build query - filter by expiry date and optionally by college
+    const query = {
       $or: [
         { expiryDate: { $gt: currentDate } },
         { expiryDate: { $exists: false } } // To handle announcements created before adding expiryDate
       ]
-    })
+    };
+    
+    // If collegeId is provided, add college filter
+    if (collegeId) {
+      query.collegeId = collegeId;
+    }
+    
+    // If we have userId, get the classes relevant to the user based on role
+    let userClasses = [];
+    if (userId) {
+      if (['faculty', 'hod'].includes(userRole)) {
+        // For faculty/HOD: Get classes they teach or are assigned to
+        const classes = await Class.find({
+          $or: [
+            { teacher: userId }, // Classes they created
+            { 'facultyAssignments.faculty': userId } // Classes they are assigned to
+          ]
+        }).select('_id');
+        
+        userClasses = classes.map(cls => cls._id.toString());
+      } 
+      else if (userRole === 'student') {
+        // For students: Get classes they are enrolled in with approved status
+        const classes = await Class.find({
+          'students.student': userId,
+          'students.status': 'approved'
+        }).select('_id');
+        
+        userClasses = classes.map(cls => cls._id.toString());
+      }
+    }
+    
+    // Final query that combines all conditions
+    let finalQuery;
+    
+    if (userId) {
+      // For faculty/HOD users: See general announcements, their class announcements, and own announcements
+      if (['faculty', 'hod'].includes(userRole) && userClasses.length > 0) {
+        finalQuery = {
+          $and: [
+            query, // Original time/college filters
+            {
+              $or: [
+                { classId: null }, // Announcements not specific to any class
+                { classId: { $in: userClasses } }, // Announcements for their classes
+                { createdBy: userId } // Announcements created by them
+              ]
+            }
+          ]
+        };
+      }
+      // For students: See general announcements, announcements for classes they're enrolled in, and own announcements
+      else if (userRole === 'student' && userClasses.length > 0) {
+        finalQuery = {
+          $and: [
+            query, // Original time/college filters
+            {
+              $or: [
+                { classId: null }, // General announcements
+                { classId: { $in: userClasses } }, // Announcements for their enrolled classes
+                { createdBy: userId } // Announcements created by them (unlikely but possible)
+              ]
+            }
+          ]
+        };
+      }
+      // For other roles (librarian, etc.): Only show general announcements and own announcements
+      else {
+        finalQuery = {
+          $and: [
+            query, // Original time/college filters
+            {
+              $or: [
+                { classId: null }, // Only general announcements
+                { createdBy: userId } // Or announcements created by them
+              ]
+            }
+          ]
+        };
+      }
+    } else {
+      // For unauthenticated users: Only show general announcements
+      finalQuery = {
+        $and: [
+          query,
+          { classId: null } // Only general announcements
+        ]
+      };
+    }
+    
+    const announcements = await Announcement.find(finalQuery)
       .populate({
         path: 'createdBy',
         select: 'displayName email role department'
+      })
+      .populate({
+        path: 'classId',
+        select: 'name department semester'
       })
       .sort({ createdAt: -1 }) // Most recent first
       .limit(limit);
     
     return announcements;
-  } catch (error ) {
+  } catch (error) {
     console.error('Error fetching all announcements:', error);
     throw error;
   }
@@ -86,6 +181,37 @@ export async function getAnnouncementsByCollege(collegeId){
     return announcements;
   } catch (error ) {
     console.error('Error fetching college announcements:', error);
+    throw error;
+  }
+}
+
+// Get announcements for a specific class
+export async function getAnnouncementsByClass(classId) {
+  try {
+    await dbConnect();
+    
+    const currentDate = new Date();
+    
+    const announcements = await Announcement.find({
+      classId: classId,
+      $or: [
+        { expiryDate: { $gt: currentDate } },
+        { expiryDate: { $exists: false } }
+      ]
+    })
+    .populate({
+      path: 'createdBy',
+      select: 'displayName email role department'
+    })
+    .populate({
+      path: 'classId',
+      select: 'name department semester batch'
+    })
+    .sort({ createdAt: -1 }); // Most recent first
+    
+    return announcements;
+  } catch (error) {
+    console.error('Error fetching class announcements:', error);
     throw error;
   }
 }

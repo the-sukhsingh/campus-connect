@@ -117,13 +117,14 @@ export async function POST(request) {
                     continue;
                 }
 
-                let defaultPassword = student.rollNo.toString() || student.studentId.toString() || 'student@123';
-                console.log('Default password:', defaultPassword);
-                // Check if the default password is strong enough (at least 6 characters)
-                console.log("typeof defaultPassword", typeof defaultPassword);
+                let defaultPassword;
 
-                if (defaultPassword.length < 6) {
-                    defaultPassword = 'student@123'; // Fallback password
+                if(student.studentId && student.studentId.length >= 6) {
+                    defaultPassword = student.studentId;
+                } else if(student.rollNo && student.rollNo.length >= 6) {
+                    defaultPassword = student.rollNo;
+                } else {
+                    defaultPassword = 'student@123';
                 }
 
                 // Create Firebase user

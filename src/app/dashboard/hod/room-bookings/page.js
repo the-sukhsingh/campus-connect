@@ -97,7 +97,8 @@ export default function HODRoomBookingsPage() {
         body: JSON.stringify({
           firebaseUid: user?.uid,
           bookingId,
-          action: 'approve',
+          status: 'approved',
+          reason:'Approved by HOD',
         }),
       });
       
@@ -135,7 +136,7 @@ export default function HODRoomBookingsPage() {
         body: JSON.stringify({
           firebaseUid: user?.uid,
           bookingId: currentBookingId,
-          action: 'reject',
+          status: 'rejected',
           rejectionReason,
         }),
       });

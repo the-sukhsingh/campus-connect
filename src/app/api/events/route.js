@@ -13,6 +13,7 @@ import {
   isUserRegistered
 } from '@/services/eventService';
 import { getUserByFirebaseUid } from '@/services/userService';
+import { createBooking } from '@/services/roomBookingService';
 
 export async function GET(request) {
   try {
@@ -89,6 +90,14 @@ export async function GET(request) {
       const isRegistered = await isUserRegistered(eventId, dbUser._id.toString());
       return NextResponse.json({ isRegistered });
     }
+    else if (action === 'count-upcoming' && firebaseUid) {
+      const events = await getRegisteredEvents(dbUser._id, collegeId);
+      const upcomingEvents = events.filter(event => new Date(event.date) >= new Date());
+
+      const count = upcomingEvents.length;
+
+      return NextResponse.json({ count });
+    }
     
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
@@ -100,7 +109,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { firebaseUid, eventData, collegeId } = body;
+    const { firebaseUid, eventData, collegeId, createBooking: shouldCreateBooking } = body;
     
     if (!firebaseUid || !eventData || !collegeId) {
       return NextResponse.json(
@@ -115,37 +124,66 @@ export async function POST(request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
     
-    if (!firebaseUid || !eventData || !collegeId) {
-      return NextResponse.json(
-        { error: 'Missing required fields' }, 
-        { status: 400 }
-      );
-    }
-    
     if (!collegeId) {
       return NextResponse.json({ error: 'User is not associated with a college' }, { status: 400 });
     }
-
     
     // Check if the user is a faculty or hod only
     if (!['faculty', 'hod'].includes(dbUser.role)) {
       return NextResponse.json({ error: 'Unauthorized. Only faculty and HODs can create events.' }, { status: 403 });
     }
     
-    // Add organizer and collegeId to event data
+    // Extract room booking details if needed
+    const { roomId, startTime, endTime } = eventData;
+    
+    // Create the event data
     const newEventData = {
       ...eventData,
       organizer: dbUser._id.toString(),
       collegeId: collegeId,
     };
     
-
     // Create the event
     const savedEvent = await createEvent(newEventData);
     
+    // If room booking is requested
+    let bookingResult = null;
+    if (shouldCreateBooking && roomId && roomId !== 'other' && startTime && endTime) {
+      try {
+        // Format event date for room booking (extract date part)
+        const eventDate = new Date(eventData.date);
+        
+        // Create booking data
+        const bookingData = {
+          room: roomId,
+          title: `Event: ${eventData.title}`,
+          purpose: 'event',
+          date: eventDate,
+          startTime: startTime,
+          endTime: endTime,
+          attendees: eventData.maxAttendees || 10, // Default to 10 if not specified
+          additionalNotes: `Automatic booking for event: ${eventData.title}`,
+          status: dbUser.role === 'hod' ? 'approved' : 'pending' // Auto-approve if HOD
+        };
+
+        console.log("Booking Data", bookingData);
+        
+        // Create the booking
+        bookingResult = await createBooking(bookingData, dbUser._id.toString());
+      } catch (bookingError) {
+        // If booking fails, still return the created event but with booking error
+        return NextResponse.json({ 
+          success: true, 
+          event: savedEvent,
+          bookingError: bookingError.message
+        });
+      }
+    }
+    
     return NextResponse.json({ 
       success: true, 
-      event: savedEvent 
+      event: savedEvent,
+      booking: bookingResult
     });
   } catch (error) {
     console.error('API error:', error);
@@ -255,7 +293,7 @@ export async function DELETE(request) {
     }
     
     // Check if the user is the organizer or an admin
-    const isOrganizer = event.organizer.toString() === dbUser._id.toString();
+    const isOrganizer = event.organizer._id.toString() === dbUser._id.toString();
     const isAdmin = dbUser.role === 'hod';
     
     if (!isOrganizer && !isAdmin) {

@@ -12,9 +12,6 @@ export default function RoomsListingPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [selectedRoom, setSelectedRoom] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
 
   // Filter states
   const [buildings, setBuildings] = useState([]);
@@ -25,20 +22,6 @@ export default function RoomsListingPage() {
     capacity: '',
     search: ''
   });
-
-  // Generate the next 14 days for the date selector
-  const nextFourteenDays = useMemo(() => {
-    const days = [];
-    const today = new Date();
-    
-    for (let i = 0; i < 14; i++) {
-      const nextDate = new Date(today);
-      nextDate.setDate(today.getDate() + i);
-      days.push(nextDate);
-    }
-    
-    return days;
-  }, []);
 
   // Fetch rooms on component mount
   useEffect(() => {
@@ -55,6 +38,7 @@ export default function RoomsListingPage() {
         if (filters.building) url += `&building=${filters.building}`;
         if (filters.type) url += `&type=${filters.type}`;
         if (filters.capacity) url += `&capacity=${filters.capacity}`;
+        if (filters.search) url += `&search=${filters.search}`;
         
         const response = await fetch(url);
         
@@ -128,113 +112,12 @@ export default function RoomsListingPage() {
     return type.charAt(0).toUpperCase() + type.slice(1);
   };
 
-  // Format date for display
-  const formatDateDisplay = (date) => {
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
 
-  // Handle room selection
-  const handleRoomSelect = async (room) => {
-    setSelectedRoom(room);
-    await fetchAvailableTimeSlots(room._id, selectedDate);
-  };
 
-  // Handle date selection
-  const handleDateSelect = async (date) => {
-    setSelectedDate(date);
-    
-    if (selectedRoom) {
-      await fetchAvailableTimeSlots(selectedRoom._id, date);
-    }
-  };
-
-  // Fetch available time slots for a room on a specific date
-  const fetchAvailableTimeSlots = async (roomId, date) => {
-    try {
-      const formattedDate = date.toISOString().split('T')[0];
-      const response = await fetch(
-        `/api/room-bookings?action=get-available-slots&uid=${user?.uid}&roomId=${roomId}&date=${formattedDate}`
-      );
-      
-      if (response.ok) {
-        const data = await response.json();
-        setAvailableTimeSlots(data.availableSlots || []);
-      } else {
-        // If API doesn't support this yet, generate default time slots
-        setAvailableTimeSlots(generateDefaultTimeSlots());
-      }
-    } catch (err) {
-      console.error('Error fetching time slots:', err);
-      setAvailableTimeSlots(generateDefaultTimeSlots());
-    }
-  };
-
-  // Generate default time slots (8 AM to 8 PM in 1-hour blocks)
-  const generateDefaultTimeSlots = () => {
-    return [
-      { time: '08:00 - 09:00', isAvailable: true },
-      { time: '09:00 - 10:00', isAvailable: true },
-      { time: '10:00 - 11:00', isAvailable: true },
-      { time: '11:00 - 12:00', isAvailable: true },
-      { time: '12:00 - 13:00', isAvailable: true },
-      { time: '13:00 - 14:00', isAvailable: true },
-      { time: '14:00 - 15:00', isAvailable: true },
-      { time: '15:00 - 16:00', isAvailable: true },
-      { time: '16:00 - 17:00', isAvailable: true },
-      { time: '17:00 - 18:00', isAvailable: true },
-      { time: '18:00 - 19:00', isAvailable: true },
-      { time: '19:00 - 20:00', isAvailable: true },
-    ];
-  };
-
-  // Get CSS classes for time slot
-  const getTimeSlotClasses = (slot) => {
-    const baseClasses = "text-center py-2 px-3 rounded-md text-sm transition-colors";
-    
-    if (slot.isAvailable) {
-      return `${baseClasses} bg-green-50 text-green-800 border border-green-200 hover:bg-green-100`;
-    } else {
-      return `${baseClasses} bg-red-50 text-red-800 border border-red-200`;
-    }
-  };
-
-  // Get CSS classes for date selector buttons
-  const getDateButtonClasses = (date) => {
-    const isSelected = selectedDate.toDateString() === date.toDateString();
-    const isToday = date.toDateString() === new Date().toDateString();
-    
-    if (isSelected) {
-      return "px-3 py-2 bg-indigo-600 text-white rounded-md font-medium";
-    } else if (isToday) {
-      return "px-3 py-2 bg-indigo-100 text-indigo-700 rounded-md font-medium hover:bg-indigo-200";
-    } else {
-      return "px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50";
-    }
-  };
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-200 py-4 px-6">
-        <div className="flex items-center">
-          <div className="flex-shrink-0 text-2xl font-bold text-indigo-700">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-            Campus Rooms
-          </div>
-        </div>
-        <div className="flex items-center">
-          <div className="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-medium">
-            {dbUser?.role?.charAt(0).toUpperCase() || 'F'}
-          </div>
-          <span className="ml-2 text-sm text-gray-700">Faculty Member</span>
-        </div>
-      </div>
+ 
 
       {error && (
         <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 m-6" role="alert">
@@ -323,152 +206,6 @@ export default function RoomsListingPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              {selectedRoom ? (
-                <div>
-                  {/* Room detail view */}
-                  <div className="flex justify-between items-start mb-6">
-                    <div>
-                      <h1 className="text-2xl font-bold">{selectedRoom.name}</h1>
-                      <p className="text-gray-600">
-                        {selectedRoom.building}, Floor {selectedRoom.floor}
-                      </p>
-                    </div>
-                    <button 
-                      onClick={() => setSelectedRoom(null)}
-                      className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded transition-colors"
-                    >
-                      Back to Rooms
-                    </button>
-                  </div>
-
-                  <div className="bg-white rounded-lg shadow overflow-hidden">
-                    <div className="p-6">
-                      <div className="mb-6">
-                        <h2 className="text-lg font-semibold mb-2">About this room</h2>
-                        <p className="text-gray-600">
-                          {selectedRoom.description || "Large auditorium with state-of-the-art sound and projection systems, perfect for major events and presentations."}
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div>
-                          <h3 className="text-sm font-semibold uppercase text-gray-500">Capacity</h3>
-                          <p className="mt-1 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                            </svg>
-                            {selectedRoom.capacity} people
-                          </p>
-                        </div>
-
-                        <div>
-                          <h3 className="text-sm font-semibold uppercase text-gray-500">Room Type</h3>
-                          <p className="mt-1 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                            </svg>
-                            {formatRoomType(selectedRoom.type)}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="mb-6">
-                        <h3 className="text-sm font-semibold uppercase text-gray-500 mb-3">Equipment & Features</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {selectedRoom.amenities && selectedRoom.amenities.map((amenity, index) => (
-                            <span key={index} className="inline-flex items-center rounded-full bg-blue-100 text-blue-800 px-3 py-1 text-sm">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
-                              {amenity}
-                            </span>
-                          ))}
-
-                          {/* Fallback if no amenities */}
-                          {(!selectedRoom.amenities || selectedRoom.amenities.length === 0) && (
-                            <>
-                              <span className="inline-flex items-center rounded-full bg-blue-100 text-blue-800 px-3 py-1 text-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                Projector
-                              </span>
-                              <span className="inline-flex items-center rounded-full bg-blue-100 text-blue-800 px-3 py-1 text-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                                </svg>
-                                Sound System
-                              </span>
-                              <span className="inline-flex items-center rounded-full bg-blue-100 text-blue-800 px-3 py-1 text-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
-                                Stage
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Available Time Slots */}
-                      <div>
-                        <div className="mb-4">
-                          <h2 className="text-lg font-semibold mb-4">Available Time Slots</h2>
-                          
-                          {/* Date Selector Pills - Next 14 Days */}
-                          <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Select Date:
-                            </label>
-                            <div className="flex flex-wrap gap-2">
-                              {nextFourteenDays.map((date, index) => (
-                                <button
-                                  key={index}
-                                  onClick={() => handleDateSelect(date)}
-                                  className={getDateButtonClasses(date)}
-                                >
-                                  {formatDateDisplay(date)}
-                                  {date.toDateString() === new Date().toDateString() && (
-                                    <span className="ml-1 text-xs">(Today)</span>
-                                  )}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
-                            {availableTimeSlots.map((slot, index) => (
-                              <div key={index} className={getTimeSlotClasses(slot)}>
-                                {slot.time}
-                              </div>
-                            ))}
-                          </div>
-                          
-                          <div className="flex items-center text-sm mt-2 text-gray-600">
-                            <div className="flex items-center mr-4">
-                              <div className="w-3 h-3 bg-green-50 border border-green-200 rounded-full mr-1"></div>
-                              <span>Available</span>
-                            </div>
-                            <div className="flex items-center">
-                              <div className="w-3 h-3 bg-red-50 border border-red-200 rounded-full mr-1"></div>
-                              <span>Booked</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex justify-center mt-6">
-                          <Link
-                            href={`/dashboard/rooms/${selectedRoom._id}`}
-                            className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
-                          >
-                            Book this Room
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
                 <>
                   {/* Rooms listing */}
                   <div className="mb-6">
@@ -496,7 +233,6 @@ export default function RoomsListingPage() {
                       {rooms.map((room) => (
                         <div 
                           key={room._id} 
-                          onClick={() => handleRoomSelect(room)}
                           className="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
                         >
                           <div className="h-48 bg-gray-200 overflow-hidden">
@@ -568,15 +304,11 @@ export default function RoomsListingPage() {
                               </div>
                             )}
                             
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.location.href = `/dashboard/rooms/${room._id}`;
-                              }}
-                              className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none"
-                            >
+                            <Link 
+                              href={`/dashboard/rooms/${room._id}`}
+                              className="inline-flex justify-center items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors w-full">
                               View Details & Book
-                            </button>
+                            </Link>
                           </div>
                         </div>
                       ))}
@@ -721,7 +453,6 @@ export default function RoomsListingPage() {
                     </div>
                   )}
                 </>
-              )}
             </div>
           )}
         </div>

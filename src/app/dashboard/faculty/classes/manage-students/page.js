@@ -16,29 +16,11 @@ function ManageStudentsPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showUpgradeForm, setShowUpgradeForm] = useState(false);
   const [approvedStudents, setApprovedStudents] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStudents, setSelectedStudents] = useState([]);
-  const [selectAll, setSelectAll] = useState(false);
 
-  const [upgradeData, setUpgradeData] = useState({
-    newSemester: '',
-    newBatch: '',
-  });
-
-  // Add state for Add Student functionality
+  // Student addition state
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newStudentData, setNewStudentData] = useState({
-    email: '',
-    displayName: '',
-    rollNo: '',
-    studentId: '',
-  });
-  const [validationErrors, setValidationErrors] = useState({});
-  
-  // Add state for bulk student addition
-  const [addMode, setAddMode] = useState('single'); // 'single' or 'bulk'
   const [bulkStudents, setBulkStudents] = useState([
     { email: '', displayName: '', rollNo: '', studentId: '' }
   ]);
@@ -77,7 +59,6 @@ function ManageStudentsPage() {
 
     fetchClassData();
   }, [user, classId]);
-
 
   const handleRemoveStudent = async (studentId) => {
     if (!user || !classId || !studentId) return;
@@ -127,26 +108,6 @@ function ManageStudentsPage() {
     }
   };
 
-  // Handle bulk selection toggling
-  const handleToggleSelectAll = () => {
-    if (selectAll) {
-      setSelectedStudents([]);
-    } else {
-      setSelectedStudents(approvedStudents.map(s => s._id));
-    }
-    setSelectAll(!selectAll);
-  };
-
-  // Handle individual student selection
-  const handleSelectStudent = (studentId) => {
-    setSelectedStudents((prev) => {
-      if (prev.includes(studentId)) {
-        return prev.filter((id) => id !== studentId);
-      } else {
-        return [...prev, studentId];
-      }
-    });
-  };
 
   // Filter students by search term
   const filteredStudents = approvedStudents.filter((student) => {
@@ -167,208 +128,6 @@ function ManageStudentsPage() {
     });
   };
 
-  // Handle upgrading students form submission
-  const handleUpgradeSubmit = async (e) => {
-    e.preventDefault();
-
-    if (selectedStudents.length === 0) {
-      setMessage({
-        type: 'error',
-        text: 'Please select at least one student to upgrade.',
-      });
-      return;
-    }
-
-    if (!upgradeData.newSemester) {
-      setMessage({
-        type: 'error',
-        text: 'Please enter a new semester.',
-      });
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      // Here you would typically call your API to handle the upgrade
-      const response = await fetch('/api/user/teacher/classes/upgrade-students', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firebaseUid: user?.uid,
-          classId,
-          studentIds: selectedStudents,
-          newSemester: upgradeData.newSemester,
-          newBatch: upgradeData.newBatch || undefined,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to upgrade students');
-      }
-
-      setMessage({
-        type: 'success',
-        text: `${selectedStudents.length} student(s) upgraded successfully!`,
-      });
-
-      // Reset state
-      setSelectedStudents([]);
-      setSelectAll(false);
-      setShowUpgradeForm(false);
-      
-      // Refresh class data
-      const refreshResponse = await fetch(`/api/user/teacher/classes/${classId}?uid=${user?.uid}`);
-      const refreshData = await refreshResponse.json();
-      setClassData(refreshData.class);
-      
-      setTimeout(() => {
-        setMessage({ type: '', text: '' });
-      }, 3000);
-    } catch (error) {
-      setMessage({
-        type: 'error',
-        text: error.message || 'Failed to upgrade students. Please try again.',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Handle opening the add student modal
-  const openAddStudentModal = () => {
-    setNewStudentData({
-      email: '',
-      displayName: '',
-      rollNo: '',
-      studentId: ''
-    });
-    setValidationErrors({});
-    setShowAddModal(true);
-  };
-
-  // Handle input change for new student form
-  const handleStudentInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewStudentData({
-      ...newStudentData,
-      [name]: value
-    });
-    
-    // Clear validation error when field is edited
-    if (validationErrors[name]) {
-      setValidationErrors({
-        ...validationErrors,
-        [name]: ''
-      });
-    }
-  };
-
-  // Validate the new student form
-  const validateStudentForm = () => {
-    const errors = {};
-    
-    if (!newStudentData.email.trim()) {
-      errors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(newStudentData.email)) {
-      errors.email = 'Please enter a valid email address';
-    }
-    
-    if (!newStudentData.displayName.trim()) {
-      errors.displayName = 'Name is required';
-    }
-    
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  // Handle creating a new student account
-  const handleCreateStudent = async (e) => {
-    e.preventDefault();
-    
-    if (!validateStudentForm()) {
-      return;
-    }
-    
-    try {
-      setIsSubmitting(true);
-      
-      const response = await fetch('/api/user/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          creatorUid: user?.uid,
-          creatorRole: 'faculty',
-          userData: {
-            email: newStudentData.email.toLowerCase(),
-            displayName: newStudentData.displayName,
-            role: 'student',
-            rollNo: newStudentData.rollNo || '',
-            classId: classId,
-            studentId: newStudentData.studentId || '',
-            department: classData?.department || undefined,
-            // If class has college info, add it to the student
-            collegeId: classData?.college?._id || undefined,
-          }
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create student account');
-      }
-      
-      const data = await response.json();
-      
-      // Refresh the student list with newly created student
-      if (data.user) {
-        // Need to refresh class data to get updated student list with correct format
-        const refreshResponse = await fetch(`/api/user/teacher/classes/${classId}?uid=${user?.uid}`);
-        const refreshData = await refreshResponse.json();
-        
-        if (refreshResponse.ok) {
-          setClassData(refreshData.class);
-          
-          if (refreshData.class && refreshData.class.students) {
-            const approved = refreshData.class.students.filter((s) => s.status === 'approved');
-
-            setApprovedStudents(approved);
-          }
-        }
-      }
-      
-      // Close the modal and reset form
-      setShowAddModal(false);
-      setNewStudentData({
-        email: '',
-        displayName: '',
-        rollNo: '',
-      });
-      
-      // Show success message
-      setMessage({
-        type: 'success',
-        text: `Student account created successfully! An email with login instructions has been sent to ${newStudentData.email}.`
-      });
-      
-      // Clear the message after 5 seconds
-      setTimeout(() => {
-        setMessage({ type: '', text: '' });
-      }, 5000);
-      
-    } catch (error) {
-      setMessage({
-        type: 'error',
-        text: error.message || 'Error creating student account. Please try again.'
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   // Handle bulk student input change
   const handleBulkStudentChange = (index, field, value) => {
@@ -391,6 +150,7 @@ function ManageStudentsPage() {
   };
 
   // Remove a row from bulk student input
+  
   const removeBulkStudentRow = (index) => {
     const updatedStudents = bulkStudents.filter((_, i) => i !== index);
     const updatedErrors = bulkValidationErrors.filter((_, i) => i !== index);
@@ -548,73 +308,16 @@ function ManageStudentsPage() {
               </div>
               
               <div className="flex flex-col sm:flex-row gap-2">
-                {selectedStudents.length > 0 && (
-                  <button
-                    onClick={() => setShowUpgradeForm(!showUpgradeForm)}
-                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none"
-                  >
-                    {showUpgradeForm ? 'Cancel' : `Upgrade ${selectedStudents.length} Student${selectedStudents.length !== 1 ? 's' : ''}`}
-                  </button>
-                )}
+               
                 <button
-                  onClick={openAddStudentModal}
+                  onClick={() => setShowAddModal(true)}
                   className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none"
                 >
-                  Add Student
+                  Add Students
                 </button>
               </div>
             </div>
 
-            {showUpgradeForm && (
-              <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                <h3 className="text-sm font-medium text-gray-700 mb-3">Upgrade Students to New Semester/Batch</h3>
-                <form onSubmit={handleUpgradeSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="newSemester" className="block text-sm font-medium text-gray-700 mb-1">
-                        New Semester *
-                      </label>
-                      <input
-                        type="text"
-                        id="newSemester"
-                        name="newSemester"
-                        value={upgradeData.newSemester}
-                        onChange={(e) => setUpgradeData({ ...upgradeData, newSemester: e.target.value })}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                        placeholder="e.g., Spring 2025"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="newBatch" className="block text-sm font-medium text-gray-700 mb-1">
-                        New Batch (Optional)
-                      </label>
-                      <input
-                        type="text"
-                        id="newBatch"
-                        name="newBatch"
-                        value={upgradeData.newBatch}
-                        onChange={(e) => setUpgradeData({ ...upgradeData, newBatch: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                        placeholder="e.g., 2025"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-end">
-                    <button
-                      type="submit"
-                      disabled={isSubmitting || !upgradeData.newSemester || selectedStudents.length === 0}
-                      className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
-                        (isSubmitting || !upgradeData.newSemester || selectedStudents.length === 0) ? 'opacity-50 cursor-not-allowed' : ''
-                      }`}
-                    >
-                      {isSubmitting ? 'Processing...' : 'Confirm Upgrade'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
             
             {/* Search Bar */}
             <div className="px-6 py-4 border-b border-gray-200">
@@ -652,15 +355,7 @@ function ManageStudentsPage() {
                     <tr>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         <div className="flex items-center">
-                          <input
-                            id="select-all"
-                            name="select-all"
-                            type="checkbox"
-                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                            checked={selectAll}
-                            onChange={handleToggleSelectAll}
-                          />
-                          <label htmlFor="select-all" className="ml-2 block text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Student
                           </label>
                         </div>
@@ -691,15 +386,8 @@ function ManageStudentsPage() {
                         <tr key={student._id}>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
-                              <input
-                                id={`student-${student._id}`}
-                                name={`student-${student._id}`}
-                                type="checkbox"
-                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                                checked={selectedStudents.includes(student._id)}
-                                onChange={() => handleSelectStudent(student._id)}
-                              />
-                              <div className="ml-4">
+                             
+                              <div>
                                 <div className="text-sm font-medium text-gray-900">
                                   {student.student?.displayName || 'Unnamed Student'}
                                 </div>
@@ -738,245 +426,145 @@ function ManageStudentsPage() {
         </div>
       )}
 
-      {/* Add Student Modal */}
+      {/* Add Students Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-3xl">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Add New Student</h3>
-              
-              {/* Toggle between single and bulk add */}
-              <div className="mt-3 flex border border-gray-200 rounded-md overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setAddMode('single')}
-                  className={`flex-1 py-2 px-4 text-sm font-medium ${
-                    addMode === 'single' 
-                      ? 'bg-indigo-600 text-white' 
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  Add Single Student
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAddMode('bulk')}
-                  className={`flex-1 py-2 px-4 text-sm font-medium ${
-                    addMode === 'bulk' 
-                      ? 'bg-indigo-600 text-white' 
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  Bulk Add Students
-                </button>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-5xl border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="text-lg font-medium text-gray-900">Add Students in Bulk</h3>
+              <button 
+                type="button" 
+                className="text-gray-400 hover:text-gray-500"
+                onClick={() => setShowAddModal(false)}
+              >
+                <span className="sr-only">Close</span>
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
             
-            {/* Single Student Form */}
-            {addMode === 'single' && (
-              <form onSubmit={handleCreateStudent} className="px-6 py-4 space-y-4">
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                    Email *
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={newStudentData.email}
-                    onChange={handleStudentInputChange}
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
-                      validationErrors.email ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="e.g., student@example.com"
-                  />
-                  {validationErrors.email && (
-                    <p className="mt-1 text-sm text-red-500">{validationErrors.email}</p>
-                  )}
-                </div>
-                <div>
-                  <label htmlFor="displayName" className="block text-sm font-medium text-gray-700">
-                    Name *
-                  </label>
-                  <input
-                    type="text"
-                    id="displayName"
-                    name="displayName"
-                    value={newStudentData.displayName}
-                    onChange={handleStudentInputChange}
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
-                      validationErrors.displayName ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="e.g., John Doe"
-                  />
-                  {validationErrors.displayName && (
-                    <p className="mt-1 text-sm text-red-500">{validationErrors.displayName}</p>
-                  )}
-                </div>
-                <div>
-                  <label htmlFor="rollNo" className="block text-sm font-medium text-gray-700">
-                    Roll No *
-                  </label>
-                  <input
-                    type="text"
-                    id="rollNo"
-                    name="rollNo"
-                    value={newStudentData.rollNo}
-                    onChange={handleStudentInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="e.g., 12345"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="studentId" className="block text-sm font-medium text-gray-700">
-                    Student ID (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    id="studentId"
-                    name="studentId"
-                    value={newStudentData.studentId}
-                    onChange={handleStudentInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="e.g., 12345"
-                  />
-                </div>
-                <div className="flex justify-end space-x-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddModal(false)}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className={`px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none ${
-                      isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
-                  >
-                    {isSubmitting ? 'Creating...' : 'Add Student'}
-                  </button>
-                </div>
-              </form>
-            )}
+            <div className="px-6 pt-4 pb-2">
+              <p className="text-sm text-gray-600 mb-4">
+                Add multiple students at once. All students will be enrolled in this class automatically.
+              </p>
+            </div>
             
-            {/* Bulk Students Form */}
-            {addMode === 'bulk' && (
-              <form onSubmit={handleCreateBulkStudents} className="px-6 py-4 space-y-4">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name*</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email*</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roll No*</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
-                        <th className="px-2 py-3 w-10"></th>
+            <form onSubmit={handleCreateBulkStudents} className="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div className="overflow-x-auto mb-8">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roll No*</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name*</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email*</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
+                      <th className="px-2 py-3 w-10"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {bulkStudents.map((student, index) => (
+                      <tr key={index} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-2 py-2">
+                          <input
+                            type="text"
+                            value={student.rollNo}
+                            onChange={(e) => handleBulkStudentChange(index, 'rollNo', e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Roll No"
+                          />
+                        </td>
+                        <td className="px-2 py-2">
+                          <input
+                            type="text"
+                            value={student.displayName}
+                            onChange={(e) => handleBulkStudentChange(index, 'displayName', e.target.value)}
+                            className={`w-full px-2 py-1 border rounded-md text-sm ${
+                              bulkValidationErrors[index]?.displayName ? 'border-red-500' : 'border-gray-300'
+                            } focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500`}
+                            placeholder="Full Name"
+                          />
+                          {bulkValidationErrors[index]?.displayName && (
+                            <p className="mt-1 text-xs text-red-500">{bulkValidationErrors[index].displayName}</p>
+                          )}
+                        </td>
+                        <td className="px-2 py-2">
+                          <input
+                            type="email"
+                            value={student.email}
+                            onChange={(e) => handleBulkStudentChange(index, 'email', e.target.value)}
+                            className={`w-full px-2 py-1 border rounded-md text-sm ${
+                              bulkValidationErrors[index]?.email ? 'border-red-500' : 'border-gray-300'
+                            } focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500`}
+                            placeholder="Email"
+                          />
+                          {bulkValidationErrors[index]?.email && (
+                            <p className="mt-1 text-xs text-red-500">{bulkValidationErrors[index].email}</p>
+                          )}
+                        </td>
+                        
+                        <td className="px-2 py-2">
+                          <input
+                            type="text"
+                            value={student.studentId}
+                            onChange={(e) => handleBulkStudentChange(index, 'studentId', e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Optional"
+                          />
+                        </td>
+                        <td className="px-2 py-2">
+                          {bulkStudents.length > 1 && (
+                            <button 
+                              type="button"
+                              onClick={() => removeBulkStudentRow(index)}
+                              className="text-red-600 hover:text-red-900"
+                              title="Remove row"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                              </svg>
+                            </button>
+                          )}
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {bulkStudents.map((student, index) => (
-                        <tr key={index}>
-                          <td className="px-2 py-2">
-                            <input
-                              type="text"
-                              value={student.displayName}
-                              onChange={(e) => handleBulkStudentChange(index, 'displayName', e.target.value)}
-                              className={`w-full px-2 py-1 border rounded-md text-sm ${
-                                bulkValidationErrors[index]?.displayName ? 'border-red-500' : 'border-gray-300'
-                              }`}
-                              placeholder="Full Name"
-                            />
-                            {bulkValidationErrors[index]?.displayName && (
-                              <p className="mt-1 text-xs text-red-500">{bulkValidationErrors[index].displayName}</p>
-                            )}
-                          </td>
-                          <td className="px-2 py-2">
-                            <input
-                              type="email"
-                              value={student.email}
-                              onChange={(e) => handleBulkStudentChange(index, 'email', e.target.value)}
-                              className={`w-full px-2 py-1 border rounded-md text-sm ${
-                                bulkValidationErrors[index]?.email ? 'border-red-500' : 'border-gray-300'
-                              }`}
-                              placeholder="Email"
-                            />
-                            {bulkValidationErrors[index]?.email && (
-                              <p className="mt-1 text-xs text-red-500">{bulkValidationErrors[index].email}</p>
-                            )}
-                          </td>
-                          <td className="px-2 py-2">
-                            <input
-                              type="text"
-                              value={student.rollNo}
-                              onChange={(e) => handleBulkStudentChange(index, 'rollNo', e.target.value)}
-                              className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
-                              placeholder="Roll No"
-                            />
-                          </td>
-                          <td className="px-2 py-2">
-                            <input
-                              type="text"
-                              value={student.studentId}
-                              onChange={(e) => handleBulkStudentChange(index, 'studentId', e.target.value)}
-                              className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
-                              placeholder="Optional"
-                            />
-                          </td>
-                          <td className="px-2 py-2">
-                            {bulkStudents.length > 1 && (
-                              <button 
-                                type="button"
-                                onClick={() => removeBulkStudentRow(index)}
-                                className="text-red-600 hover:text-red-900"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                </svg>
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <button
-                    type="button"
-                    onClick={addBulkStudentRow}
-                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                    </svg>
-                    Add Row
-                  </button>
-                  
-                  <div className="flex space-x-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowAddModal(false)}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className={`px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none ${
-                        isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                      }`}
-                    >
-                      {isSubmitting ? 'Creating...' : 'Add Students'}
-                    </button>
-                  </div>
-                </div>
-              </form>
-            )}
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              <div className="flex justify-between items-center">
+                <button
+                  type="button"
+                  onClick={addBulkStudentRow}
+                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                  </svg>
+                  Add Row
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={`inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${
+                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Creating...
+                    </>
+                  ) : (
+                    'Add Students'
+                  )}
+                </button>
+              </div>
+              
+            </form>
           </div>
         </div>
       )}

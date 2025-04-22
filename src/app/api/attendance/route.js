@@ -163,8 +163,7 @@ export async function GET(request) {
       // Get previous attendance records
       const previousAttendance = await getPreviousAttendance(
         classId, 
-        subject,
-        limit || 10
+        subject
       );
       
       return NextResponse.json({ previousAttendance });

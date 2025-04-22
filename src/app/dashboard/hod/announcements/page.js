@@ -245,12 +245,7 @@ function HodAnnouncementsPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Manage Announcements</h1>
         <div>
-          <button
-            onClick={() => router.push('/dashboard/hod')}
-            className="inline-flex items-center px-4 py-2 mr-3 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-          >
-            Back to Dashboard
-          </button>
+          
           {!isFormOpen && (
             <button
               onClick={() => {

@@ -118,12 +118,7 @@ function EventsPage() {
         </div>
         <div className="flex space-x-4">
 
-        <Link
-          href={`/dashboard/${dbUser.role}`}
-          className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded transition-colors"
-        >
-          Back to Dashboard
-        </Link>
+        
        {
         dbUser.role !== 'student' && (
           <Link

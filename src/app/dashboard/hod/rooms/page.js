@@ -40,7 +40,6 @@ export default function HodRoomsPage() {
   const fetchRooms = async () => {
     try {
       setLoading(true);
-      console.log("DBUSERCOLLEGE", dbUser.college._id);
       const response = await fetch(`/api/rooms?collegeId=${dbUser.college._id}`);
       
       if (!response.ok) {
@@ -48,7 +47,8 @@ export default function HodRoomsPage() {
       }
       
       const data = await response.json();
-      setRooms(data);
+      console.log("ROoms are ",data)
+      setRooms(data.rooms);
     } catch (err) {
       setError(err.message);
       console.error('Error fetching rooms:', err);
@@ -378,7 +378,7 @@ export default function HodRoomsPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {rooms.map((room) => (
+                  {rooms && rooms.map((room) => (
                     <tr key={room._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">

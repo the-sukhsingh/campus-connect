@@ -14,7 +14,6 @@ function StudentDashboard() {
   const [enrolledClasses, setEnrolledClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
-    attendance: 0,
     upcomingEvents: 0,
     borrowedBooks: 0,
     newProperty: 0
@@ -35,13 +34,7 @@ function StudentDashboard() {
           setEnrolledClasses(classData.classes || []);
         }
         
-        // Fetch attendance stats
-        const attendanceResponse = await fetch(`/api/attendance?uid=${user?.uid}&action=get-student-stats`);
-        if (attendanceResponse.ok) {
-          const attData = await attendanceResponse.json();
-          setStats(prev => ({...prev, attendance: attData.averageAttendance || 0}));
-        }
-        
+      
         // Fetch upcoming events
         const eventsResponse = await fetch(`/api/events?uid=${user?.uid}&action=count-upcoming`);
         if (eventsResponse.ok) {
@@ -93,17 +86,7 @@ function StudentDashboard() {
           </div>
           
           <div className="flex flex-wrap gap-3">
-            <div className="bg-white rounded-lg shadow-sm border border-indigo-100 px-4 py-2 flex items-center">
-              <div className="mr-3 bg-indigo-100 p-2 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">Attendance</p>
-                <p className="text-lg font-semibold">{stats.attendance}%</p>
-              </div>
-            </div>
+            
             
             <div className="bg-white rounded-lg shadow-sm border border-purple-100 px-4 py-2 flex items-center">
               <div className="mr-3 bg-purple-100 p-2 rounded-full">

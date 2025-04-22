@@ -89,6 +89,7 @@ function ClassStudentsPage() {
             lastMarkedDate: null,
             studentStats: []
           });
+          console.log('Attendance Data:', data.summary);
         }
       } catch (err) {
         console.error('Error fetching attendance statistics:', err);
@@ -251,9 +252,9 @@ function ClassStudentsPage() {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredStudents.map((student) => {
-                      const attendancePercentage = getAttendancePercentage(student._id);
+                      const attendancePercentage = getAttendancePercentage(student.student._id);
                       const attendanceStatus = getAttendanceStatus(attendancePercentage);
-                      
+                      console.log("Student Attendance Percentage:",student, attendancePercentage, attendanceStatus);
                       return (
                         <tr key={student._id}>
                           <td className="px-6 py-4 whitespace-nowrap">

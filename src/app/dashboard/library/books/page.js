@@ -68,12 +68,7 @@ export default function BooksListingPage() {
           <p className="text-gray-600 mt-1">Browse our collection of books</p>
         </div>
         <div className="mt-4 sm:mt-0">
-          <Link
-            href="/dashboard"
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded transition-colors"
-          >
-            Back to Dashboard
-          </Link>
+          
         </div>
       </div>
 

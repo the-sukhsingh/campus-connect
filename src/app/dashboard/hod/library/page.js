@@ -147,12 +147,7 @@ function LibraryManagementPage() {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Link
-            href="/dashboard/hod"
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded transition-colors"
-          >
-            Back to Dashboard
-          </Link>
+          
         </div>
       </div>
 

@@ -3,11 +3,14 @@
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect } from "react";
+import { EyeIcon } from "lucide-react";
 
 export default function Home() {
   const { user, dbUser, loading } = useAuth();
   const [announcements, setAnnouncements] = useState([]);
   const [announcementsLoading, setAnnouncementsLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
 
   // Fetch recent announcements when user is logged in
   useEffect(() => {
@@ -15,7 +18,8 @@ export default function Home() {
       if (user) {
         try {
           setAnnouncementsLoading(true);
-          const response = await fetch('/api/announcements?action=get-all&limit=5');
+          // Pass the user's Firebase UID to filter announcements by college
+          const response = await fetch(`/api/announcements?action=get-all&limit=5&uid=${user?.uid}`);
           
           if (!response.ok) {
             throw new Error('Failed to fetch announcements');
@@ -23,6 +27,7 @@ export default function Home() {
           
           const data = await response.json();
           setAnnouncements(data.announcements || []);
+          console.log("Announcements fetched:", data.announcements);
         } catch (error) {
           console.error('Error fetching announcements:', error);
         } finally {
@@ -45,8 +50,67 @@ export default function Home() {
     });
   };
 
+  // Function to open announcement modal
+  const openAnnouncementModal = (announcement) => {
+    setSelectedAnnouncement(announcement);
+    setShowModal(true);
+  };
+
+  // Function to close announcement modal
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedAnnouncement(null);
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
+      {/* Modal for announcement details */}
+      {showModal && selectedAnnouncement && (
+        <div className="fixed inset-0 bg-black/30 bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
+              <h3 className="text-xl font-bold">{selectedAnnouncement.title}</h3>
+              <div className="flex items-center text-sm mt-2 text-blue-100">
+                <span>Posted by {selectedAnnouncement.createdBy?.displayName || "Faculty"}</span>
+                <span className="mx-2">•</span>
+                <span>{formatDate(selectedAnnouncement.createdAt)}</span>
+              </div>
+              {selectedAnnouncement.classId ? (
+                <div className="mt-2 bg-blue-700/30 text-white px-3 py-1.5 rounded-md inline-flex items-center text-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  Class: {selectedAnnouncement.classId.name} • {selectedAnnouncement.classId.department} • {selectedAnnouncement.classId.semester}
+                </div>
+              ) : (
+                <div className="mt-2 bg-green-700/30 text-white px-3 py-1.5 rounded-md inline-flex items-center text-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  General Announcement
+                </div>
+              )}
+              {selectedAnnouncement.expiryDate && (
+                <div className="mt-2 text-xs text-blue-100">
+                  Expires on: {new Date(selectedAnnouncement.expiryDate).toLocaleDateString()}
+                </div>
+              )}
+            </div>
+            <div className="p-6 overflow-y-auto flex-grow">
+              <p className="whitespace-pre-wrap text-gray-700">{selectedAnnouncement.content}</p>
+            </div>
+            <div className="border-t border-gray-200 p-4 flex justify-end">
+              <button
+                onClick={closeModal}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors font-medium"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <section className="text-center mb-10">
         <h1 className="text-4xl font-bold mb-4">Welcome to Campus Connect</h1>
         <p className="text-xl">Your comprehensive campus management system</p>
@@ -125,16 +189,51 @@ export default function Home() {
               ) : announcements.length > 0 ? (
                 <div className="space-y-4">
                   {announcements.map((announcement) => (
-                    <div key={announcement._id} className="bg-gray-50 p-4 rounded-md shadow-sm border border-gray-100">
-                      <h4 className="font-bold text-lg">{announcement.title}</h4>
-                      <div className="flex items-center mt-1 text-sm text-gray-500">
-                        <span>Posted by {announcement.createdBy?.displayName || "Faculty"}</span>
-                        <span className="mx-2">•</span>
-                        <span>{formatDate(announcement.createdAt)}</span>
+                    <div 
+                      key={announcement._id} 
+                      className="bg-white border-l-4 border-blue-500 p-5 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:-translate-y-1 relative overflow-hidden group"
+                      onClick={() => openAnnouncementModal(announcement)}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      <div className="flex justify-between items-start">
+                        <h4 className="font-bold text-lg text-blue-800">{announcement.title}</h4>
+                        <div className="flex items-center gap-2">
+                          {announcement.classId ? (
+                            <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full flex items-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                              Class
+                            </span>
+                          ) : (
+                            <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full flex items-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                              </svg>
+                              General
+                            </span>
+                          )}
+                          <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                            {new Date(announcement.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </span>
+                        </div>
                       </div>
-                      <p className="mt-2 text-gray-700 whitespace-pre-wrap line-clamp-3">
+                      <div className="flex items-center mt-2 text-sm text-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <span>{announcement.createdBy?.displayName || "Faculty"}</span>
+                        
+                      </div>
+                      <p className="mt-3 text-gray-700 whitespace-pre-wrap line-clamp-2">
                         {announcement.content}
                       </p>
+                      <div className="flex items-center gap-4 justify-end">
+                        <span className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800">
+                          View Announcement
+                          <EyeIcon className="h-4 w-4 ml-1 mt-1" />
+                        </span>
+                      </div>
                     </div>
                   ))}
                   
@@ -142,8 +241,11 @@ export default function Home() {
                     <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
                       <Link
                         href={`/dashboard/${dbUser.role}/announcements`}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium flex items-center"
                       >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
                         Manage Announcements
                       </Link>
                     </div>

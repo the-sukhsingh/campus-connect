@@ -1,12 +1,15 @@
 import dbConnect from '@/lib/dbConnect';
+import mongoose from 'mongoose';
 import Event from '@/models/Event';
 
 // Get all events for a specific college
 export async function getAllEvents(collegeId) {
   try {
     await dbConnect();
-  
-    const events = await Event.find({ collegeId })
+    // Ensure Event model is available
+    const EventModel = mongoose.models.Event || Event;
+    
+    const events = await EventModel.find({ collegeId })
       .populate({
         path: 'organizer',
         select: 'displayName email role'
@@ -23,7 +26,10 @@ export async function getAllEvents(collegeId) {
 export async function getEventsByOrganizer(organizerId, collegeId) {
   try {
     await dbConnect();
-    const events = await Event.find({ 
+    // Ensure Event model is available
+    const EventModel = mongoose.models.Event || Event;
+    
+    const events = await EventModel.find({ 
       organizer: organizerId,
       collegeId: collegeId 
     })
@@ -43,7 +49,10 @@ export async function getEventsByOrganizer(organizerId, collegeId) {
 export async function getEventById(eventId, collegeId) {
   try {
     await dbConnect();
-    const event = await Event.findOne({ 
+    // Ensure Event model is available
+    const EventModel = mongoose.models.Event || Event;
+    
+    const event = await EventModel.findOne({ 
       _id: eventId,
       collegeId: collegeId
     })
@@ -65,12 +74,13 @@ export async function getEventById(eventId, collegeId) {
 export async function createEvent(eventData) {
   try {
     await dbConnect();
+    // Ensure Event model is available
+    const EventModel = mongoose.models.Event || Event;
 
-    const newEvent = new Event({
+    const newEvent = new EventModel({
       ...eventData,
       collegeId: eventData.collegeId,
     });
-
 
     await newEvent.save();
     return newEvent;
@@ -84,7 +94,8 @@ export async function createEvent(eventData) {
 export async function updateEvent(eventId, eventData) {
   try {
     await dbConnect();
-    const updatedEvent = await Event.findByIdAndUpdate(
+    const EventModel = mongoose.models.Event || Event;
+    const updatedEvent = await EventModel.findByIdAndUpdate(
       eventId,
       eventData,
       { new: true }
@@ -100,7 +111,8 @@ export async function updateEvent(eventId, eventData) {
 export async function deleteEvent(eventId) {
   try {
     await dbConnect();
-    const result = await Event.findByIdAndDelete(eventId);
+    const EventModel = mongoose.models.Event || Event;
+    const result = await EventModel.findByIdAndDelete(eventId);
     return !!result;
   } catch (error) {
     console.error('Error deleting event:', error);
@@ -112,9 +124,10 @@ export async function deleteEvent(eventId) {
 export async function registerForEvent(eventId, userId) {
   try {
     await dbConnect();
+    const EventModel = mongoose.models.Event || Event;
     
     // Find the event
-    const event = await Event.findById(eventId);
+    const event = await EventModel.findById(eventId);
     if (!event) {
       return { success: false, message: 'Event not found' };
     }
@@ -139,7 +152,7 @@ export async function registerForEvent(eventId, userId) {
     await event.save();
     
     // Return the updated event with populated fields
-    const updatedEvent = await Event.findById(eventId)
+    const updatedEvent = await EventModel.findById(eventId)
       .populate({
         path: 'organizer',
         select: 'displayName email role'
@@ -164,9 +177,10 @@ export async function registerForEvent(eventId, userId) {
 export async function cancelEventRegistration(eventId, userId) {
   try {
     await dbConnect();
+    const EventModel = mongoose.models.Event || Event;
     
     // Find the event
-    const event = await Event.findById(eventId);
+    const event = await EventModel.findById(eventId);
     if (!event) {
       return { success: false, message: 'Event not found' };
     }
@@ -188,7 +202,7 @@ export async function cancelEventRegistration(eventId, userId) {
     await event.save();
     
     // Return the updated event with populated fields
-    const updatedEvent = await Event.findById(eventId)
+    const updatedEvent = await EventModel.findById(eventId)
       .populate({
         path: 'organizer',
         select: 'displayName email role'
@@ -200,7 +214,7 @@ export async function cancelEventRegistration(eventId, userId) {
     
     return { 
       success: true, 
-      message: 'Successfully canceled event registration',
+      message: 'Successfully cancelled event registration',
       event: updatedEvent
     };
   } catch (error) {
@@ -213,7 +227,8 @@ export async function cancelEventRegistration(eventId, userId) {
 export async function getRegisteredEvents(userId, collegeId) {
   try {
     await dbConnect();
-    const events = await Event.find({ 
+    const EventModel = mongoose.models.Event || Event;
+    const events = await EventModel.find({ 
       attendees: userId,
       collegeId: collegeId 
     })
@@ -233,7 +248,8 @@ export async function getRegisteredEvents(userId, collegeId) {
 export async function isUserRegistered(eventId, userId) {
   try {
     await dbConnect();
-    const event = await Event.findById(eventId);
+    const EventModel = mongoose.models.Event || Event;
+    const event = await EventModel.findById(eventId);
     if (!event) return false;
     return event.attendees.some((attendeeId) => attendeeId.toString() === userId);
   } catch (error) {

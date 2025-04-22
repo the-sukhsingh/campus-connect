@@ -221,13 +221,13 @@ export async function cancelBooking(bookingId, userId) {
       throw new Error('You are not authorized to cancel this booking');
     }
     
-    // Check if the booking is already canceled or rejected
-    if (['canceled', 'rejected'].includes(booking.status)) {
+    // Check if the booking is already cancelled or rejected
+    if (['cancelled', 'rejected'].includes(booking.status)) {
       throw new Error(`Booking is already ${booking.status}`);
     }
     
     // Update the booking status
-    booking.status = 'canceled';
+    booking.status = 'cancelled';
     await booking.save();
     
     return booking;

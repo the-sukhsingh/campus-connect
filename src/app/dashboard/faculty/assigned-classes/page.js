@@ -105,12 +105,7 @@ function AssignedClassesPage() {
           <h1 className="text-2xl font-bold">My Assigned Classes</h1>
           <p className="text-gray-600 mt-1">View and manage your classes and attendance</p>
         </div>
-        <Link
-          href="/dashboard/faculty"
-          className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded transition-colors"
-        >
-          Back to Dashboard
-        </Link>
+       
       </div>
 
       {error && (
@@ -218,16 +213,6 @@ function AssignedClassesPage() {
                       <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
                     </svg>
                     Mark Attendance
-                  </Link>
-                  
-                  <Link
-                    href={`/dashboard/faculty/attendance?classFilter=${classItem._id}`}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded flex items-center justify-center transition-colors"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clipRule="evenodd" />
-                    </svg>
-                    View Records
                   </Link>
                 </div>
               </div>

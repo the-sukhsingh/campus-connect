@@ -105,12 +105,7 @@ function BookCatalogPage() {
           <h1 className="text-2xl font-bold">Library Book Catalog</h1>
           <p className="text-gray-600 mt-1">Browse all books available in the library</p>
         </div>
-        <Link
-          href={`/dashboard/${dbUser.role}`}
-          className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded transition-colors"
-        >
-          Back to Dashboard
-        </Link>
+        
       </div>
 
       {error && (

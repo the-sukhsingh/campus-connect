@@ -116,12 +116,7 @@ function MyBooksPage() {
           <h1 className="text-2xl font-bold">My Books</h1>
           <p className="text-gray-600 mt-1">Manage your borrowed books and returns</p>
         </div>
-        <Link
-          href="/dashboard/student"
-          className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded transition-colors"
-        >
-          Back to Dashboard
-        </Link>
+        
       </div>
 
       {error && (

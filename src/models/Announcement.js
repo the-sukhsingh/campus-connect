@@ -23,6 +23,11 @@ const AnnouncementSchema = new Schema({
     ref: 'College',
     default: null
   },
+  classId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Class',
+    default: null
+  },
   expiryDate: {
     type: Date,
     default: () => {

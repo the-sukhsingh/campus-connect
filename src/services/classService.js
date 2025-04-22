@@ -323,6 +323,65 @@ export async function removeFacultyAssignment(
   }
 }
 
+// Delete a class
+export async function deleteClass(classId, facultyId) {
+  try {
+    await dbConnect();
+    
+    if (!mongoose.Types.ObjectId.isValid(classId) || !mongoose.Types.ObjectId.isValid(facultyId)) {
+      throw new Error('Invalid IDs');
+    }
+    
+    // Verify the class exists
+    const classObj = await Class.findById(classId);
+    if (!classObj) {
+      throw new Error('Class not found');
+    }
+    
+    // Only allow the class owner to delete the class
+    if (classObj.teacher.toString() !== facultyId) {
+      throw new Error('Unauthorized. Only the class creator can delete this class');
+    }
+    
+    // Remove class from teacher's classes array
+    await User.updateOne(
+      { _id: facultyId },
+      { $pull: { classes: classId } }
+    );
+    
+    // Remove class from college's classes array
+    if (classObj.college) {
+      await CollegeModel.updateOne(
+        { _id: classObj.college },
+        { $pull: { classes: classId } }
+      );
+    }
+    
+    // Remove class from any faculty member's classes array
+    if (classObj.facultyAssignments && classObj.facultyAssignments.length > 0) {
+      const facultyIds = classObj.facultyAssignments.map(
+        assignment => assignment.faculty
+      );
+      
+      await User.updateMany(
+        { _id: { $in: facultyIds } },
+        { $pull: { classes: classId } }
+      );
+    }
+    
+    // Delete the class
+    await Class.findByIdAndDelete(classId);
+    
+    return {
+      success: true,
+      message: 'Class has been deleted successfully'
+    };
+  } catch (error) {
+    console.error('Error deleting class:', error);
+    throw error;
+  }
+}
+
 // Get student requests for a class
 export async function getStudentRequestsForClass(classId, status) {
   try {

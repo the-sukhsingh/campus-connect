@@ -4,6 +4,7 @@ import Book, { IBook } from '@/models/Book';
 import User from '@/models/User';
 import College from '@/models/College';
 import { nanoid } from 'nanoid';
+import BookBorrowing from '@/models/BookBorrowing';
 
 // Generate unique book code
 const generateBookCode = async (collegeId) => {
@@ -378,6 +379,13 @@ export const deleteBook = async (bookId, firebaseUid) => {
     
     // Check if book has borrowings
     // This would require importing the BookBorrowing model and checking if there are active borrowings
+
+    const bookBorrowings = await BookBorrowing.find({ book: bookId });
+
+    if (bookBorrowings.length > 0) {
+      return { success: false, error: 'Cannot delete book with active borrowings' };
+    }
+
     // For now, we'll just delete the book
     
     await Book.findByIdAndDelete(bookId);

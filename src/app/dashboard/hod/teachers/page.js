@@ -19,7 +19,7 @@ function TeachersManagementPage() {
   const [selectedDepartments, setSelectedDepartments] = useState({});
   const [librarianSelections, setLibrarianSelections] = useState({});
 
-  // New state for Add Faculty functionality
+  // State for Add Faculty functionality
   const [showAddModal, setShowAddModal] = useState(false);
   const [newFacultyData, setNewFacultyData] = useState({
     email: '',
@@ -27,7 +27,18 @@ function TeachersManagementPage() {
     department: '',
     isLibrarian: false,
   });
+  
+  // State for Edit Faculty functionality
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editTeacherId, setEditTeacherId] = useState(null);
+  const [editFacultyData, setEditFacultyData] = useState({
+    displayName: '',
+    department: '',
+    isLibrarian: false,
+  });
+  
   const [validationErrors, setValidationErrors] = useState({});
+  const [editValidationErrors, setEditValidationErrors] = useState({});
 
   // Fetch college and teachers data
   const fetchData = async () => {
@@ -241,6 +252,185 @@ function TeachersManagementPage() {
     }
   };
 
+  // Handle opening the edit modal and populate data
+  const openEditModal = (teacher) => {
+    setEditTeacherId(teacher._id);
+    setEditFacultyData({
+      displayName: teacher.displayName || '',
+      department: teacher.department || (collegeInfo.departments?.[0] || ''),
+      isLibrarian: teacher.role === 'librarian',
+    });
+    setShowEditModal(true);
+  };
+  
+  // Handle input change for edit form
+  const handleEditInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setEditFacultyData({
+      ...editFacultyData,
+      [name]: type === 'checkbox' ? checked : value
+    });
+    
+    // Clear validation error when field is edited
+    if (editValidationErrors[name]) {
+      setEditValidationErrors({
+        ...editValidationErrors,
+        [name]: ''
+      });
+    }
+  };
+  
+  // Validate edit faculty form
+  const validateEditFacultyForm = () => {
+    const errors = {};
+    
+    if (!editFacultyData.displayName.trim()) {
+      errors.displayName = 'Name is required';
+    }
+    
+    if (!editFacultyData.department) {
+      errors.department = 'Department is required';
+    }
+    
+    setEditValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+  
+  // Handle updating a teacher
+  const handleUpdateTeacher = async (e) => {
+    e.preventDefault();
+    
+    if (!validateEditFacultyForm()) {
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      const response = await fetch('/api/user/college/teachers/manage', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firebaseUid: user?.uid,
+          teacherId: editTeacherId,
+          updates: {
+            displayName: editFacultyData.displayName,
+            department: editFacultyData.department,
+            isLibrarian: editFacultyData.isLibrarian,
+          }
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update teacher');
+      }
+      
+      const data = await response.json();
+      
+      // Update the teacher in the list
+      setTeachers(prevTeachers => 
+        prevTeachers.map(teacher => 
+          teacher._id === editTeacherId 
+            ? {
+                ...teacher,
+                displayName: editFacultyData.displayName,
+                department: editFacultyData.department,
+                role: editFacultyData.isLibrarian ? 'librarian' : 'faculty'
+              } 
+            : teacher
+        )
+      );
+      
+      // Close modal and reset state
+      setShowEditModal(false);
+      setEditTeacherId(null);
+      setEditFacultyData({
+        displayName: '',
+        department: '',
+        isLibrarian: false,
+      });
+      
+      // Show success message
+      setMessage({
+        type: 'success',
+        text: 'Teacher updated successfully!'
+      });
+      
+      // Clear message after 5 seconds
+      setTimeout(() => {
+        setMessage({ type: '', text: '' });
+      }, 5000);
+      
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error.message || 'Failed to update teacher. Please try again.'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  // Handle deleting a teacher
+  const handleDeleteTeacher = async (teacherId, teacherName) => {
+    if (!window.confirm(`Are you sure you want to delete ${teacherName || 'this teacher'}? This action cannot be undone and will remove their account completely.`)) {
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      const response = await fetch('/api/user/college/teachers/manage', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firebaseUid: user?.uid,
+          teacherId: teacherId
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete teacher');
+      }
+      
+      // Remove the teacher from the list
+      setTeachers(prevTeachers => 
+        prevTeachers.filter(teacher => teacher._id !== teacherId)
+      );
+      
+      // Show success message
+      setMessage({
+        type: 'success',
+        text: 'Teacher removed successfully!'
+      });
+      
+      // Clear message after 5 seconds
+      setTimeout(() => {
+        setMessage({ type: '', text: '' });
+      }, 5000);
+      
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error.message || 'Failed to remove teacher. Please try again.'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  // Handle pending teacher action (approve/reject)
+  const handleTeacherAction = async (teacherId, action) => {
+    // Implementation for handling pending teacher requests
+    // This function would need to be implemented for processing pending teacher requests
+  };
+
   return (
     <div className="p-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
@@ -277,12 +467,7 @@ function TeachersManagementPage() {
             {refreshing ? 'Refreshing...' : 'Refresh'}
           </button>
 
-          <Link
-            href="/dashboard/hod"
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded transition-colors"
-          >
-            Back to Dashboard
-          </Link>
+         
         </div>
       </div>
 
@@ -379,6 +564,9 @@ function TeachersManagementPage() {
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Joined
                         </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -409,6 +597,22 @@ function TeachersManagementPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {formatDate(teacher.createdAt)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => openEditModal(teacher)}
+                                className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTeacher(teacher._id, teacher.displayName)}
+                                className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none"
+                              >
+                                Delete
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -666,6 +870,114 @@ function TeachersManagementPage() {
                     </>
                   ) : (
                     'Create Account'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Faculty Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 overflow-y-auto z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/30 bg-opacity-50 transition-opacity" onClick={() => setShowEditModal(false)}></div>
+          
+          <div className="relative bg-white rounded-lg max-w-lg w-full mx-4 shadow-xl transform transition-all">
+            <div className="px-6 py-5 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium text-gray-900">Edit Teacher Details</h3>
+                <button 
+                  type="button" 
+                  className="text-gray-400 hover:text-gray-500"
+                  onClick={() => setShowEditModal(false)}
+                >
+                  <span className="sr-only">Close</span>
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <form onSubmit={handleUpdateTeacher}>
+              <div className="px-6 py-5 space-y-4">
+                <div>
+                  <label htmlFor="displayName" className="block text-sm font-medium text-gray-700">Full Name</label>
+                  <input
+                    type="text"
+                    id="displayName"
+                    name="displayName"
+                    value={editFacultyData.displayName}
+                    onChange={handleEditInputChange}
+                    className={`mt-1 block w-full border ${editValidationErrors.displayName ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
+                    placeholder="Dr. John Smith"
+                  />
+                  {editValidationErrors.displayName && (
+                    <p className="mt-1 text-sm text-red-600">{editValidationErrors.displayName}</p>
+                  )}
+                </div>
+                
+                <div>
+                  <label htmlFor="department" className="block text-sm font-medium text-gray-700">Department</label>
+                  <select
+                    id="department"
+                    name="department"
+                    value={editFacultyData.department}
+                    onChange={handleEditInputChange}
+                    className={`mt-1 block w-full border ${editValidationErrors.department ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
+                  >
+                    {collegeInfo.departments?.map((department) => (
+                      <option key={department} value={department}>
+                        {department}
+                      </option>
+                    ))}
+                  </select>
+                  {editValidationErrors.department && (
+                    <p className="mt-1 text-sm text-red-600">{editValidationErrors.department}</p>
+                  )}
+                </div>
+                
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="isLibrarian"
+                    name="isLibrarian"
+                    checked={editFacultyData.isLibrarian}
+                    onChange={handleEditInputChange}
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="isLibrarian" className="ml-2 block text-sm text-gray-900">
+                    Assign as librarian
+                  </label>
+                </div>
+              </div>
+              
+              <div className="px-6 py-4 bg-gray-50 text-right border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mr-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={`inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Updating...
+                    </>
+                  ) : (
+                    'Update Teacher'
                   )}
                 </button>
               </div>

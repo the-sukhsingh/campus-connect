@@ -203,12 +203,7 @@ export default function AdminRoomBookingsPage() {
         <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
           <p>{error}</p>
         </div>
-        <Link
-          href={`/dashboard/${dbUser?.role || ''}`}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded transition-colors"
-        >
-          Back to Dashboard
-        </Link>
+        
       </div>
     );
   }
@@ -227,12 +222,7 @@ export default function AdminRoomBookingsPage() {
           >
             View All Rooms
           </Link>
-          <Link
-            href={`/dashboard/${dbUser?.role}`}
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded transition-colors"
-          >
-            Back to Dashboard
-          </Link>
+          
         </div>
       </div>
 
@@ -282,14 +272,14 @@ export default function AdminRoomBookingsPage() {
             Rejected
           </button>
           <button
-            onClick={() => handleTabChange('canceled')}
+            onClick={() => handleTabChange('cancelled')}
             className={`px-6 py-3 text-sm font-medium ${
-              activeTab === 'canceled'
+              activeTab === 'cancelled'
                 ? 'border-b-2 border-indigo-500 text-indigo-600'
                 : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            Canceled
+            Cancelled
           </button>
         </div>
 

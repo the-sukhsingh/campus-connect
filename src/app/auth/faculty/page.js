@@ -59,12 +59,13 @@ export default function FacultyAuthPage() {
       // Verify if the user is a faculty member
       const response = await fetch(`/api/user/firebase/${userCredential.user.uid}`);
       const userData = await response.json();
-      
-      if (userData.role !== 'faculty') {
+      console.log("Userdata is", userData);
+
+      if (userData.role !== 'faculty' && userData.role !== 'librarian') {
         throw new Error('auth/wrong-role');
       }
       
-      router.push('/dashboard/faculty');
+      router.push(`/dashboard/${userData.role}`);
     } catch (error) {
       if (error.message === 'auth/wrong-role') {
         setError('This account does not have faculty privileges. Please use the correct login page for your role.');

@@ -168,12 +168,7 @@ function CollegeManagePage() {
             Update your college information and manage settings
           </p>
         </div>
-        <Link
-          href="/dashboard/hod"
-          className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded transition-colors"
-        >
-          Back to Dashboard
-        </Link>
+        
       </div>
 
       {message.text && (

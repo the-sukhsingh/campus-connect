@@ -79,7 +79,7 @@ export default function StudentAuthPage() {
       const response = await fetch(`/api/user/firebase/${userCredential.user.uid}`);
       const userData = await response.json();
       
-      if (userData.role !== 'student' && userData.role !== 'faculty' && userData.role !== 'hod') {
+      if (userData.role !== 'student') {
         throw new Error('auth/wrong-role');
       }
       

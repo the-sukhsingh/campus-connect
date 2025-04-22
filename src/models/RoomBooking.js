@@ -40,7 +40,7 @@ const RoomBookingSchema = new Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'approved', 'rejected', 'canceled'],
+    enum: ['pending', 'approved', 'rejected', 'cancelled'],
     default: 'pending',
   },
   rejectionReason: {

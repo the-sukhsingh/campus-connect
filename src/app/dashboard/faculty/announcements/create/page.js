@@ -2,7 +2,7 @@
 
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
-import { useState, FormEvent } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -11,13 +11,42 @@ function CreateAnnouncementPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [classes, setClasses] = useState([]);
+  const [loading, setLoading] = useState(false);
   
-  // Form data state - updated to include expiry date
+  // Form data state - updated to include expiry date and class selection
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    expiryDate: ''
+    expiryDate: '',
+    classId: '' // Empty string means it's a general announcement
   });
+
+  // Fetch assigned classes for this faculty
+  useEffect(() => {
+    const fetchClasses = async () => {
+      if (!user) return;
+      
+      try {
+        setLoading(true);
+        
+        const response = await fetch(`/api/user/college/teachers?uid=${user?.uid}&action=assigned-classes`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch assigned classes');
+        }
+        
+        const data = await response.json();
+        setClasses(data.classes || []);
+      } catch (error) {
+        console.error('Error fetching assigned classes:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchClasses();
+  }, [user]);
 
   // Handle input changes
   const handleChange = (e) => {
@@ -61,9 +90,11 @@ function CreateAnnouncementPage() {
           firebaseUid: user?.uid,
           action: 'create',
           announcement: {
-            ...formData,
+            title: formData.title,
+            content: formData.content,
             expiryDate: formData.expiryDate || undefined
-          }
+          },
+          classId: formData.classId || null // Pass classId separately
         }),
       });
       
@@ -81,7 +112,8 @@ function CreateAnnouncementPage() {
       setFormData({
         title: '',
         content: '',
-        expiryDate: ''
+        expiryDate: '',
+        classId: ''
       });
       
       // Redirect after successful submission
@@ -106,7 +138,7 @@ function CreateAnnouncementPage() {
         <div>
           <h1 className="text-2xl font-bold">Create Announcement</h1>
           <p className="text-gray-600 mt-1">
-            Post an announcement for all users
+            Post an announcement for all users or for a specific class
           </p>
         </div>
         <Link
@@ -148,6 +180,33 @@ function CreateAnnouncementPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 placeholder="Enter announcement title"
               />
+            </div>
+
+            {/* Class Selection */}
+            <div>
+              <label htmlFor="classId" className="block text-sm font-medium text-gray-700 mb-2">
+                Target Audience <span className="text-xs text-gray-500">(Optional - select a specific class or leave empty for general announcement)</span>
+              </label>
+              <select
+                id="classId"
+                name="classId"
+                value={formData.classId}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              >
+                <option value="">General Announcement (All Users)</option>
+                {loading ? (
+                  <option disabled>Loading classes...</option>
+                ) : (
+                  classes.map((classItem) => (
+                    <option key={classItem._id} value={classItem._id}>
+                      {classItem.name} - {classItem.department} ({classItem.semester})
+                      {classItem.teachingSubjects?.length > 0 && 
+                        ` - ${classItem.teachingSubjects.join(', ')}`}
+                    </option>
+                  ))
+                )}
+              </select>
             </div>
 
             {/* Content */}

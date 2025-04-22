@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getRooms, createRoom, updateRoom, deleteRoom, getRoomById } from '@/services/roomService';
 import { getUserByFirebaseUid } from '@/services/userService';
+import dbConnect from '@/lib/dbConnect';
+import Room from '@/models/Room';
 
 export async function GET(request) {
   try {
@@ -10,6 +12,12 @@ export async function GET(request) {
     const firebaseUid = searchParams.get('uid');
     const action = searchParams.get('action');
     const roomId = searchParams.get('roomId');
+    const building = searchParams.get('building');
+    const type = searchParams.get('type');
+    const capacity = searchParams.get('capacity');
+    const search = searchParams.get('search');
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
 
     let dbUser;
 
@@ -25,17 +33,61 @@ export async function GET(request) {
       }
       return NextResponse.json({ room });
     }
+    
+    // If action is get-buildings, return unique building names
+    if (action === 'get-buildings') {
+      await dbConnect();
+      const collegeFilter = dbUser?.college ? { collegeId: dbUser.college } : {};
+      const buildings = await Room.distinct('building', collegeFilter);
+      return NextResponse.json({ buildings });
+    }
+    
+    // If action is get-room-types, return unique room types
+    if (action === 'get-room-types') {
+      await dbConnect();
+      const collegeFilter = dbUser?.college ? { collegeId: dbUser.college } : {};
+      const roomTypes = await Room.distinct('type', collegeFilter);
+      return NextResponse.json({ roomTypes });
+    }
 
     // For regular GET requests without specific room ID
     if (!collegeId) {
         collegeId = dbUser?.college || null;
     }
 
-    console.log("collegeId", collegeId);
-    // Get rooms, optionally filtered by collegeId
-    const rooms = await getRooms(collegeId);
+    // Build the query for filtering
+    let query = collegeId ? { collegeId } : {};
     
-    return NextResponse.json({ rooms });
+    // Apply additional filters if provided
+    if (building) query.building = building;
+    if (type) query.type = type;
+    if (capacity) query.capacity = { $gte: parseInt(capacity) };
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { building: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    // Connect to database
+    await dbConnect();
+    
+    // Get total count for pagination
+    const total = await Room.countDocuments(query);
+    
+    // Get rooms with pagination
+    const rooms = await Room.find(query)
+      .sort({ building: 1, name: 1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+    
+    return NextResponse.json({ 
+      rooms,
+      total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page
+    });
   } catch (error) {
     console.error('API error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

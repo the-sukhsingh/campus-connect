@@ -16,6 +16,7 @@ function ClassesManagementPage() {
   const [selectedClass, setSelectedClass] = useState(null);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [editingClassId, setEditingClassId] = useState(null);
+  const [isDeletingClass, setIsDeletingClass] = useState(false);
   const [editFormData, setEditFormData] = useState({
     name: '',
     course: '',
@@ -265,6 +266,54 @@ function ClassesManagementPage() {
     }
   };
 
+  // Handle class deletion
+  const handleDeleteClass = async (classItem) => {
+    if (!user || !classItem?._id) return;
+    
+    // Show confirmation dialog
+    if (!confirm(`Are you sure you want to delete the class "${classItem.name}"? This action cannot be undone and will remove all associated data including student enrollments and faculty assignments.`)) {
+      return;
+    }
+    
+    try {
+      setIsDeletingClass(true);
+      
+      const response = await fetch(`/api/user/teacher/classes/${classItem._id}?uid=${user?.uid}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete class');
+      }
+      
+      // Remove the class from the list
+      setClasses(prevClasses => 
+        prevClasses.filter(cls => cls._id !== classItem._id)
+      );
+      
+      // Show success message
+      setMessage({
+        type: 'success',
+        text: `Class "${classItem.name}" has been deleted successfully`
+      });
+      
+      // Clear the message after 5 seconds
+      setTimeout(() => {
+        setMessage({ type: '', text: '' });
+      }, 5000);
+      
+    } catch (error) {
+      console.error('Error deleting class:', error);
+      setMessage({
+        type: 'error',
+        text: error.message || 'Failed to delete class. Please try again.'
+      });
+    } finally {
+      setIsDeletingClass(false);
+    }
+  };
+
   // Format date for display
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -305,12 +354,6 @@ function ClassesManagementPage() {
             Create and manage your classes, approve student requests
           </p>
         </div>
-        <Link
-          href="/dashboard/faculty"
-          className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded transition-colors"
-        >
-          Back to Dashboard
-        </Link>
       </div>
 
       {message.text && (
@@ -354,7 +397,6 @@ function ClassesManagementPage() {
         </div>
       ) : selectedClass ? (
         <>
-          {/* Student Requests View */}
           <div className="mb-6">
             <button
               onClick={() => setSelectedClass(null)}
@@ -366,79 +408,6 @@ function ClassesManagementPage() {
               Back to Classes
             </button>
 
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-lg font-semibold mb-4">
-                Student Join Requests
-              </h2>
-
-              {loading ? (
-                <div className="flex justify-center items-center h-32">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
-                </div>
-              ) : pendingRequests.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No pending student requests</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Student
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Email
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Request Date
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {pendingRequests.map((student) => (
-                        <tr key={student._id}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">
-                              {student.displayName || 'Unnamed Student'}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">
-                              {student.email}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {student.joinRequestDate ? formatDate(student.joinRequestDate) : 'Unknown'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => handleStudentAction(student._id, selectedClass, 'approve')}
-                                disabled={isSubmitting}
-                                className={`inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                                  }`}
-                              >
-                                Approve
-                              </button>
-                              <button
-                                onClick={() => handleStudentAction(student._id, selectedClass, 'reject')}
-                                disabled={isSubmitting}
-                                className={`inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                                  }`}
-                              >
-                                Reject
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
           </div>
         </>
       ) : (
@@ -457,7 +426,7 @@ function ClassesManagementPage() {
                 {showForm ? (
                   <>
                     <svg className="mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414z" clipRule="evenodd" />
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
                     </svg>
                     Cancel
                   </>
@@ -491,7 +460,7 @@ function ClassesManagementPage() {
                       value={formData.name}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                      placeholder="e.g., Introduction to Computer Science"
+                      placeholder="e.g., B.Tech Computer Science"
                     />
                     </div>
                     <div>
@@ -675,6 +644,13 @@ function ClassesManagementPage() {
                                 className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none"
                               >
                                 Edit Class
+                              </button>
+                              <button
+                                onClick={() => handleDeleteClass(classItem)}
+                                disabled={isDeletingClass}
+                                className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {isDeletingClass ? 'Deleting...' : 'Delete Class'}
                               </button>
                             </div>
                           </td>

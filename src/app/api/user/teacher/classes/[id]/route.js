@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getClassById } from "@/services/classService";
+import { getClassById, deleteClass } from "@/services/classService";
 import { getUserByFirebaseUid } from "@/services/userService";
 import dbConnect from "@/lib/dbConnect";
 import Class from "@/models/Class";
@@ -155,6 +155,53 @@ export async function PATCH(request, { params }) {
     console.error("Error updating class:", error);
     return NextResponse.json(
       { error: error.message || "Failed to update class" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE: Delete a class
+export async function DELETE(request, { params }) {
+  try {
+    const classId = (await params).id;
+    const { searchParams } = new URL(request.url);
+    const firebaseUid = searchParams.get("uid");
+
+    if (!firebaseUid) {
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Check if user exists and is a teacher or HOD
+    const user = await getUserByFirebaseUid(firebaseUid);
+    if (!user) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    if (user.role !== "faculty" && user.role !== "hod") {
+      return NextResponse.json(
+        { error: "Unauthorized. Only teachers can delete classes" },
+        { status: 403 }
+      );
+    }
+
+    // Delete the class and handle references cleanup
+    const result = await deleteClass(classId, user._id);
+
+    return NextResponse.json({
+      success: true,
+      message: "Class deleted successfully"
+    });
+    
+  } catch (error) {
+    console.error("Error deleting class:", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to delete class" },
       { status: 500 }
     );
   }

@@ -113,12 +113,7 @@ export default function BorrowingsListingPage() {
           >
             Browse Books
           </Link>
-          <Link
-            href="/dashboard"
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded transition-colors"
-          >
-            Back to Dashboard
-          </Link>
+          
         </div>
       </div>
 

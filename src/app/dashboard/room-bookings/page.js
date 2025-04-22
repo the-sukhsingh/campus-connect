@@ -25,7 +25,7 @@ export default function MyBookingsPage() {
         setLoading(true);
         setError('');
         
-        let url = `/api/room-bookings?action=get-user-bookings&uid=${user?.uid}&page=${currentPage}`;
+        let url = `/api/room-bookings?action=get-my-bookings&uid=${user?.uid}&page=${currentPage}`;
         
         // Add status filter if not showing all
         if (activeTab !== 'all') {
@@ -98,11 +98,11 @@ export default function MyBookingsPage() {
       // Update booking in list
       setBookings(prev => prev.map(booking => 
         booking._id === bookingId 
-          ? { ...booking, status: 'canceled' } 
+          ? { ...booking, status: 'cancelled' } 
           : booking
       ));
       
-      setSuccessMessage(data.message || 'Booking canceled successfully');
+      setSuccessMessage(data.message || 'Booking cancelled successfully');
     } catch (err) {
       console.error('Error canceling booking:', err);
       setError(err.message || 'Failed to cancel booking. Please try again.');
@@ -120,8 +120,8 @@ export default function MyBookingsPage() {
         return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Approved</span>;
       case 'rejected':
         return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Rejected</span>;
-      case 'canceled':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Canceled</span>;
+      case 'cancelled':
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Cancelled</span>;
       default:
         return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">{status}</span>;
     }
@@ -148,12 +148,7 @@ export default function MyBookingsPage() {
           >
             Book a Room
           </Link>
-          <Link
-            href={`/dashboard/${dbUser?.role}`}
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded transition-colors"
-          >
-            Back to Dashboard
-          </Link>
+          
         </div>
       </div>
 
@@ -213,14 +208,14 @@ export default function MyBookingsPage() {
             Rejected
           </button>
           <button
-            onClick={() => handleTabChange('canceled')}
+            onClick={() => handleTabChange('cancelled')}
             className={`px-6 py-3 text-sm font-medium ${
-              activeTab === 'canceled'
+              activeTab === 'cancelled'
                 ? 'border-b-2 border-indigo-500 text-indigo-600'
                 : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            Canceled
+            Cancelled
           </button>
         </div>
 

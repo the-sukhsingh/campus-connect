@@ -178,21 +178,22 @@ export async function isAttendanceLocked(classId, subject, date) {
 }
 
 // Get previous attendance records for a specific class and subject
-export async function getPreviousAttendance(classId, subject, limit = 10) {
+export async function getPreviousAttendance(classId, subject) {
   try {
     await dbConnect();
-    
+
     const attendanceRecords = await Attendance.find({
       classId,
       subject
     })
     .populate({
       path: 'attendanceRecords.student',
-      select: 'displayName email rollNo'
+      select: 'displayName email rollNo _id'
     })
     .sort({ date: -1 }) // Most recent first
-    .limit(limit);
     
+    console.log('Previous attendance records:', attendanceRecords);
+
     return attendanceRecords;
   } catch (error ) {
     console.error('Error fetching previous attendance:', error);
@@ -288,18 +289,20 @@ export async function getStudentAttendance(studentId) {
     for(const classData of classes) {
       
       const studentRecord = classData.students.find((student) => 
-        student.student.toString() === studentId.toString() || 
-        (student.student._id && student.student._id.toString() === studentId)
+      {
+        
+        return student.student.toString() === studentId.toString() ||
+        (student.student._id && student.student._id.toString() === studentId.toString());
+      }
       );
   
       if (!studentRecord) continue;
 
       // Get all active subjects in this class
       const activeSubjects = classData.facultyAssignments.map(assignment => assignment.subject);
-
       // Find all attendance records that contain this student
       const classAttendanceRecords = await Attendance.find({
-        'attendanceRecords.student': studentRecord._id || studentRecord.student._id
+        'attendanceRecords.student': studentRecord.student || studentRecord.student._id
       })
       .populate({
         path: 'classId',
@@ -318,8 +321,10 @@ export async function getStudentAttendance(studentId) {
         .filter(record => activeSubjects.includes(record.subject)) // Filter by active subjects only
         .map(record => {
           const studentAttendance = record.attendanceRecords.find(
-            (rec) => rec.student.toString() === studentRecord._id.toString() || 
-                          (rec.student._id && rec.student._id.toString() === studentRecord._id.toString())
+            (rec) => {
+              return rec.student.toString() === studentRecord.student.toString() || 
+              (rec.student._id && rec.student._id.toString() === studentRecord.student.toString())
+            }
           );
           return {
             class: record.classId,
@@ -330,7 +335,7 @@ export async function getStudentAttendance(studentId) {
             markedBy: record.markedBy
           };
         });
-      
+        console.log('Formatted records:', formattedRecords);
 
       attendanceRecords.push(...formattedRecords);
     }
@@ -383,11 +388,20 @@ export async function getStudentAttendanceSummary(studentId){
             student.student.toString() === studentId.toString() || 
             (student.student._id && student.student._id.toString() === studentId)
           );
+
+          console.log('Student record:', studentRecord);
+
+          // console.log("Attendance record:", record);
+
           // Find this student's status in the attendance record
           const studentAttendanceRecord = record.attendanceRecords.find(
-            (rec) => rec.student.toString() === studentRecord._id.toString() || 
-                          (rec.student._id && rec.student._id.toString() === studentRecord._id.toString())
+            (rec) => {
+              console.log('Checking student:', rec.student.toString(), studentRecord.student.toString());
+              return rec.student.toString() === studentRecord.student.toString() 
+            }
           );
+
+          // console.log('Student attendance record:', studentAttendanceRecord);
 
           if (studentAttendanceRecord) {
             if (studentAttendanceRecord.status === 'present') {
@@ -418,6 +432,8 @@ export async function getStudentAttendanceSummary(studentId){
         });
       }
     }
+
+    // console.log('Student attendance summary:', classSummaries);
     
     return classSummaries;
   } catch (error ) {
