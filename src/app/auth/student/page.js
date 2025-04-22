@@ -79,14 +79,16 @@ export default function StudentAuthPage() {
       const response = await fetch(`/api/user/firebase/${userCredential.user.uid}`);
       const userData = await response.json();
       
-      if (userData.role !== 'student') {
+      if (userData.role !== 'student' && userData.role !== 'faculty' && userData.role !== 'hod') {
         throw new Error('auth/wrong-role');
       }
       
-      router.push('/dashboard/student');
+      router.push(`/dashboard/${userData.role}`);
     } catch (error) {
       if (error.message === 'auth/wrong-role') {
         setError('This account does not have student privileges. Please use the correct login page for your role.');
+      } else if (error.message === 'auth/no-account') {
+        setError('Your account doesn\'t exist. Student accounts can only be created by faculty. Please contact your teacher.');
       } else {
         setError(getReadableErrorMessage(error.message));
       }

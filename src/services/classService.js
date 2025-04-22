@@ -106,7 +106,7 @@ export async function getClassesByFaculty(facultyId) {
     // Find classes where this faculty member is assigned
     const classes = await Class.find({
       $or: [
-        { teacher: user._id }, // Classes they created
+        // { teacher: user._id }, // Classes they created
         { 'facultyAssignments.faculty': user._id } // Classes they are assigned to
       ]
     })

@@ -158,6 +158,7 @@ export async function POST(request) {
                     isFirstLogin: true,
                     passwordChanged: false,
                     profileCompleted: false,
+                    college:student.collegeId ? student.collegeId : creatorUser.college,
                 });
 
                 await newUser.save();

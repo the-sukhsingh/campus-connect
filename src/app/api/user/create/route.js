@@ -75,6 +75,13 @@ export async function POST(request) {
             defaultPassword = Math.random().toString(36).slice(-8);
         }
 
+
+        if(defaultPassword.length < 6) {
+            if(userData.role === 'student') {
+                defaultPassword = DEFAULT_STUDENT_PASSWORD;
+            }
+        }
+
         // Create the user in Firebase first
         const firebaseUser = await auth.createUser({
             email: userData.email.toLowerCase(),
