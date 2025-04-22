@@ -18,7 +18,6 @@ function ManageStudentsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showUpgradeForm, setShowUpgradeForm] = useState(false);
   const [approvedStudents, setApprovedStudents] = useState([]);
-  const [pendingStudents, setPendingStudents] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudents, setSelectedStudents] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
@@ -62,10 +61,8 @@ function ManageStudentsPage() {
 
         if (data.class && data.class.students) {
           const approved = data.class.students.filter((s) => s.status === 'approved');
-          const pending = data.class.students.filter((s) => s.status === 'pending');
-
+          console.log('Approved students:', approved);
           setApprovedStudents(approved);
-          setPendingStudents(pending);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -81,57 +78,6 @@ function ManageStudentsPage() {
     fetchClassData();
   }, [user, classId]);
 
-  const handleStudentAction = async (studentId, action) => {
-    if (!user || !classId || !studentId) return;
-
-    try {
-      setIsSubmitting(true);
-
-      const response = await fetch('/api/user/teacher/classes/students', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firebaseUid: user?.uid,
-          classId,
-          studentId,
-          action,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Failed to ${action} student`);
-      }
-
-      if (action === 'approve') {
-        const approvedStudent = pendingStudents.find((s) => s._id === studentId);
-        if (approvedStudent) {
-          setApprovedStudents((prev) => [...prev, { ...approvedStudent, status: 'approved' }]);
-          setPendingStudents((prev) => prev.filter((s) => s._id !== studentId));
-        }
-      } else {
-        setPendingStudents((prev) => prev.filter((s) => s._id !== studentId));
-      }
-
-      setMessage({
-        type: 'success',
-        text: `Student ${action === 'approve' ? 'approved' : 'rejected'} successfully!`,
-      });
-
-      setTimeout(() => {
-        setMessage({ type: '', text: '' });
-      }, 3000);
-    } catch (error) {
-      setMessage({
-        type: 'error',
-        text: error.message || `Failed to ${action} student. Please try again.`,
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleRemoveStudent = async (studentId) => {
     if (!user || !classId || !studentId) return;
@@ -364,6 +310,7 @@ function ManageStudentsPage() {
             rollNo: newStudentData.rollNo || '',
             classId: classId,
             studentId: newStudentData.studentId || '',
+            department: classData?.department || undefined,
             // If class has college info, add it to the student
             collegeId: classData?.college?._id || undefined,
           }
@@ -388,10 +335,8 @@ function ManageStudentsPage() {
           
           if (refreshData.class && refreshData.class.students) {
             const approved = refreshData.class.students.filter((s) => s.status === 'approved');
-            const pending = refreshData.class.students.filter((s) => s.status === 'pending');
 
             setApprovedStudents(approved);
-            setPendingStudents(pending);
           }
         }
       }
@@ -497,6 +442,7 @@ function ManageStudentsPage() {
             role: 'student',
             rollNo: student.rollNo || '',
             studentId: student.studentId || '',
+            department: classData?.department || '',
             classId: classId,
             ...(classData?.collegeId && { collegeId: classData.collegeId }),
           })),
@@ -520,10 +466,8 @@ function ManageStudentsPage() {
 
           if (refreshData.class && refreshData.class.students) {
             const approved = refreshData.class.students.filter((s) => s.status === 'approved');
-            const pending = refreshData.class.students.filter((s) => s.status === 'pending');
 
             setApprovedStudents(approved);
-            setPendingStudents(pending);
           }
         }
       }
@@ -591,76 +535,7 @@ function ManageStudentsPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Pending Students Section */}
-          {pendingStudents.length > 0 && (
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="px-6 py-4 bg-yellow-50 border-b border-yellow-100">
-                <h2 className="text-lg font-semibold text-yellow-800">Pending Join Requests</h2>
-                <p className="text-sm text-yellow-700">
-                  These students have requested to join your class
-                </p>
-              </div>
-              
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Student
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Request Date
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {pendingStudents.map((student) => (
-                      <tr key={student._id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {student.student?.displayName || 'Unnamed Student'}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {student.student?.email}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {student.joinRequestDate ? formatDate(student.joinRequestDate) : 'Unknown'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex justify-end space-x-2">
-                            <button
-                              onClick={() => handleStudentAction(student._id, 'approve')}
-                              disabled={isSubmitting}
-                              className={`inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                                }`}
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => handleStudentAction(student._id, 'reject')}
-                              disabled={isSubmitting}
-                              className={`inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                                }`}
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+
 
           {/* Enrolled Students Section */}
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -794,6 +669,9 @@ function ManageStudentsPage() {
                         Roll No
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Student ID
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Joined On
                       </th>
                       <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -833,6 +711,9 @@ function ManageStudentsPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">{student.student?.rollNo || 'N/A'}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{student.student?.studentId || 'N/A'}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {student.joinRequestDate ? formatDate(student.joinRequestDate) : 'Unknown'}

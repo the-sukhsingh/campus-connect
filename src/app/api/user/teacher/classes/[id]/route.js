@@ -54,7 +54,7 @@ export async function GET(request, { params }) {
   }
 }
 
-// PATCH: Update class details (semester, batch, etc.)
+// PATCH: Update class details
 export async function PATCH(request, { params }) {
   try {
     const classId = (await params).id;
@@ -67,9 +67,9 @@ export async function PATCH(request, { params }) {
       );
     }
     
-    if (!updateData || (!updateData.semester && !updateData.batch)) {
+    if (!updateData) {
       return NextResponse.json(
-        { error: "Update data with semester or batch is required" },
+        { error: "Update data is required" },
         { status: 400 }
       );
     }
@@ -117,8 +117,11 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    // Update only allowed fields
+    // Update all allowed fields
     const allowedUpdates = {
+      name: updateData.name,
+      course: updateData.course, 
+      department: updateData.department,
       semester: updateData.semester,
       batch: updateData.batch
     };

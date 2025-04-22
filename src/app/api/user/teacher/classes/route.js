@@ -71,10 +71,7 @@ export async function POST(request) {
             );
         }
 
-        return NextResponse.json(
-            { message: "Class created successfully", data: result },
-            { status: 201 }
-        );
+        return NextResponse.json({class: result});
 
     } catch (error ) {
         console.error("Error creating class:", error);

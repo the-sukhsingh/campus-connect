@@ -3,6 +3,7 @@ import dbConnect from '@/lib/dbConnect';
 import UserModel from '@/models/User';
 import { auth } from '@/config/firebaseAdmin';
 import { getCollegeById } from '@/services/collegeService';
+import { getClassById } from '@/services/classService';
 
 // Default faculty password - consistent for all faculty members
 const DEFAULT_FACULTY_PASSWORD = "faculty@123";
@@ -55,12 +56,16 @@ export async function POST(request) {
         if (userData.role === 'faculty') {
             // For faculty, use a consistent password
             defaultPassword = DEFAULT_FACULTY_PASSWORD;
+            if (userData.isLibrarian){
+                defaultPassword = 'librarian@123'; // Default password for librarian
+                userData.role = 'librarian'; // Set role to librarian
+            }
         } else if (userData.role === 'student') {
             // For students, use their rollNo or studentId as password
-            if (userData.rollNo) {
-                defaultPassword = userData.rollNo;
-            } else if (userData.studentId) {
+            if (userData.studentId) {
                 defaultPassword = userData.studentId;
+            } else if (userData.rollNo) {
+                defaultPassword = userData.rollNo;
             } else {
                 // Fallback to a random password if no ID is provided
                 defaultPassword = DEFAULT_STUDENT_PASSWORD;
@@ -89,7 +94,6 @@ export async function POST(request) {
             isVerified: true,
             verificationMethod: 'hod',
             collegeStatus: userData.collegeId ? 'linked' : 'notlinked',
-            isLibrarian: userData.isLibrarian || false,
             isFirstLogin: true, // Mark as first login
             passwordChanged: false, // Set the password change status to false to force password change
             // Add student-specific fields if present
@@ -107,15 +111,15 @@ export async function POST(request) {
 
 
         
-        if (newUser.role === 'faculty') {
+        if (newUser.role === 'faculty' || newUser.role === 'librarian') {
             // Add the faculty to the college's faculty list
             college.verifiedTeachers.push(newUser._id);
         }
 
         if (newUser.role === 'student') {
             // Add the student to the college's student listconst classData = await getClassById(userData.classId);
-            console.log('Class data:', classData);
-            if (!classData) {
+            console.log('Class data:', userData);
+            if (!userData.classId) {
                 return NextResponse.json({
                     success: false,
                     message: 'Class not found'
@@ -123,6 +127,7 @@ export async function POST(request) {
             };
     
             newUser.class = userData.classId;
+            const classData = await getClassById(userData.classId);
             classData.students.push({
                 student: newUser._id,
                 status: 'approved',

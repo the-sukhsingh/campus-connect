@@ -157,7 +157,7 @@ export async function getClassById(classId) {
       .populate('teacher', 'displayName email')
       .populate({
       path: 'students.student',
-      select: 'displayName email rollNo'
+      select: 'displayName email rollNo studentId'
       });
 
     if (!classObj) {

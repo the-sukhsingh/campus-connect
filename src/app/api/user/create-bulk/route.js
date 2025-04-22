@@ -146,6 +146,7 @@ export async function POST(request) {
                     displayName: student.displayName,
                     role: 'student',
                     rollNo: student.rollNo || '',
+                    department: student.department || '',
                     studentId: student.studentId || Date.now().toString(36) + Math.random().toString(36).substring(2, 7),
                     class: student.classId,
                     createdBy: creatorUser._id,

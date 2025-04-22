@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 function ClassesManagementPage() {
-  const { user } = useAuth();
+  const { user, dbUser } = useAuth();
   const [classes, setClasses] = useState([]);
   const [collegeInfo, setCollegeInfo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -15,12 +15,20 @@ function ClassesManagementPage() {
   const [showForm, setShowForm] = useState(false);
   const [selectedClass, setSelectedClass] = useState(null);
   const [pendingRequests, setPendingRequests] = useState([]);
+  const [editingClassId, setEditingClassId] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    course: '',
+    department: '',
+    semester: '',
+    batch: ''
+  });
 
   // Form state for creating a new class
   const [formData, setFormData] = useState({
     name: '',
     course: '',
-    department: '',
+    department: dbUser?.department || '',
     semester: '',
     batch: ''
   });
@@ -41,7 +49,7 @@ function ClassesManagementPage() {
         }
 
         const collegeData = await collegeResponse.json();
-
+        console.log('College Data:', collegeData);
         if (!collegeData.college || collegeData.status !== 'approved') {
           setCollegeInfo(null);
           setLoading(false);
@@ -125,6 +133,7 @@ function ClassesManagementPage() {
       }
 
       const data = await response.json();
+      console.log('Class created:', data.class);
 
       // Add the new class to the list
       setClasses(prev => [data.class, ...prev]);
@@ -160,7 +169,101 @@ function ClassesManagementPage() {
     }
   };
 
+  // Handle edit class mode
+  const handleEditClass = (classItem) => {
+    setEditingClassId(classItem._id);
+    setEditFormData({
+      name: classItem.name || '',
+      course: classItem.course || '',
+      department: classItem.department || '',
+      semester: classItem.semester || '',
+      batch: classItem.batch || ''
+    });
+  };
 
+  // Handle edit form input changes
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Close the edit form modal
+  const closeEditForm = () => {
+    setEditingClassId(null);
+    setEditFormData({
+      name: '',
+      course: '',
+      department: '',
+      semester: '',
+      batch: ''
+    });
+  };
+
+  // Handle update class submission
+  const handleUpdateClass = async (e) => {
+    e.preventDefault();
+
+    // Form validation
+    const { name, course, department, semester, batch } = editFormData;
+    if (!name || !course || !department || !semester || !batch) {
+      setMessage({
+        type: 'error',
+        text: 'All fields are required'
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const response = await fetch(`/api/user/teacher/classes/${editingClassId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firebaseUid: user?.uid,
+          updateData: editFormData
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update class');
+      }
+
+      const data = await response.json();
+      
+      // Update the class in the list
+      setClasses(prev => prev.map(classItem => 
+        classItem._id === editingClassId ? { ...classItem, ...editFormData } : classItem
+      ));
+
+      // Close form and show success message
+      closeEditForm();
+
+      setMessage({
+        type: 'success',
+        text: 'Class updated successfully!'
+      });
+
+      // Clear the message after 5 seconds
+      setTimeout(() => {
+        setMessage({ type: '', text: '' });
+      }, 5000);
+
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error.message || 'Failed to update class. Please try again.'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -371,12 +474,12 @@ function ClassesManagementPage() {
           </div>
 
           {/* Create Class Form */}
-          {showForm && (
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <h2 className="text-lg font-semibold mb-4">Create New Class</h2>
-              <form onSubmit={handleCreateClass} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
+                {showForm && (
+                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                  <h2 className="text-lg font-semibold mb-4">Create New Class</h2>
+                  <form onSubmit={handleCreateClass} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                       Class Name *
                     </label>
@@ -390,8 +493,8 @@ function ClassesManagementPage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                       placeholder="e.g., Introduction to Computer Science"
                     />
-                  </div>
-                  <div>
+                    </div>
+                    <div>
                     <label htmlFor="course" className="block text-sm font-medium text-gray-700 mb-1">
                       Course Code *
                     </label>
@@ -405,11 +508,11 @@ function ClassesManagementPage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                       placeholder="e.g., CS101"
                     />
+                    </div>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
                     <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">
                       Department *
                     </label>
@@ -423,8 +526,8 @@ function ClassesManagementPage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                       placeholder="e.g., Computer Science"
                     />
-                  </div>
-                  <div>
+                    </div>
+                    <div>
                     <label htmlFor="semester" className="block text-sm font-medium text-gray-700 mb-1">
                       Semester *
                     </label>
@@ -438,49 +541,57 @@ function ClassesManagementPage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                       placeholder="e.g., Fall 2025"
                     />
-                  </div>
-                  <div>
+                    </div>
+                    <div>
                     <label htmlFor="batch" className="block text-sm font-medium text-gray-700 mb-1">
                       Batch/Year *
                     </label>
-                    <input
+                    <select
                       id="batch"
                       name="batch"
-                      type="text"
                       required
                       value={formData.batch}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                      placeholder="e.g., 2023"
-                    />
+                    >
+                      <option value="">Select Year</option>
+                      {Array.from({ length: 10 }, (_, i) => {
+                      const year = new Date().getFullYear() + i;
+                      return (
+                        <option key={year} value={year}>
+                        {year}
+                        </option>
+                      );
+                      })}
+                    </select>
+                    </div>
                   </div>
-                </div>
 
-                <div className="pt-2">
-                  <button
+                  <div className="pt-2">
+                    <button
                     type="submit"
                     disabled={isSubmitting}
                     className={`w-full md:w-auto flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
                       }`}
-                  >
+                    >
                     {isSubmitting ? (
                       <>
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Creating...
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Creating...
                       </>
                     ) : (
                       'Create Class'
                     )}
-                  </button>
+                    </button>
+                  </div>
+                  </form>
                 </div>
-              </form>
-            </div>
-          )}
+                )}
 
-          {/* Classes List */}
+                {/* Classes List */}
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
             {classes.length === 0 ? (
               <div className="p-6 text-center">
@@ -559,6 +670,12 @@ function ClassesManagementPage() {
                               >
                                 Manage Students
                               </Link>
+                              <button
+                                onClick={() => handleEditClass(classItem)}
+                                className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none"
+                              >
+                                Edit Class
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -569,6 +686,133 @@ function ClassesManagementPage() {
               </div>
             )}
           </div>
+
+          {/* Edit Class Modal */}
+          {editingClassId && (
+            <div className="fixed inset-0 flex items-center justify-center bg-gray-800/50 bg-opacity-50 z-50">
+              <div className="bg-white rounded-lg shadow-md p-6 w-full max-w-lg">
+                <h2 className="text-lg font-semibold mb-4">Edit Class</h2>
+                <form onSubmit={handleUpdateClass} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700 mb-1">
+                        Class Name *
+                      </label>
+                      <input
+                        id="edit-name"
+                        name="name"
+                        type="text"
+                        required
+                        value={editFormData.name}
+                        onChange={handleEditInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="e.g., Introduction to Computer Science"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="edit-course" className="block text-sm font-medium text-gray-700 mb-1">
+                        Course Code *
+                      </label>
+                      <input
+                        id="edit-course"
+                        name="course"
+                        type="text"
+                        required
+                        value={editFormData.course}
+                        onChange={handleEditInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="e.g., CS101"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label htmlFor="edit-department" className="block text-sm font-medium text-gray-700 mb-1">
+                        Department *
+                      </label>
+                      <input
+                        id="edit-department"
+                        name="department"
+                        type="text"
+                        required
+                        value={editFormData.department}
+                        onChange={handleEditInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="e.g., Computer Science"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="edit-semester" className="block text-sm font-medium text-gray-700 mb-1">
+                        Semester *
+                      </label>
+                      <input
+                        id="edit-semester"
+                        name="semester"
+                        type="text"
+                        required
+                        value={editFormData.semester}
+                        onChange={handleEditInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="e.g., Fall 2025"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="edit-batch" className="block text-sm font-medium text-gray-700 mb-1">
+                        Batch/Year *
+                      </label>
+                      <select
+                        id="edit-batch"
+                        name="batch"
+                        required
+                        value={editFormData.batch}
+                        onChange={handleEditInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                      >
+                        <option value="">Select Year</option>
+                        {Array.from({ length: 10 }, (_, i) => {
+                          const year = new Date().getFullYear() + i;
+                          return (
+                            <option key={year} value={year}>
+                              {year}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 flex justify-end space-x-4">
+                    <button
+                      type="button"
+                      onClick={closeEditForm}
+                      className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-100 focus:outline-none"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                        }`}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Updating...
+                        </>
+                      ) : (
+                        'Update Class'
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

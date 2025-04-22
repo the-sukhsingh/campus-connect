@@ -28,6 +28,7 @@ export async function POST(req) {
     
     // Update the user record to mark password as changed
     user.passwordChanged = true;
+    user.isFirstLogin = false; // Set to false if you want to allow the user to log in again
     await user.save();
     
     return NextResponse.json({ 
