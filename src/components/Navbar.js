@@ -58,6 +58,7 @@ export default function Navbar() {
         { name: 'My Books', href: '/dashboard/student/books/', icon: '📖', ariaLabel: 'View My Books' },
         { name: 'Announcements', href: '/dashboard/student/announcements', icon: '📢', ariaLabel: 'View Announcements' },
         { name: 'Events', href: '/dashboard/student/events', icon: '🎉', ariaLabel: 'View Events' },
+        { name: 'Feedback', href: '/dashboard/feedback', icon: '💬', ariaLabel: 'Submit Feedback' },
       ],
       faculty: [
         { name: 'Classes', href: '/dashboard/faculty/classes', icon: '👨‍🏫', ariaLabel: 'View Classes' },
@@ -67,6 +68,7 @@ export default function Navbar() {
         { name: 'Space', href: '/dashboard/room-bookings', icon: '🚪', ariaLabel: 'Manage Space' },
         { name: 'Announcements', href: '/dashboard/faculty/announcements', icon: '📢', ariaLabel: 'Manage Announcements' },
         { name: 'Events', href: '/dashboard/events', icon: '🎭', ariaLabel: 'View Events' },
+        { name: 'Feedback', href: '/dashboard/feedback', icon: '💬', ariaLabel: 'Submit Feedback' },
       ],
       hod: [
         { name: 'College', href: '/dashboard/hod/college/manage', icon: '🏫', ariaLabel: 'Manage College' },
@@ -76,6 +78,7 @@ export default function Navbar() {
         { name: 'Manage Spaces', href: '/dashboard/hod/room-bookings', icon: '🚪', ariaLabel: 'Manage Space' },
         { name: 'Announcements', href: '/dashboard/hod/announcements', icon: '📢', ariaLabel: 'Manage Announcements' },
         { name: 'Events', href: '/dashboard/events', icon: '🎭', ariaLabel: 'View Events' },
+        { name: 'Feedback', href: '/dashboard/hod/feedback', icon: '💬', ariaLabel: 'Manage Feedback' },
       ],
       librarian: [
         { name: 'Books', href: '/dashboard/librarian/books', icon: '📚', ariaLabel: 'Manage Books' },
@@ -84,6 +87,7 @@ export default function Navbar() {
         { name: 'Returns', href: '/dashboard/librarian/returns', icon: '↩️', ariaLabel: 'Process Returns' },
         { name: 'Announcements', href: '/dashboard/librarian/announcements', icon: '📢', ariaLabel: 'Manage Announcements' },
         { name: 'Events', href: '/dashboard/events', icon: '🎭', ariaLabel: 'View Events' },
+        { name: 'Feedback', href: '/dashboard/feedback', icon: '💬', ariaLabel: 'Submit Feedback' },
       ],
     };
 
