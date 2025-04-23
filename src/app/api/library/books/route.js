@@ -10,6 +10,8 @@ import {
   generateUniqueCodeForExistingBook
 } from '@/services/bookService';
 
+import {addBookCopies} from '@/services/bookCopyService'
+
 export async function GET(req) {
   try {
     const searchParams = req.nextUrl.searchParams;
@@ -87,6 +89,7 @@ export async function POST(req) {
     const body = await req.json();
     const { firebaseUid, action, bookData, bookId } = body;
 
+    console.log('Request body:', body);
     
     if (!firebaseUid) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
@@ -98,6 +101,17 @@ export async function POST(req) {
       }
       
       const result = await addBook(bookData, firebaseUid);
+      const copiesResult = await addBookCopies(
+        result.book._id.toString(), 
+        bookData.copies, 
+        {
+          status: 'available',
+          condition: 'good',
+        }, 
+        firebaseUid
+      );
+
+      
       
       if (!result.success) {
         return NextResponse.json({ error: result.error }, { status: 400 });

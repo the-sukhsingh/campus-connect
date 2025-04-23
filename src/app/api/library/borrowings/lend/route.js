@@ -2,13 +2,14 @@ import { NextResponse } from 'next/server';
 import { createBorrowing, createBorrowingByCode } from '@/services/bookBorrowingService';
 import { getUserByFirebaseUid } from '@/services/userService';
 import Book from '@/models/Book';
+import BookCopy from '@/models/BookCopy';
 import User from '@/models/User';
 import dbConnect from '@/lib/dbConnect';
 
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { firebaseUid, bookId, studentId, dueDate, uniqueCode } = body;
+    const { firebaseUid, bookId, bookCopyId, copyNumber, studentId, dueDate, uniqueCode } = body;
     
     // Check if we're using uniqueCode or bookId
     const isUsingUniqueCode = !!uniqueCode;
@@ -39,38 +40,59 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Student not found' }, { status: 404 });
     }
     
-    if (student.role !== 'student') {
-      return NextResponse.json({ error: 'User is not a student' }, { status: 400 });
+    if (student.role !== 'student' && student.role !== 'faculty') {
+      return NextResponse.json({ error: 'User must be a student or faculty member' }, { status: 400 });
     }
     
     let borrowing;
     
     if (isUsingUniqueCode) {
-      // Lend book by unique code
+      // Lend book by unique code and copy number
+      if (!copyNumber) {
+        return NextResponse.json({ error: 'Copy number is required when lending by book code' }, { status: 400 });
+      }
+      
       borrowing = await createBorrowingByCode(
-        uniqueCode, 
+        uniqueCode,
+        parseInt(copyNumber, 10), 
         student._id.toString(), 
         new Date(dueDate),
         librarianUser.college?.toString() || ''
       );
     } else {
-      // Check if book exists and is available
+      // Using bookId approach
+      if (!bookCopyId) {
+        return NextResponse.json({ error: 'Book copy ID is required' }, { status: 400 });
+      }
+      
+      // Check if book exists
       const book = await Book.findById(bookId);
       if (!book) {
         return NextResponse.json({ error: 'Book not found' }, { status: 404 });
       }
       
-      if (book.availableCopies <= 0) {
-        return NextResponse.json({ error: 'No available copies of this book' }, { status: 400 });
+      // Check if book copy exists and is available
+      const bookCopy = await BookCopy.findById(bookCopyId);
+      if (!bookCopy) {
+        return NextResponse.json({ error: 'Book copy not found' }, { status: 404 });
       }
       
-      // Create a new borrowing using book ID
-      borrowing = await createBorrowing(bookId, student._id.toString(), new Date(dueDate));
+      if (bookCopy.status !== 'available') {
+        return NextResponse.json({ error: 'This copy of the book is not available for borrowing' }, { status: 400 });
+      }
+      
+      // Create a new borrowing using book ID and book copy ID
+      borrowing = await createBorrowing(
+        bookId,
+        bookCopyId,
+        student._id.toString(),
+        new Date(dueDate)
+      );
     }
     
     return NextResponse.json({ 
       success: true, 
-      message: `Book successfully lent to ${student.displayName || student.email}`,
+      message: `Book copy successfully lent to ${student.displayName || student.email}`,
       borrowing 
     });
   } catch (error) {

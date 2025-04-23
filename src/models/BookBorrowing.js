@@ -1,11 +1,15 @@
 import mongoose, { Schema} from 'mongoose';
 
-
 // Define the schema
 const BookBorrowingSchema = new Schema({
   book: {
     type: Schema.Types.ObjectId,
     ref: 'Book',
+    required: true
+  },
+  bookCopy: {
+    type: Schema.Types.ObjectId,
+    ref: 'BookCopy',
     required: true
   },
   student: {
@@ -50,7 +54,8 @@ const BookBorrowingSchema = new Schema({
 });
 
 // Create compound index for faster lookups
-// BookBorrowingSchema.index({ book: 1, student: 1, status: 1 });
+BookBorrowingSchema.index({ bookCopy: 1, status: 1 });
+BookBorrowingSchema.index({ student: 1, status: 1 });
 
 // Define and export the model (if it doesn't already exist)
 const BookBorrowing = mongoose.models.BookBorrowing || mongoose.model('BookBorrowing', BookBorrowingSchema);

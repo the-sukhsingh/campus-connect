@@ -46,7 +46,7 @@ export async function GET(request) {
     searchQuery.$or = [
       { displayName: { $regex: query, $options: 'i' } },
       { email: { $regex: query, $options: 'i' } },
-      { rollNo: { $regex: query, $options: 'i' } }
+      { rollNo: { $regex: query, $options: 'i' } },
     ];
     
     // Execute the search

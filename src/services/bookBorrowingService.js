@@ -1,6 +1,7 @@
 import dbConnect from '@/lib/dbConnect';
 import BookBorrowing from '@/models/BookBorrowing';
 import Book from '@/models/Book';
+import BookCopy from '@/models/BookCopy';
 
 // Get all borrowings with filtering and pagination
 export async function getBorrowings(
@@ -24,7 +25,8 @@ export async function getBorrowings(
       .skip(skip)
       .limit(limit)
       .populate('book', 'title author ISBN genre')
-      .populate('student', 'displayName email')
+      .populate('bookCopy', 'copyNumber status condition')
+      .populate('student', 'displayName email role department')
       .populate('approvedBy', 'displayName email');
     
     return { borrowings, total, pages };
@@ -91,6 +93,7 @@ export async function getBookBorrowings(
     }
     
     const borrowings = await BookBorrowing.find(query)
+      .populate('bookCopy', 'copyNumber status condition')
       .populate('student', 'displayName email')
       .populate('approvedBy', 'displayName email');
     
@@ -118,36 +121,43 @@ export async function getPendingReturnRequests(
 // Create a new borrowing
 export async function createBorrowing(
   bookId,
+  bookCopyId,
   studentId,
   dueDate
 ) {
   try {
     await dbConnect();
     
-    // Check if book is available
+    // Check if book copy exists and is available
+    const bookCopy = await BookCopy.findById(bookCopyId);
+    if (!bookCopy) {
+      throw new Error('Book copy not found');
+    }
+    
+    if (bookCopy.status !== 'available') {
+      throw new Error('This copy of the book is not available for borrowing');
+    }
+    
+    // Get book information
     const book = await Book.findById(bookId);
     if (!book) {
       throw new Error('Book not found');
     }
     
-    if (book.availableCopies <= 0) {
-      throw new Error('No available copies of this book');
-    }
-    
-    // Check if student already has an active borrowing for this book
+    // Check if student already has an active borrowing for this book copy
     const existingBorrowing = await BookBorrowing.findOne({
-      book: bookId,
-      student: studentId,
+      bookCopy: bookCopyId,
       status: { $in: ['borrowed', 'return-requested'] }
     });
     
     if (existingBorrowing) {
-      throw new Error('Student already has an active borrowing for this book');
+      throw new Error('This copy is already borrowed by someone else');
     }
     
     // Create new borrowing
     const borrowing = new BookBorrowing({
       book: bookId,
+      bookCopy: bookCopyId,
       student: studentId,
       issueDate: new Date(),
       dueDate,
@@ -156,7 +166,11 @@ export async function createBorrowing(
     
     await borrowing.save();
     
-    // Update available copies
+    // Update book copy status
+    bookCopy.status = 'borrowed';
+    await bookCopy.save();
+    
+    // Update available copies count in the book record
     await Book.findByIdAndUpdate(bookId, {
       $inc: { availableCopies: -1 }
     });
@@ -168,9 +182,10 @@ export async function createBorrowing(
   }
 }
 
-// Create a new borrowing using book's unique code
+// Create a new borrowing using book's unique code and copy number
 export async function createBorrowingByCode(
   uniqueCode,
+  copyNumber,
   studentId,
   dueDate,
   collegeId
@@ -188,24 +203,31 @@ export async function createBorrowingByCode(
       throw new Error('Book not found with this unique code in your college');
     }
     
-    if (book.availableCopies <= 0) {
-      throw new Error('No available copies of this book');
+    // Find the specific book copy
+    const bookCopy = await BookCopy.findOne({
+      book: book._id,
+      copyNumber: copyNumber,
+      status: 'available'
+    });
+    
+    if (!bookCopy) {
+      throw new Error(`Copy #${copyNumber} is not available for borrowing`);
     }
     
-    // Check if student already has an active borrowing for this book
+    // Check if student already has an active borrowing for this book copy
     const existingBorrowing = await BookBorrowing.findOne({
-      book: book._id,
-      student: studentId,
+      bookCopy: bookCopy._id,
       status: { $in: ['borrowed', 'return-requested'] }
     });
     
     if (existingBorrowing) {
-      throw new Error('Student already has an active borrowing for this book');
+      throw new Error('This copy is already borrowed by someone else');
     }
     
     // Create new borrowing
     const borrowing = new BookBorrowing({
       book: book._id,
+      bookCopy: bookCopy._id,
       student: studentId,
       issueDate: new Date(),
       dueDate,
@@ -213,6 +235,10 @@ export async function createBorrowingByCode(
     });
     
     await borrowing.save();
+    
+    // Update book copy status
+    bookCopy.status = 'borrowed';
+    await bookCopy.save();
     
     // Update available copies
     await Book.findByIdAndUpdate(book._id, {
@@ -270,7 +296,7 @@ export async function approveBookReturn(
     const borrowing = await BookBorrowing.findOne({
       _id: borrowingId,
       status: 'return-requested'
-    });
+    }).populate('bookCopy');
     
     if (!borrowing) {
       throw new Error('Borrowing not found or not in return-requested status');
@@ -287,6 +313,13 @@ export async function approveBookReturn(
     }
     
     await borrowing.save();
+    
+    // Update book copy status
+    if (borrowing.bookCopy) {
+      await BookCopy.findByIdAndUpdate(borrowing.bookCopy._id, {
+        status: 'available'
+      });
+    }
     
     // Update available copies
     await Book.findByIdAndUpdate(borrowing.book, {
@@ -314,6 +347,7 @@ export async function calculateOverdueBooks() {
       dueDate: { $lt: today }
     })
       .populate('book', 'title author ISBN')
+      .populate('bookCopy', 'copyNumber')
       .populate('student', 'displayName email');
     
     return overdueBooks;

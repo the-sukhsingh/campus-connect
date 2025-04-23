@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Book from '@/models/Book';
 import BookBorrowing from '@/models/BookBorrowing';
+import User from '@/models/User';
 import { getUserByFirebaseUid } from '@/services/userService';
 
 export async function GET(request) {
@@ -64,11 +65,24 @@ export async function GET(request) {
       dueDate: { $lt: today }
     });
 
+    // Get active users count - users who have borrowed or requested books in the last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    // Find unique users who have borrowed books recently
+    const recentBorrowings = await BookBorrowing.distinct('student', {
+      createdAt: { $gte: thirtyDaysAgo },
+      book: { $in: await Book.find({ college: collegeId }).distinct('_id') }
+    });
+    
+    const activeUsers = recentBorrowings.length;
+
     return NextResponse.json({ 
       totalBooks,
       availableBooks,
       borrowedBooks,
-      overdueBooks
+      overdueBooks,
+      activeUsers
     });
     
   } catch (error) {

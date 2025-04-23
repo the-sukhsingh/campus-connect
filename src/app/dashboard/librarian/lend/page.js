@@ -6,7 +6,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-
 function LendBookPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -24,13 +23,22 @@ function LendBookPage() {
   const [studentResults, setStudentResults] = useState([]);
   const [showStudentResults, setShowStudentResults] = useState(false);
   
+  // Book copy state
+  const [bookCopies, setBookCopies] = useState([]);
+  const [selectedBookCopy, setSelectedBookCopy] = useState(null);
+  const [isLoadingCopies, setIsLoadingCopies] = useState(false);
+  const [copyNumber, setCopyNumber] = useState('');
+  
   // Advanced search
   const [advSearchTerm, setAdvSearchTerm] = useState('');
   const [advSearchType, setAdvSearchType] = useState('book');
   const [advSelectedBook, setAdvSelectedBook] = useState(null);
   const [advSelectedStudent, setAdvSelectedStudent] = useState(null);
+  const [advSelectedBookCopy, setAdvSelectedBookCopy] = useState(null);
+  const [advBookCopies, setAdvBookCopies] = useState([]);
   const [advSearchResults, setAdvSearchResults] = useState([]);
   const [isAdvSearching, setIsAdvSearching] = useState(false);
+  const [isAdvLoadingCopies, setIsAdvLoadingCopies] = useState(false);
   
   // Set default due date (14 days from now) when component mounts
   useEffect(() => {
@@ -38,6 +46,116 @@ function LendBookPage() {
     defaultDueDate.setDate(defaultDueDate.getDate() + 14);
     setDueDate(defaultDueDate.toISOString().split('T')[0]);
   }, []);
+  
+  // Load book copies when a book is found
+  useEffect(() => {
+    if (foundBook) {
+      fetchBookCopies(foundBook._id);
+    }
+  }, [foundBook]);
+  
+  // Load book copies for advanced search when a book is selected
+  useEffect(() => {
+    if (advSelectedBook) {
+      fetchAdvBookCopies(advSelectedBook._id);
+    }
+  }, [advSelectedBook]);
+  
+  // Fetch book copies for the found book
+  const fetchBookCopies = async (bookId) => {
+    if (!bookId || !user) return;
+    
+    setIsLoadingCopies(true);
+    setBookCopies([]);
+    
+    try {
+      const response = await fetch(
+        `/api/library/book-copies?firebaseUid=${user?.uid}&bookId=${bookId}`
+      );
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch book copies');
+      }
+      
+      const data = await response.json();
+      
+      // Check response format and extract book copies
+      if (data.success && data.bookCopies) {
+        // Filter only available copies
+        const availableCopies = data.bookCopies.filter(copy => copy.status === 'available');
+        setBookCopies(availableCopies);
+        
+        if (availableCopies.length > 0) {
+          setSelectedBookCopy(availableCopies[0]);
+          setCopyNumber(availableCopies[0].copyNumber.toString());
+        }
+      } else if (data.success && data.copies) {
+        // Alternative response format
+        const availableCopies = data.copies.filter(copy => copy.status === 'available');
+        setBookCopies(availableCopies);
+        
+        if (availableCopies.length > 0) {
+          setSelectedBookCopy(availableCopies[0]);
+          setCopyNumber(availableCopies[0].copyNumber.toString());
+        }
+      } else {
+        throw new Error('No book copies found in response');
+      }
+    } catch (err) {
+      console.error('Error fetching book copies:', err);
+      setError(err.message || 'Failed to fetch book copies');
+    } finally {
+      setIsLoadingCopies(false);
+    }
+  };
+  
+  // Fetch book copies for advanced search
+  const fetchAdvBookCopies = async (bookId) => {
+    if (!bookId || !user) return;
+    
+    setIsAdvLoadingCopies(true);
+    setAdvBookCopies([]);
+    
+    try {
+      const response = await fetch(
+        `/api/library/book-copies?firebaseUid=${user?.uid}&bookId=${bookId}`
+      );
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch book copies');
+      }
+      
+      const data = await response.json();
+      
+      // Check response format and extract book copies
+      if (data.success && data.bookCopies) {
+        // Filter only available copies
+        const availableCopies = data.bookCopies.filter(copy => copy.status === 'available');
+        setAdvBookCopies(availableCopies);
+        
+        if (availableCopies.length > 0) {
+          setAdvSelectedBookCopy(availableCopies[0]);
+        }
+      } else if (data.success && data.copies) {
+        // Alternative response format
+        const availableCopies = data.copies.filter(copy => copy.status === 'available');
+        setAdvBookCopies(availableCopies);
+        
+        if (availableCopies.length > 0) {
+          setAdvSelectedBookCopy(availableCopies[0]);
+        }
+      } else {
+        throw new Error('No book copies found in response');
+      }
+    } catch (err) {
+      console.error('Error fetching book copies:', err);
+      setError(err.message || 'Failed to fetch book copies');
+    } finally {
+      setIsAdvLoadingCopies(false);
+    }
+  };
   
   // Quick search - Find book by unique code
   const handleBookSearch = async () => {
@@ -48,6 +166,8 @@ function LendBookPage() {
 
     setError('');
     setFoundBook(null);
+    setSelectedBookCopy(null);
+    setBookCopies([]);
     setIsSearchingBook(true);
     
     try {
@@ -103,6 +223,7 @@ function LendBookPage() {
       
       if (data.users && data.users.length > 0) {
         setStudentResults(data.users);
+        console.log('Student results:', data.users);
         if (data.users.length === 1) {
           // Auto-select if only one student found
           setFoundStudent(data.users[0]);
@@ -171,6 +292,7 @@ function LendBookPage() {
   // Select book in advanced search
   const handleAdvSelectBook = (book) => {
     setAdvSelectedBook(book);
+    setAdvSelectedBookCopy(null);
     setAdvSearchResults([]);
     setAdvSearchTerm('');
     setAdvSearchType('student');
@@ -183,10 +305,27 @@ function LendBookPage() {
     setAdvSearchTerm('');
   };
   
+  // Handle book copy selection
+  const handleBookCopyChange = (e) => {
+    const copyId = e.target.value;
+    const selectedCopy = bookCopies.find(copy => copy._id === copyId);
+    setSelectedBookCopy(selectedCopy);
+    if (selectedCopy) {
+      setCopyNumber(selectedCopy.copyNumber.toString());
+    }
+  };
+  
+  // Handle advanced book copy selection
+  const handleAdvBookCopyChange = (e) => {
+    const copyId = e.target.value;
+    const selectedCopy = advBookCopies.find(copy => copy._id === copyId);
+    setAdvSelectedBookCopy(selectedCopy);
+  };
+  
   // Handle lending book (quick method)
   const handleQuickLendBook = async () => {
-    if (!user || !foundBook || !foundStudent || !dueDate) {
-      setError('Please select both a book and a student, and set a due date');
+    if (!user || !foundBook || !foundStudent || !dueDate || !selectedBookCopy) {
+      setError('Please select a book, a student, a book copy, and set a due date');
       return;
     }
     
@@ -208,6 +347,8 @@ function LendBookPage() {
         body: JSON.stringify({
           firebaseUid: user?.uid,
           bookId: foundBook._id,
+          bookCopyId: selectedBookCopy._id,
+          copyNumber: parseInt(copyNumber, 10),
           studentId: foundStudent._id,
           dueDate: new Date(dueDate).toISOString()
         }),
@@ -220,14 +361,17 @@ function LendBookPage() {
       
       const data = await response.json();
       
-      setSuccess(`Book "${foundBook.title}" has been successfully lent to ${foundStudent.displayName}!`);
+      setSuccess(`Book "${foundBook.title}" (Copy #${selectedBookCopy.copyNumber}) has been successfully lent to ${foundStudent.displayName}!`);
       
       // Reset form
       setFoundBook(null);
       setFoundStudent(null);
+      setSelectedBookCopy(null);
+      setBookCopies([]);
       setUniqueCodeSearch('');
       setStudentSearch('');
       setStudentResults([]);
+      setCopyNumber('');
       
       const defaultDueDate = new Date();
       defaultDueDate.setDate(defaultDueDate.getDate() + 14);
@@ -243,8 +387,8 @@ function LendBookPage() {
   
   // Handle lending book (advanced method)
   const handleAdvancedLendBook = async () => {
-    if (!user || !advSelectedBook || !advSelectedStudent || !dueDate) {
-      setError('Please select both a book and a student, and set a due date');
+    if (!user || !advSelectedBook || !advSelectedStudent || !dueDate || !advSelectedBookCopy) {
+      setError('Please select a book, a student, a book copy, and set a due date');
       return;
     }
     
@@ -266,6 +410,8 @@ function LendBookPage() {
         body: JSON.stringify({
           firebaseUid: user?.uid,
           bookId: advSelectedBook._id,
+          bookCopyId: advSelectedBookCopy._id,
+          copyNumber: advSelectedBookCopy.copyNumber,
           studentId: advSelectedStudent._id,
           dueDate: new Date(dueDate).toISOString()
         }),
@@ -278,11 +424,13 @@ function LendBookPage() {
       
       const data = await response.json();
       
-      setSuccess(`Book "${advSelectedBook.title}" has been successfully lent to ${advSelectedStudent.displayName}!`);
+      setSuccess(`Book "${advSelectedBook.title}" (Copy #${advSelectedBookCopy.copyNumber}) has been successfully lent to ${advSelectedStudent.displayName}!`);
       
       // Reset form
       setAdvSelectedBook(null);
       setAdvSelectedStudent(null);
+      setAdvSelectedBookCopy(null);
+      setAdvBookCopies([]);
       setAdvSearchTerm('');
       setAdvSearchType('book');
       
@@ -302,11 +450,16 @@ function LendBookPage() {
   const handleReset = () => {
     setFoundBook(null);
     setFoundStudent(null);
+    setSelectedBookCopy(null);
+    setBookCopies([]);
     setUniqueCodeSearch('');
     setStudentSearch('');
     setStudentResults([]);
+    setCopyNumber('');
     setAdvSelectedBook(null);
     setAdvSelectedStudent(null);
+    setAdvSelectedBookCopy(null);
+    setAdvBookCopies([]);
     setAdvSearchResults([]);
     setAdvSearchTerm('');
     setAdvSearchType('book');
@@ -410,7 +563,7 @@ function LendBookPage() {
                       <span className="flex items-center">
                         <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
                         Searching...
                       </span>
@@ -446,8 +599,54 @@ function LendBookPage() {
                     </div>
                   </div>
                   
+                  {/* Book Copy Selection */}
                   <div className="mb-6">
-                    <h2 className="text-lg font-medium mb-4">Step 2: Find Student</h2>
+                    <h2 className="text-lg font-medium mb-4">Step 2: Select Book Copy</h2>
+                    {isLoadingCopies ? (
+                      <div className="flex items-center text-gray-600">
+                        <svg className="animate-spin -ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Loading available copies...
+                      </div>
+                    ) : bookCopies.length > 0 ? (
+                      <div>
+                        <div className="mb-4">
+                          <label htmlFor="bookCopy" className="block text-sm font-medium text-gray-700 mb-1">
+                            Available Copies
+                          </label>
+                          <select
+                            id="bookCopy"
+                            name="bookCopy"
+                            value={selectedBookCopy ? selectedBookCopy._id : ''}
+                            onChange={handleBookCopyChange}
+                            className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:w-auto"
+                          >
+                            {bookCopies.map(copy => (
+                              <option key={copy._id} value={copy._id}>
+                                Copy #{copy.copyNumber} - {copy.condition} condition
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        {selectedBookCopy && (
+                          <div className="bg-blue-50 p-3 rounded-md border border-blue-200 text-sm">
+                            <p><span className="font-medium">Selected:</span> Copy #{selectedBookCopy.copyNumber}</p>
+                            <p><span className="font-medium">Condition:</span> {selectedBookCopy.condition}</p>
+                            {selectedBookCopy.notes && <p><span className="font-medium">Notes:</span> {selectedBookCopy.notes}</p>}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-yellow-50 text-yellow-800 border border-yellow-200 rounded-md">
+                        No available copies of this book were found. All copies may be borrowed or unavailable.
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="mb-6">
+                    <h2 className="text-lg font-medium mb-4">Step 3: Find Student</h2>
                     <div className="flex flex-col sm:flex-row gap-4">
                       <div className="grow">
                         <div className="relative">
@@ -519,7 +718,7 @@ function LendBookPage() {
                   
                   {foundStudent && (
                     <div className="mb-6">
-                      <h2 className="text-lg font-medium mb-4">Step 3: Set Due Date</h2>
+                      <h2 className="text-lg font-medium mb-4">Step 4: Set Due Date</h2>
                       <div>
                         <input
                           type="date"
@@ -538,7 +737,7 @@ function LendBookPage() {
                     </div>
                   )}
                   
-                  {foundStudent && (
+                  {foundStudent && selectedBookCopy && (
                     <div className="flex justify-end mt-8">
                       <button
                         type="button"
@@ -654,7 +853,7 @@ function LendBookPage() {
                         <span className="flex items-center">
                           <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
                           Searching...
                         </span>
@@ -800,6 +999,34 @@ function LendBookPage() {
                         {advSelectedBook.ISBN && <p><span className="font-medium">ISBN:</span> {advSelectedBook.ISBN}</p>}
                         {advSelectedBook.uniqueCode && <p><span className="font-medium">Unique Code:</span> {advSelectedBook.uniqueCode}</p>}
                       </div>
+                      
+                      {/* Book Copy Selection for Advanced */}
+                      <div className="mt-4 border-t pt-3">
+                        <h4 className="text-sm font-medium mb-2">Select Book Copy</h4>
+                        {isAdvLoadingCopies ? (
+                          <div className="flex items-center text-sm text-gray-600">
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Loading copies...
+                          </div>
+                        ) : advBookCopies.length > 0 ? (
+                          <select
+                            value={advSelectedBookCopy ? advSelectedBookCopy._id : ''}
+                            onChange={handleAdvBookCopyChange}
+                            className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                          >
+                            {advBookCopies.map(copy => (
+                              <option key={copy._id} value={copy._id}>
+                                Copy #{copy.copyNumber} - {copy.condition} condition
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <p className="text-sm text-red-600">No available copies found.</p>
+                        )}
+                      </div>
                     </div>
                     
                     <div className="bg-gray-50 p-4 rounded-lg border">
@@ -843,16 +1070,16 @@ function LendBookPage() {
                     <button
                       type="button"
                       onClick={handleAdvancedLendBook}
-                      disabled={loading}
+                      disabled={loading || !advSelectedBookCopy}
                       className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none ${
-                        loading ? 'opacity-50 cursor-not-allowed' : ''
+                        (loading || !advSelectedBookCopy) ? 'opacity-50 cursor-not-allowed' : ''
                       }`}
                     >
                       {loading ? (
                         <span className="flex items-center">
                           <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 7.962 7.962 7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
                           Processing...
                         </span>
@@ -867,57 +1094,8 @@ function LendBookPage() {
           )}
         </div>
       </div>
-      
-      {/* Helpful Information Box */}
-      <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md shadow-sm mb-6">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <div className="ml-3">
-            <p className="text-sm text-blue-700">
-              <span className="font-bold">Quick Lending</span> allows you to quickly issue books using their unique codes. 
-              <span className="font-bold"> Advanced Search</span> provides more detailed search capabilities.
-            </p>
-          </div>
-        </div>
-      </div>
-      
-      {/* Quick Links and Tips */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="font-medium text-gray-900 mb-2">Managing Books</h3>
-          <p className="text-gray-600 mb-3 text-sm">Need to add new books or update existing ones?</p>
-          <Link 
-            href="/dashboard/librarian/books"
-            className="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-800"
-          >
-            Go to Books Management
-            <svg className="ml-1 w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </Link>
-        </div>
-        
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="font-medium text-gray-900 mb-2">Return Requests</h3>
-          <p className="text-gray-600 mb-3 text-sm">View and process book return requests from students.</p>
-          <Link 
-            href="/dashboard/librarian/returns"
-            className="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-800"
-          >
-            Manage Returns
-            <svg className="ml-1 w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </Link>
-        </div>
-      </div>
     </div>
   );
 }
 
-// Wrap with role protection
-export default withRoleProtection(LendBookPage, ['librarian', 'hod']);
+export default withRoleProtection(LendBookPage, ['admin', 'librarian']);
