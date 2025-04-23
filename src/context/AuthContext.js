@@ -11,7 +11,6 @@ import {
 } from 'firebase/auth';
 import { auth } from '@/config/firebase';
 import { getUserByFirebaseUid, getUserByEmail } from '@/services/userServiceClient';
-
 // Define the context type
 const AuthContext = createContext({
   user: null,
@@ -29,6 +28,7 @@ const AuthContext = createContext({
   verifyInviteCode: async () => {},
   linkStudentWithCollege: async () => {},
   logout: async () => {},
+  getIdToken: async () => {}, // Add getIdToken to context default value
 });
 
 // Create a provider component
@@ -41,7 +41,6 @@ const AuthProvider = ({ children }) => {
   const [passwordChanged, setPasswordChanged] = useState(null); // Add passwordChanged state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   // Handle user state changes with retry mechanism
   const handleUserData = async (firebaseUser) => {
     setLoading(true);
@@ -312,6 +311,19 @@ const AuthProvider = ({ children }) => {
     }
   };
 
+  const getIdToken = async (forceRefresh = true) => {
+    if (!user) throw new Error('User not authenticated');
+    try {
+      const token = await user.getIdToken(forceRefresh);
+      return token;
+    } catch (err) {
+      const error = err;
+      console.error('Error getting ID token');
+      setError(error);
+      throw error;
+    }
+  };
+
   const value = {
     user,
     dbUser,
@@ -328,6 +340,7 @@ const AuthProvider = ({ children }) => {
     verifyInviteCode,
     linkStudentWithCollege,
     logout,
+    getIdToken, // Add getIdToken to context value
   };
 
   return (

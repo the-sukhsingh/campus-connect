@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 
 export default function FacultyAuthPage() {
@@ -120,11 +119,17 @@ export default function FacultyAuthPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-800 to-green-700 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-0 w-full h-full bg-pattern opacity-10"></div>
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-green-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+       {/* Animated bubbles */}
+       <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="bubble-1"></div>
+        <div className="bubble-2"></div>
+        <div className="bubble-3"></div>
+        <div className="bubble-4"></div>
+        <div className="bubble-5"></div>
+        <div className="bubble-6"></div>
+        <div className="bubble-7"></div>
+        <div className="bubble-8"></div>
+
       </div>
       
       <div className="z-10 w-full max-w-md">
@@ -179,7 +184,7 @@ export default function FacultyAuthPage() {
                   type="email"
                   autoComplete="email"
                   required
-                  className={`peer block w-full px-4 py-3 rounded-lg border ${error && error.includes('email') ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-transparent transition-all`}
+                  className={`peer block w-full px-4 py-3 rounded-lg border ${error && error.includes('email') ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} focus:ring-2 focus:ring-green-300 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-transparent transition-all`}
                   placeholder="Email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -206,7 +211,7 @@ export default function FacultyAuthPage() {
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   required
-                  className={`peer block w-full px-4 py-3 rounded-lg border ${error && error.includes('password') ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-transparent pr-10 transition-all`}
+                  className={`peer block w-full px-4 py-3 rounded-lg border ${error && error.includes('password') ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} focus:ring-2 focus:ring-green-300 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-transparent pr-10 transition-all`}
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -244,7 +249,7 @@ export default function FacultyAuthPage() {
 
               <div className="flex items-center justify-end">
                 <div className="text-sm">
-                  <Link href="#" className="font-medium text-green-600 hover:text-green-500 dark:text-green-400 dark:hover:text-green-300">
+                  <Link href="#" className="font-medium text-green-600 hover:text-green-300 dark:text-green-400 dark:hover:text-green-300">
                     Forgot your password?
                   </Link>
                 </div>
@@ -254,7 +259,7 @@ export default function FacultyAuthPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className={`group relative flex w-full justify-center rounded-lg px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 overflow-hidden ${
+                  className={`group relative flex w-full justify-center rounded-lg px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-300 overflow-hidden ${
                     isLoading 
                       ? 'bg-green-400 cursor-not-allowed' 
                       : 'bg-gradient-to-r from-green-600 to-green-800 hover:from-green-700 hover:to-green-900'
@@ -295,7 +300,7 @@ export default function FacultyAuthPage() {
                   type="button"
                   onClick={handleGoogleSignIn}
                   disabled={isLoading}
-                  className={`group relative flex w-full justify-center items-center rounded-lg bg-white dark:bg-gray-700 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors ${
+                  className={`group relative flex w-full justify-center items-center rounded-lg bg-white dark:bg-gray-700 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-300 transition-colors ${
                     isLoading ? 'cursor-not-allowed opacity-70' : ''
                   }`}
                 >
@@ -331,6 +336,89 @@ export default function FacultyAuthPage() {
         .bg-pattern {
           background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.15) 1px, transparent 0);
           background-size: 20px 20px;
+        }
+           @keyframes float {
+          0% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+          100% { transform: translateY(0px); }
+        }
+        
+        @keyframes bubble-move {
+          0% { transform: translate(0, 100vh) scale(0); opacity: 0; }
+          50% { opacity: 0.5; }
+          100% { transform: translate(0, -100vh) scale(1); opacity: 0; }
+        }
+
+        .bg-pattern {
+          background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.15) 1px, transparent 0);
+          background-size: 20px 20px;
+        }
+
+        .bubble-1, .bubble-2, .bubble-3, .bubble-4, .bubble-5 {
+          position: absolute;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.1);
+          pointer-events: none;
+        }
+
+        .bubble-1 {
+          width: 80px;
+          height: 80px;
+          left: 10%;
+          animation: bubble-move 8s infinite linear;
+        }
+
+        .bubble-2 {
+          width: 360px;
+          height: 360px;
+          left: 30%;
+          animation: bubble-move 12s infinite linear;
+          animation-delay: -2s;
+        }
+
+        .bubble-3 {
+          width: 140px;
+          height: 140px;
+          left: 50%;
+          animation: bubble-move 10s infinite linear;
+          animation-delay: -5s;
+        }
+
+        .bubble-4 {
+          width: 270px;
+          height: 270px;
+          left: 70%;
+          animation: bubble-move 14s infinite linear;
+          animation-delay: -7s;
+        }
+
+        .bubble-5 {
+          width: 450px;
+          height: 450px;
+          left: 90%;
+          animation: bubble-move 11s infinite linear;
+          animation-delay: -3s;
+        }
+        .bubble-6 {
+          width: 690px;
+          height: 690px;
+          left: 20%;
+          animation: bubble-move 9s infinite linear;
+          animation-delay: -4s;
+        }
+        .bubble-7 {
+          width: 330px;
+          height: 330px;
+          left: 40%;
+          animation: bubble-move 13s infinite linear;
+          animation-delay: -6s;
+        }
+        .bubble-8 {
+          width: 120px;
+          height: 120px;
+          left: 60%;
+          animation: bubble-move 15s infinite linear;
+          animation-delay: -8s;
         }
       `}</style>
     </div>

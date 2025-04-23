@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "update-firebase-config": "node scripts/update-firebase-config.js"
   },
   "dependencies": {
     "date-fns": "^4.1.0",

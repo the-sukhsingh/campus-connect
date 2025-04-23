@@ -4,15 +4,19 @@ import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+
+// Dynamically import the NotificationSubscription component (client-side only)
+const NotificationSubscription = dynamic(
+  () => import('@/components/NotificationSubscription'),
+  { ssr: false }
+);
 
 function HodDashboard() {
   const { user, userRole } = useAuth();
   const [collegeInfo, setCollegeInfo] = useState(null);
-  const [pendingTeacherRequests, setPendingTeacherRequests] = useState(0);
-  const [pendingTeachers, setPendingTeachers] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
 
   // Fetch college information and pending requests for the HOD
@@ -32,31 +36,21 @@ function HodDashboard() {
 
       // If college exists, fetch pending teacher requests
       if (data.college) {
-        const requestsResponse = await fetch(
-          `/api/user/college/teachers?uid=${user?.uid}&action=pending&collegeId=${data.college._id}`
-        );
 
-        if (requestsResponse.ok) {
-          const requestsData = await requestsResponse.json();
-          setPendingTeacherRequests(requestsData.pendingRequests?.length || 0);
-          setPendingTeachers(requestsData.pendingRequests || []);
-        }
-        
         // Fetch recent college announcements
         const announcementsResponse = await fetch(
           `/api/announcements?uid=${user?.uid}&action=get-college-announcements&collegeId=${data.college._id}&limit=5`
         );
-        
+
         if (announcementsResponse.ok) {
           const announcementsData = await announcementsResponse.json();
           setAnnouncements(announcementsData.announcements || []);
         }
       }
-    } catch (error ) {
+    } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   };
 
@@ -66,11 +60,6 @@ function HodDashboard() {
     fetchData();
   }, [user]);
 
-  // Handle refresh action
-  const handleRefresh = () => {
-    setRefreshing(true);
-    fetchData();
-  };
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -87,7 +76,7 @@ function HodDashboard() {
       <h1 className="text-2xl font-bold mb-4">HOD Dashboard</h1>
       <div className="bg-white shadow rounded-lg p-4 mb-4">
         <p className="text-gray-700">
-          Welcome, <span className="font-semibold">{user?.displayName || user?.email}</span>! 
+          Welcome, <span className="font-semibold">{user?.displayName || user?.email}</span>!
           <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
             {userRole}
           </span>
@@ -151,81 +140,10 @@ function HodDashboard() {
                   </button>
                 </div>
               </div>
-              
-              {/* Teacher Requests */}
-              <div className="bg-white shadow rounded-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <div className="bg-orange-100 p-3 rounded-full">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                      </svg>
-                    </div>
-                    <div className="ml-4">
-                      <h2 className="text-lg font-semibold">Teacher Requests</h2>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={handleRefresh}
-                    disabled={refreshing}
-                    className="inline-flex items-center p-2 border border-transparent rounded-md text-indigo-600 hover:bg-indigo-50"
-                    title="Refresh requests"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  </button>
-                </div>
-                
-                {pendingTeacherRequests > 0 ? (
-                  <div>
-                    <p className="text-gray-600 mb-4">
-                      You have <span className="font-bold text-orange-600">{pendingTeacherRequests}</span> pending teacher requests that require your attention.
-                    </p>
-                    
-                    <div className="mt-3 max-h-60 overflow-y-auto border rounded-md">
-                      <ul className="divide-y divide-gray-200">
-                        {pendingTeachers.map((teacher) => (
-                          <li key={teacher._id} className="p-3 hover:bg-gray-50">
-                            <div className="flex justify-between">
-                              <div>
-                                <p className="font-medium">{teacher.displayName || "Unnamed Teacher"}</p>
-                                <p className="text-sm text-gray-500">{teacher.email}</p>
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {formatDate(teacher.createdAt)}
-                              </div>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    
-                    <div className="mt-4">
-                      <button
-                        onClick={() => router.push('/dashboard/hod/teachers')}
-                        className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700"
-                      >
-                        Review All Requests
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <p className="text-gray-600 mb-3">
-                      No pending teacher requests at this time.
-                    </p>
-                    <button
-                      onClick={handleRefresh}
-                      disabled={refreshing}
-                      className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                    >
-                      {refreshing ? 'Checking...' : 'Check Again'}
-                    </button>
-                  </div>
-                )}
-              </div>
-              
+
+              {/* Notification Management */}
+                <NotificationSubscription />
+
               {/* Classes Management */}
               <div className="bg-white shadow rounded-lg p-6">
                 <div className="flex items-center mb-4">
@@ -248,7 +166,7 @@ function HodDashboard() {
                   View Classes
                 </button>
               </div>
-              
+
               {/* Teachers Management */}
               <div className="bg-white shadow rounded-lg p-6">
                 <div className="flex items-center mb-4">
@@ -271,7 +189,7 @@ function HodDashboard() {
                   Manage Teachers
                 </button>
               </div>
-              
+
               {/* Library Management */}
               <div className="bg-white shadow rounded-lg p-6">
                 <div className="flex items-center mb-4">
@@ -294,7 +212,7 @@ function HodDashboard() {
                   Manage Library
                 </button>
               </div>
-              
+
               {/* Announcements */}
               <div className="bg-white shadow rounded-lg p-6 md:col-span-3">
                 <div className="flex items-center justify-between mb-4">
@@ -315,7 +233,7 @@ function HodDashboard() {
                     Manage Announcements
                   </button>
                 </div>
-                
+
                 <div className="mt-2">
                   {announcements.length > 0 ? (
                     <div>
@@ -353,6 +271,8 @@ function HodDashboard() {
                   )}
                 </div>
               </div>
+
+              
             </div>
           )}
         </>

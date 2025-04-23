@@ -7,6 +7,13 @@ import { useState, useEffect } from 'react';
 import ProfileCompletionWrapper from '@/components/ProfileCompletionWrapper';
 import WelcomeTour from '@/components/WelcomeTour';
 import Tooltip from '@/components/Tooltip';
+import dynamic from 'next/dynamic';
+
+// Dynamically import the NotificationSubscription component (client-side only)
+const NotificationSubscription = dynamic(
+  () => import('@/components/NotificationSubscription'),
+  { ssr: false }
+);
 
 function StudentDashboard() {
   const { user } = useAuth();
@@ -192,6 +199,9 @@ function StudentDashboard() {
           
           {/* Right Sidebar */}
           <div className="space-y-6">
+            {/* Notification Subscription Component */}
+            <NotificationSubscription />
+            
             {/* Quick Actions */}
             <div className="bg-white shadow rounded-lg p-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center">
@@ -258,6 +268,7 @@ function StudentDashboard() {
                   <li>Check your attendance records and upcoming classes</li>
                   <li>Borrow books from the library catalog</li>
                   <li>View and register for upcoming campus events</li>
+                  <li>Enable notifications to stay updated on announcements</li>
                 </ul>
                 <p className="mt-3">
                   <a href="/help/student" className="text-indigo-600 hover:text-indigo-800 flex items-center">
@@ -281,6 +292,13 @@ function StudentDashboard() {
         }
         .animate-fadeIn {
           animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateX(20px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        .animate-slideIn {
+          animation: slideIn 0.3s ease-out;
         }
       `}</style>
     </ProfileCompletionWrapper>

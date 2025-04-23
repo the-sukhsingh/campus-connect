@@ -5,13 +5,11 @@ import { useAuth } from '@/context/AuthContext';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-
 function EditEventPage() {
   const { user, dbUser } = useAuth();
   const router = useRouter();
   const params = useParams();
   const eventId = params.id;
-
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -90,6 +88,7 @@ function EditEventPage() {
 
     fetchEventData();
   }, [user, eventId, dbUser]);
+
 
   // Handle input changes
   const handleChange = (e) => {

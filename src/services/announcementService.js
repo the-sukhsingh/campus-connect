@@ -1,7 +1,11 @@
 import dbConnect from '@/lib/dbConnect';
-import Announcement, { IAnnouncement } from '@/models/Announcement';
-import { Types } from 'mongoose';
+import Announcement from '@/models/Announcement';
 import Class from '@/models/Class';
+import { 
+  sendNotificationToCollege,
+  sendNotificationToClass,
+  sendNotificationToRole
+} from './notificationService';
 
 // Create a new announcement
 export async function createAnnouncement(announcementData) {
@@ -9,10 +13,61 @@ export async function createAnnouncement(announcementData) {
     await dbConnect();
     const announcement = new Announcement(announcementData);
     await announcement.save();
+    
+    // Send push notifications based on the announcement type
+    await sendAnnouncementNotifications(announcement);
+    
     return announcement;
   } catch (error) {
     console.error('Error creating announcement:', error);
     throw error;
+  }
+}
+
+// Send push notifications based on the type of announcement
+async function sendAnnouncementNotifications(announcement) {
+  try {
+    const title = announcement.title;
+    const body = announcement.content || 'New announcement available';
+    const data = {
+      announcementId: announcement._id.toString(),
+      url: `/`,
+      type: 'announcement',
+      createdAt: announcement.createdAt.toISOString()
+    };
+    
+    // Class-specific announcement
+    if (announcement.classId) {
+      await sendNotificationToClass(
+        announcement.classId,
+        title,
+        body,
+        data
+      );
+    }
+    // College-specific announcement
+    else if (announcement.collegeId) {
+      await sendNotificationToCollege(
+        announcement.collegeId,
+        title,
+        body,
+        data
+      );
+    }
+    // General announcement (for all users)
+    else {
+      // Send to all roles if no specific targeting
+      const roles = ['student', 'faculty', 'admin', 'hod', 'librarian'];
+      for (const role of roles) {
+        await sendNotificationToRole(role, title, body, data);
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error sending announcement notifications:', error);
+    // Don't throw the error, just log it to prevent blocking the announcement creation
+    return false;
   }
 }
 

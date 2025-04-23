@@ -17,11 +17,15 @@ export default function EventDetail() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Fetch event data when component loads or when reconnecting to network
   useEffect(() => {
     if (!user || !eventId) return;
+
     const fetchEventDetails = async () => {
       try {
         setLoading(true);
+
+        // Use our network-aware fetching method
         const response = await fetch(
           `/api/events?action=get-event&uid=${user?.uid}&eventId=${eventId}`
         );
@@ -33,7 +37,6 @@ export default function EventDetail() {
         const data = await response.json();
         setEvent(data.event);
         setIsRegistered(data.isRegistered);
-        setLoading(false);
 
         if (data.isRegistered) {
           setMessage({
@@ -54,7 +57,9 @@ export default function EventDetail() {
     };
 
     fetchEventDetails();
-  }, [user, eventId]);
+  }, [user, eventId, ]);
+
+
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -227,7 +232,7 @@ export default function EventDetail() {
   return (
     <div className="w-full mx-auto p-4 md:p-6">
       {message.text && (
-        <div className={`${message.type === 'success' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'} border px-4 py-3 rounded-lg mb-4`}>
+        <div className={`${message.type === 'success' ? 'bg-green-50 border-green-200 text-green-700' : message.type === 'warning' ? 'bg-yellow-50 border-yellow-200 text-yellow-700' : message.type === 'info' ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-red-50 border-red-200 text-red-700'} border px-4 py-3 rounded-lg mb-4`}>
           {message.text}
         </div>
       )}
@@ -403,6 +408,6 @@ export default function EventDetail() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
   );
 }

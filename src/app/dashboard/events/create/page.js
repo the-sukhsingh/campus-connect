@@ -17,7 +17,7 @@ function CreateEventPage() {
   const [roomBookings, setRoomBookings] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [selectedTimeSlots, setSelectedTimeSlots] = useState([]);
-  
+
   // Time slots display - with start and end time in 12h format and 24h format for API
   const [timeSlots, setTimeSlots] = useState([
     { id: 1, display: '08:00 AM - 09:00 AM', start: '08:00 AM', end: '09:00 AM', startTime24: '08:00', endTime24: '09:00', isAvailable: true, isSelected: false },

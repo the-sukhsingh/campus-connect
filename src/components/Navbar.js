@@ -1,14 +1,17 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
 import { useState, useEffect, useRef } from 'react';
-import { LogOut, Menu, X, ChevronRight, ChevronLeft, User, Settings, Bell, BookOpen } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { useNotifications } from '@/context/NotificationContext';
+import { LogOut, Menu, X, ChevronRight, ChevronLeft, User, Settings, Bell, BookOpen, Trash2, Check, ExternalLink, ChevronDown } from 'lucide-react';
 
 export default function Navbar() {
   const { user, dbUser, loading, logout } = useAuth();
+  const { notifications, unreadCount, removeNotification, markAsRead, markAllAsRead, clearAllNotifications } = useNotifications();
   const pathname = usePathname();
+  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [maxScroll, setMaxScroll] = useState(0);
@@ -17,6 +20,9 @@ export default function Navbar() {
   const userMenuRef = useRef(null);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const notificationsRef = useRef(null);
+  const [hoveredItem, setHoveredItem] = useState(null);
+  const [expandedMobileSubmenu, setExpandedMobileSubmenu] = useState(null);
+  const menuRefs = useRef({});
 
   // Handle outside clicks
   useEffect(() => {
@@ -45,53 +51,78 @@ export default function Navbar() {
   const getNavLinks = () => {
     if (!dbUser || !dbUser.role) return [];
 
-    const commonLinks = [{ name: 'Dashboard', href: `/dashboard/${dbUser.role}`, icon: '🏠', ariaLabel: 'Go to Dashboard' }];
+    const commonLinks = [{ name: 'Dashboard', href: `/dashboard/${dbUser.role}`, icon: '🏠' }];
 
     const roleLinks = {
       admin: [
-        { name: 'Colleges', href: '/dashboard/admin/colleges', icon: '🏛️', ariaLabel: 'Manage Colleges' },
-        { name: 'Room Bookings', href: '/dashboard/admin/room-bookings', icon: '📅', ariaLabel: 'Manage Room Bookings' }
+        { name: 'Colleges', href: '/dashboard/admin/colleges', icon: '🏛️' },
+        { name: 'Room Bookings', href: '/dashboard/admin/room-bookings', icon: '📅' }
       ],
       student: [
-        { name: 'Attendance', href: '/dashboard/student/attendance', icon: '📊', ariaLabel: 'View Attendance' },
-        { name: 'Catalog', href: '/dashboard/student/books/catalog', icon: '📚', ariaLabel: 'Browse Book Catalog' },
-        { name: 'My Books', href: '/dashboard/student/books/', icon: '📖', ariaLabel: 'View My Books' },
-        { name: 'Announcements', href: '/dashboard/student/announcements', icon: '📢', ariaLabel: 'View Announcements' },
-        { name: 'Events', href: '/dashboard/student/events', icon: '🎉', ariaLabel: 'View Events' },
-        { name: 'Feedback', href: '/dashboard/feedback', icon: '💬', ariaLabel: 'Submit Feedback' },
+        { name: 'Dashboard', href: '/dashboard/student', icon: '🏠' },
+        { name: 'Attendance', href: '/dashboard/student/attendance', icon: '📊' },
+        { name: 'Notes', href: '/dashboard/student/notes', icon: '📝' },
+        {
+          name: 'Library',
+          href: '/dashboard/student/books/catalog',
+          icon: '📚',
+          submenu: [
+            { name: 'Catalog', href: '/dashboard/student/books/catalog' },
+            { name: 'My Books', href: '/dashboard/student/books' }
+          ]
+        },
+        { name: 'Announcements', href: '/dashboard/student/announcements', icon: '📢' },
+        { name: 'Events', href: '/dashboard/student/events', icon: '🎉' },
+        { name: 'Feedback', href: '/dashboard/feedback', icon: '💬' },
       ],
       faculty: [
-        { name: 'Classes', href: '/dashboard/faculty/classes', icon: '👨‍🏫', ariaLabel: 'View Classes' },
-        { name: 'My Classes', href: '/dashboard/faculty/classes/my', icon: '📓', ariaLabel: 'View My Classes' },
-        { name: 'Assigned Classes', href: '/dashboard/faculty/assigned-classes', icon: '✏️', ariaLabel: 'View Assigned Classes' },
-        { name: 'Attendance', href: '/dashboard/faculty/attendance', icon: '📋', ariaLabel: 'Manage Attendance' },
-        { name: 'Space', href: '/dashboard/room-bookings', icon: '🚪', ariaLabel: 'Manage Space' },
-        { name: 'Announcements', href: '/dashboard/faculty/announcements', icon: '📢', ariaLabel: 'Manage Announcements' },
-        { name: 'Events', href: '/dashboard/events', icon: '🎭', ariaLabel: 'View Events' },
-        { name: 'Feedback', href: '/dashboard/feedback', icon: '💬', ariaLabel: 'Submit Feedback' },
+        { name: 'Dashboard', href: '/dashboard/faculty', icon: '🏠' },
+        {
+          name: 'Classes',
+          href: '/dashboard/faculty/classes',
+          icon: '👨‍🏫',
+          submenu: [
+            { name: 'My Classes', href: '/dashboard/faculty/classes' },
+            { name: 'Assigned Classes', href: '/dashboard/faculty/assigned-classes' },
+            { name: 'Attendance', href: '/dashboard/faculty/attendance' }
+          ]
+        },
+        { name: 'Notes', href: '/dashboard/faculty/notes', icon: '📝' },
+        { name: 'Space', href: '/dashboard/room-bookings', icon: '🚪' },
+        { name: 'Announcements', href: '/dashboard/faculty/announcements', icon: '📢' },
+        { name: 'Events', href: '/dashboard/events', icon: '🎭' },
+        { name: 'Feedback', href: '/dashboard/feedback', icon: '💬' },
       ],
       hod: [
-        { name: 'College', href: '/dashboard/hod/college/manage', icon: '🏫', ariaLabel: 'Manage College' },
-        { name: 'Teachers', href: '/dashboard/hod/teachers', icon: '👨‍🏫', ariaLabel: 'Manage Teachers' },
-        { name: 'Classes', href: '/dashboard/hod/classes', icon: '🧑‍🎓', ariaLabel: 'Manage Classes' },
-        { name: 'Space', href: '/dashboard/hod/rooms', icon: '🚪', ariaLabel: 'Manage Space' },
-        { name: 'Manage Spaces', href: '/dashboard/hod/room-bookings', icon: '🚪', ariaLabel: 'Manage Space' },
-        { name: 'Announcements', href: '/dashboard/hod/announcements', icon: '📢', ariaLabel: 'Manage Announcements' },
-        { name: 'Events', href: '/dashboard/events', icon: '🎭', ariaLabel: 'View Events' },
-        { name: 'Feedback', href: '/dashboard/hod/feedback', icon: '💬', ariaLabel: 'Manage Feedback' },
+        { name: 'Dashboard', href: '/dashboard/hod', icon: '🏠' },
+        { name: 'College', href: '/dashboard/hod/college/manage', icon: '🏫' },
+        { name: 'Teachers', href: '/dashboard/hod/teachers', icon: '👨‍🏫' },
+        { name: 'Classes', href: '/dashboard/hod/classes', icon: '🧑‍🎓' },
+        {
+          name: 'Space',
+          href: '/dashboard/hod/rooms',
+          icon: '🚪',
+          submenu: [
+            { name: 'Manage Spaces', href: '/dashboard/hod/rooms' },
+            { name: 'Manage Space Bookings', href: '/dashboard/hod/room-bookings' }
+          ]
+        },
+        { name: 'Announcements', href: '/dashboard/hod/announcements', icon: '📢' },
+        { name: 'Events', href: '/dashboard/events', icon: '🎭' },
+        { name: 'Feedback', href: '/dashboard/hod/feedback', icon: '💬' },
       ],
       librarian: [
-        { name: 'Books', href: '/dashboard/librarian/books', icon: '📚', ariaLabel: 'Manage Books' },
-        { name: 'Catalog', href: '/dashboard/student/books/catalog', icon: '📖', ariaLabel: 'Browse Book Catalog' },
-        { name: 'Lend', href: '/dashboard/librarian/lend', icon: '🤲', ariaLabel: 'Lend Books' },
-        { name: 'Returns', href: '/dashboard/librarian/returns', icon: '↩️', ariaLabel: 'Process Returns' },
-        { name: 'Announcements', href: '/dashboard/librarian/announcements', icon: '📢', ariaLabel: 'Manage Announcements' },
-        { name: 'Events', href: '/dashboard/events', icon: '🎭', ariaLabel: 'View Events' },
-        { name: 'Feedback', href: '/dashboard/feedback', icon: '💬', ariaLabel: 'Submit Feedback' },
+        { name: 'Dashboard', href: '/dashboard/librarian', icon: '🏠' },
+        { name: 'Books', href: '/dashboard/librarian/books', icon: '📚' },
+        { name: 'Lend', href: '/dashboard/librarian/lend', icon: '🤲' },
+        { name: 'Returns', href: '/dashboard/librarian/returns', icon: '↩️' },
+        { name: 'Announcements', href: '/dashboard/librarian/announcements', icon: '📢' },
+        { name: 'Events', href: '/dashboard/events', icon: '🎭' },
+        { name: 'Feedback', href: '/dashboard/feedback', icon: '💬' },
       ],
     };
 
-    return [...commonLinks, ...(roleLinks[dbUser.role] || [])];
+    return dbUser.role === 'admin' ? [...commonLinks, ...(roleLinks[dbUser.role] || [])] : (roleLinks[dbUser.role] || []);
   };
 
   // Scroll navigation links horizontally
@@ -125,14 +156,12 @@ export default function Navbar() {
   const isActive = (href) => {
     if (pathname === href) return true;
 
-    // Special case for nested routes (e.g., /dashboard/student/books/123 should highlight "Books" link)
-    const pathnameSegments = pathname.split('/');
-    const hrefSegments = href.split('/');
+    const pathnameSegments = pathname?.split('/');
+    const hrefSegments = href?.split('/');
 
-    // Compare segments up to the href's depth
-    if (hrefSegments.length >= 3 && pathnameSegments.length >= hrefSegments.length) {
-      const relevantPathSegments = pathnameSegments.slice(0, hrefSegments.length);
-      return relevantPathSegments.join('/') === href;
+    if (hrefSegments?.length >= 3 && pathnameSegments?.length >= hrefSegments?.length) {
+      const relevantPathSegments = pathnameSegments?.slice(0, hrefSegments?.length);
+      return relevantPathSegments?.join('/') === href;
     }
 
     return false;
@@ -140,17 +169,60 @@ export default function Navbar() {
 
   const navLinks = getNavLinks();
 
-  // Mock notifications for demonstration
-  const notifications = [
-    { id: 1, title: 'New announcement posted', time: '10 min ago' },
-    { id: 2, title: 'Your book is due tomorrow', time: '1 hour ago' },
-    { id: 3, title: 'Room booking confirmed', time: '3 hours ago' },
-  ];
+  const formatNotificationTime = (timestamp) => {
+    if (!timestamp) return 'Unknown time';
 
-  // Get user's initials for avatar
+    try {
+      const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
+
+      const now = new Date();
+      const isToday = date.getDate() === now.getDate() &&
+        date.getMonth() === now.getMonth() &&
+        date.getFullYear() === now.getFullYear();
+
+      if (isToday) {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      } else {
+        return date.toLocaleDateString([], { day: 'numeric', month: 'short' });
+      }
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Unknown time';
+    }
+  };
+
+  const handleNavigation = (e, href) => {
+    e.preventDefault();
+    setIsMenuOpen(false);
+    router.push(href);
+  };
+
+  const handleNotificationClick = (notification) => {
+    markAsRead(notification.id);
+    setNotificationsOpen(false);
+
+    if (notification.url && notification.url !== '/') {
+      if (notification.url.startsWith('/') && !notification.url.match(/^https?:\/\//)) {
+        router.push(notification.url);
+      } else {
+        window.open(notification.url, '_blank');
+      }
+    }
+  };
+
+  const handleDeleteNotification = (e, id) => {
+    e.stopPropagation();
+    removeNotification(id);
+  };
+
+  const handleMarkAsRead = (e, id) => {
+    e.stopPropagation();
+    markAsRead(id);
+  };
+
   const getUserInitials = () => {
     if (dbUser && dbUser.displayName) {
-      return dbUser.displayName.split(' ')[0].charAt(0).toUpperCase();
+      return dbUser.displayName.charAt(0).toUpperCase();
     }
     return 'U';
   };
@@ -159,20 +231,19 @@ export default function Navbar() {
     <nav className="bg-gradient-to-r from-indigo-800 via-purple-700 to-indigo-700 text-white shadow-lg sticky top-0 z-50" role="navigation" aria-label="Main Navigation">
       <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
           <Link
             href="/"
+            onClick={(e) => handleNavigation(e, '/')}
             className="text-2xl font-extrabold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 via-pink-300 to-red-400 hover:scale-105 transition-transform flex items-center"
             aria-label="CampusConnect Home"
           >
-            <BookOpen className="mr-2 mt-2 text-yellow-300" size={24} aria-hidden="true" />
+            <BookOpen className="mr-2 text-yellow-300" size={24} aria-hidden="true" />
             <span className="hidden sm:inline">CampusConnect</span>
             <span className="sm:hidden">CC</span>
           </Link>
 
-          {/* Desktop Navigation */}
           {user && dbUser && (
-            <div className="hidden md:flex items-center ml-6 relative flex-1 max-w-4xl">
+            <div className="hidden md:flex items-center ml-6 overflow-y-visible flex-1 max-w-4xl">
               {scrollPosition > 10 && (
                 <button
                   onClick={() => scrollNav('left')}
@@ -184,25 +255,60 @@ export default function Navbar() {
               )}
 
               <div
-                className="flex items-center gap-1 overflow-x-auto px-1 py-1.5 rounded-xl scrollbar-hide scrollDiv" 
+                className="flex z-20 items-center gap-1 overflow-x-auto overflow-y-visible px-1 py-1.5 rounded-xl scrollbar-hide scrollDiv" 
                 ref={navRef}
                 onScroll={handleScroll}
               >
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`transition-all duration-300 px-3 py-1.5 rounded-lg text-sm font-medium flex items-center whitespace-nowrap mx-1 ${isActive(link.href)
-                      ? 'bg-white/90 text-indigo-700 font-bold shadow-md hover:bg-opacity-100'
-                      : 'text-white hover:bg-white/20 hover:scale-105'
-                      }`}
-                    aria-label={link.ariaLabel}
-                    aria-current={isActive(link.href) ? "page" : undefined}
-                  >
-                    <span className="mr-1.5" aria-hidden="true">{link.icon}</span>
-                    <span>{link.name}</span>
-                  </Link>
-                ))}
+                {navLinks.map((link, index) => {
+                  const hasSubmenu = link.submenu && link.submenu.length > 0;
+                  
+                  return (
+                    <div
+                      key={link.href || index}
+                      className="relative"
+                      ref={el => menuRefs.current[link.name] = el}
+                      onMouseEnter={() => setHoveredItem(link.name)}
+                    >
+                      <div onMouseEnter={() => setHoveredItem(link.name)}>
+                        <Link
+                          href={link.href}
+                          className={`flex items-center justify-between w-full py-2 px-3 text-sm font-medium whitespace-nowrap mx-1 transition-all duration-300 rounded-lg ${
+                            isActive(link.href)
+                              ? 'bg-white/90 text-indigo-700 font-bold shadow-md hover:bg-opacity-100'
+                              : 'text-white hover:bg-white/20'
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <span className="mr-1.5" aria-hidden="true">{link.icon}</span>
+                            <span>{link.name}</span>
+                          </div>
+                          {hasSubmenu && <ChevronDown size={14} className="ml-1" />}
+                        </Link>
+
+                        {hasSubmenu && hoveredItem === link.name && (
+                          <div className="fixed mt-2 w-56 bg-white text-gray-800 rounded-lg shadow-lg py-1 animate-fadeDown origin-top">
+                            <div className="px-4 py-2 border-b border-gray-200">
+                              <p className="font-medium">{link.name}</p>
+                            </div>
+                            <ul className="py-1">
+                              {link.submenu.map((submenuItem) => (
+                                <li key={submenuItem.href}>
+                                  <Link
+                                    href={submenuItem.href}
+                                    onClick={() => setHoveredItem(null)}
+                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                                  >
+                                    {submenuItem.name}
+                                  </Link>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {scrollPosition < maxScroll - 10 && (
@@ -217,11 +323,7 @@ export default function Navbar() {
             </div>
           )}
 
-            
           <div className="flex items-center gap-2 md:gap-4">
-            {/* Loading Indicator */}
-
-
             {loading ? (
               <div className="text-sm italic flex items-center">
                 <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" role="status" aria-label="Loading"></div>
@@ -229,7 +331,6 @@ export default function Navbar() {
               </div>
             ) : user ? (
               <>
-                {/* Notifications Dropdown */}
                 <div className="relative" ref={notificationsRef}>
                   <button
                     onClick={() => {
@@ -241,32 +342,107 @@ export default function Navbar() {
                     aria-expanded={notificationsOpen}
                   >
                     <Bell size={20} />
-                    <span className="absolute top-0.5 right-0.5 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center" aria-label="3 unread notifications">
-                      3
-                    </span>
+                    {unreadCount > 0 && (
+                      <span className="absolute top-0.5 right-0.5 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center" aria-label={`${unreadCount} unread notifications`}>
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
                   </button>
 
                   {notificationsOpen && (
-                    <div className="absolute right-0 mt-2 w-64 bg-white text-gray-800 rounded-lg shadow-lg py-2 animate-fadeDown origin-top-right">
-                      <h3 className="px-4 py-2 font-bold border-b border-gray-200">Notifications</h3>
-                      <div className="max-h-60 overflow-y-auto">
-                        {notifications.map(notif => (
-                          <div key={notif.id} className="px-4 py-2 hover:bg-gray-100 border-b border-gray-100">
-                            <p className="text-sm font-medium">{notif.title}</p>
-                            <p className="text-xs text-gray-500">{notif.time}</p>
-                          </div>
-                        ))}
+                    <div className="absolute right-0 mt-2 w-80 bg-white text-gray-800 rounded-lg shadow-lg py-2 animate-fadeDown origin-top-right">
+                      <div className="px-4 py-2 font-bold border-b border-gray-200 flex justify-between items-center">
+                        <h3>Notifications</h3>
+                        <div className="flex gap-1">
+                          {unreadCount > 0 && (
+                            <button
+                              onClick={() => markAllAsRead()}
+                              className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 p-1 hover:bg-blue-50 rounded"
+                              title="Mark all as read"
+                            >
+                              <Check size={14} />
+                              <span>Read all</span>
+                            </button>
+                          )}
+                          <button
+                            onClick={() => clearAllNotifications()}
+                            className="text-xs text-red-600 hover:text-red-800 font-medium flex items-center gap-1 p-1 hover:bg-red-50 rounded"
+                            title="Clear all notifications"
+                          >
+                            <Trash2 size={14} />
+                            <span>Clear all</span>
+                          </button>
+                        </div>
                       </div>
-                      <div className="px-4 py-2 text-center">
-                        <Link href="#" className="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
-                          View all notifications
-                        </Link>
+                      <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
+                        {notifications.length > 0 ? (
+                          notifications.map(notification => (
+                            <div
+                              key={notification.id}
+                              onClick={() => handleNotificationClick(notification)}
+                              className={`px-4 py-2 hover:bg-gray-100 border-b border-gray-100 cursor-pointer transition-colors ${!notification.read ? 'bg-blue-50' : ''}`}
+                            >
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <p className={`text-sm ${!notification.read ? 'font-bold' : 'font-medium'}`}>
+                                    {notification.title}
+                                  </p>
+                                  <p className="text-xs text-gray-600 line-clamp-2 mb-1">{notification.body}</p>
+                                  <div className="flex justify-between items-center mt-1">
+                                    <span className="text-xs text-gray-500 italic">
+                                      {formatNotificationTime(notification.timestamp)}
+                                    </span>
+                                    <div className="flex gap-1">
+                                      {!notification.read && (
+                                        <button
+                                          onClick={(e) => handleMarkAsRead(e, notification.id)}
+                                          className="text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-100"
+                                          title="Mark as read"
+                                        >
+                                          <Check size={14} />
+                                        </button>
+                                      )}
+                                      {notification.url && notification.url !== '/' && (
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (notification.url.startsWith('/') && !notification.url.match(/^https?:\/\//)) {
+                                              window.open(notification.url, '_blank');
+                                            } else {
+                                              window.open(notification.url, '_blank');
+                                            }
+                                          }}
+                                          className="text-gray-600 hover:text-gray-800 p-1 rounded-full hover:bg-gray-100"
+                                          title="Open in new tab"
+                                        >
+                                          <ExternalLink size={14} />
+                                        </button>
+                                      )}
+                                      <button
+                                        onClick={(e) => handleDeleteNotification(e, notification.id)}
+                                        className="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-100"
+                                        title="Delete notification"
+                                      >
+                                        <Trash2 size={14} />
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="px-4 py-6 text-center text-gray-500">
+                            <Bell className="mx-auto mb-2 text-gray-400" size={32} />
+                            <p className="text-sm">No notifications yet</p>
+                            <p className="text-xs mt-1">When you receive notifications, they&apos;ll appear here</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* User Menu Dropdown */}
                 <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={() => {
@@ -281,7 +457,7 @@ export default function Navbar() {
                       {getUserInitials()}
                     </div>
                     <span className="hidden md:inline text-sm font-medium truncate max-w-[100px]">
-                      {dbUser?.name || user.email}
+                      {dbUser?.displayName || user.email}
                     </span>
                   </button>
 
@@ -293,8 +469,7 @@ export default function Navbar() {
                         <p className="text-xs font-medium text-indigo-600 mt-1 capitalize">{dbUser?.role || 'User'}</p>
                       </div>
 
-
-                      <Link href="/dashboard/password-change" className="flex items-center px-4 py-2 text-sm hover:bg-gray-100 transition-colors">
+                      <Link href="/dashboard/password-change" onClick={(e) => handleNavigation(e, '/dashboard/password-change')} className="flex items-center px-4 py-2 text-sm hover:bg-gray-100 transition-colors">
                         <Settings size={16} className="mr-2" />
                         Change Password
                       </Link>
@@ -315,6 +490,7 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/auth"
+                onClick={(e) => handleNavigation(e, '/auth')}
                 className="px-4 py-1.5 bg-indigo-500 hover:bg-indigo-600 rounded-md transition-all hover:scale-105 hover:shadow-md text-sm font-medium flex items-center"
                 aria-label="Sign in to your account"
               >
@@ -323,7 +499,6 @@ export default function Navbar() {
               </Link>
             )}
 
-            {/* Mobile Menu Toggle */}
             {user && (
               <button
                 onClick={() => {
@@ -342,7 +517,6 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Navigation - Animated dropdown */}
       {isMenuOpen && (
         <div
           className="md:hidden bg-gradient-to-b from-indigo-900 to-purple-900 py-2 px-3 space-y-1 animate-fadeDown shadow-inner"
@@ -350,7 +524,6 @@ export default function Navbar() {
           aria-orientation="vertical"
           aria-labelledby="mobile-menu-button"
         >
-          {/* User Info at Top of Mobile Menu */}
           {dbUser && (
             <div className="bg-white/10 rounded-lg p-3 mb-3">
               <div className="flex items-center gap-3">
@@ -366,104 +539,104 @@ export default function Navbar() {
             </div>
           )}
 
-          {/* Notifications Section in Mobile Menu */}
-          <div className="bg-white/5 rounded-lg mb-3">
-            <div className="px-3 py-2 border-b border-white/10 flex justify-between items-center">
-              <h3 className="font-medium">Notifications</h3>
-              <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                {notifications.length}
-              </span>
-            </div>
-            <div className="max-h-36 overflow-y-auto">
-              {notifications.map(notif => (
-                <div key={notif.id} className="px-3 py-2 border-b border-white/5 last:border-b-0">
-                  <p className="text-sm">{notif.title}</p>
-                  <p className="text-xs text-white/60">{notif.time}</p>
-                </div>
-              ))}
-            </div>
-          </div>
 
           <div className="bg-white/5 rounded-lg overflow-hidden">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`flex items-center px-3 py-2.5 text-sm font-medium transition-all border-b border-white/10 last:border-b-0 ${isActive(link.href)
-                  ? 'bg-white/20 font-semibold'
-                  : 'hover:bg-white/10'
-                  }`}
-                onClick={() => setIsMenuOpen(false)}
-                aria-label={link.ariaLabel}
-                aria-current={isActive(link.href) ? "page" : undefined}
-              >
-                <span className="mr-3 text-lg" aria-hidden="true">{link.icon}</span>
-                {link.name}
-              </Link>
-            ))}
+            {navLinks.map((link, index) => {
+              const hasSubmenu = link.submenu && link.submenu.length > 0;
+              return (
+                <div key={link.href || index}>
+                  <div className="flex items-center">
+                    <Link
+                      href={link.href}
+                      onClick={(e) => handleNavigation(e, link.href)}
+                      className={`flex items-center flex-grow px-3 py-2.5 text-sm font-medium transition-all border-b border-white/10 ${
+                        isActive(link.href) ? 'bg-white/20 font-semibold' : 'hover:bg-white/10'
+                      }`}
+                    >
+                      <span className="mr-3 text-lg" aria-hidden="true">{link.icon}</span>
+                      {link.name}
+                    </Link>
+                    {hasSubmenu && (
+                      <button 
+                        className="px-4 py-2.5 border-b border-white/10"
+                        onClick={() => setExpandedMobileSubmenu(expandedMobileSubmenu === link.name ? null : link.name)}
+                      >
+                        <ChevronDown 
+                          size={16} 
+                          className={`transition-transform ${expandedMobileSubmenu === link.name ? 'rotate-180' : ''}`} 
+                        />
+                      </button>
+                    )}
+                  </div>
+                  {hasSubmenu && expandedMobileSubmenu === link.name && (
+                    <div className="pl-6 bg-white/5">
+                      {link.submenu.map((submenuItem) => (
+                        <Link
+                          key={submenuItem.href}
+                          href={submenuItem.href}
+                          onClick={(e) => handleNavigation(e, submenuItem.href)}
+                          className="block px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                        >
+                          {submenuItem.name}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
-          <div className="flex gap-2 mt-3">
-            <Link
-              href="/dashboard/password-change"
-              className="flex-1 flex items-center justify-center gap-1 bg-white/10 hover:bg-white/20 py-2 rounded-md text-sm"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <Settings size={16} className="mr-1" />
-              Settings
-            </Link>
-          </div>
-
-          <button
-            onClick={handleSignOut}
-            className="w-full flex items-center justify-center gap-2 py-2 bg-red-500/80 hover:bg-red-600 rounded-md text-sm font-medium transition-all"
-          >
-            <LogOut size={16} />
-            Sign out
-          </button>
         </div>
       )}
 
-{/* Add global styles */}
-<style jsx global>{`
-  .hide-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .hide-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  @keyframes fadeDown {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .animate-fadeDown {
-    animation: fadeDown 0.2s ease forwards;
-  }
-   .scrollDiv::-webkit-scrollbar {
-    height: 1px;
-  }
+      <style jsx global>{`
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        @keyframes fadeDown {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeDown {
+          animation: fadeDown 0.2s ease forwards;
+        }
+        .scrollDiv::-webkit-scrollbar {
+          height: 1px;
+        }
+        .scrollDiv::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .scrollDiv::-webkit-scrollbar-thumb {
+          background-color: rgba(255, 255, 255, 0.4);
+          border-radius: 1px;
+        }
+        .scrollDiv::-webkit-scrollbar-button {
+          display: none;
+          height: 0;
+          width: 0;
+        }
+        .scrollDiv {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(255, 255, 255, 0.4) transparent;
+        }
 
-  .scrollDiv::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .scrollDiv::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.4);
-    border-radius: 1px;
-  }
-
-  .scrollDiv::-webkit-scrollbar-button {
-    display: none;
-    height: 0;
-    width: 0;
-  }
-
-  .scrollDiv {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.4) transparent;
-  }
-`}</style>
+        .navbar-submenu {
+          position: absolute;
+          top: 100%;
+          left: 0;
+          z-index: 999;
+          background-color: white;
+          width: 200px;
+          border-radius: 0.5rem;
+          box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+          overflow: visible;
+        }
+      `}</style>
     </nav>
   );
 }

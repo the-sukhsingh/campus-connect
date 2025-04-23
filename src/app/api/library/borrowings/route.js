@@ -10,6 +10,7 @@ import {
 } from '@/services/bookBorrowingService';
 import { getUserByFirebaseUid } from '@/services/userService';
 import BookBorrowing from '@/models/BookBorrowing';
+import Book from '@/models/Book';
 
 export async function GET(request) {
   try {
@@ -69,8 +70,19 @@ export async function GET(request) {
       return NextResponse.json(result);
     }
     else if (action === 'get-all-borrowings' && (dbUser.role === 'librarian' || dbUser.role === 'hod')) {
-      // Get all borrowings for librarians
+      // Get all borrowings for librarians but only from their college
       const query = status ? { status } : {};
+      
+      // Add college filter if the librarian is associated with a college
+      if (dbUser.college) {
+        // We need to find books that belong to librarian's college
+        // First, query all books from the librarian's college
+        const bookIds = await Book.find({ college: dbUser.college }).distinct('_id');
+        
+        // Then filter the borrowings to only include those books
+        query.book = { $in: bookIds };
+      }
+      
       const result = await getBorrowings(query, page, limit);
       return NextResponse.json(result);
     }

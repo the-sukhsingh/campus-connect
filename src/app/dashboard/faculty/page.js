@@ -5,6 +5,13 @@ import { useAuth } from '@/context/AuthContext';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ProfileCompletionWrapper from '@/components/ProfileCompletionWrapper';
+import dynamic from 'next/dynamic';
+
+// Dynamically import the NotificationSubscription component (client-side only)
+const NotificationSubscription = dynamic(
+  () => import('@/components/NotificationSubscription'),
+  { ssr: false }
+);
 
 function FacultyDashboard() {
   const { user, userRole } = useAuth();
@@ -111,8 +118,8 @@ function FacultyDashboard() {
           {/* Assigned Classes */}
           <div className="bg-white shadow rounded-lg p-6 hover:shadow-md transition-shadow">
             <div className="flex items-center mb-4">
-              <div className="bg-amber-100 p-3 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="bg-green-100 p-3 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
@@ -124,38 +131,18 @@ function FacultyDashboard() {
             <p className="text-gray-500 mb-6">Access classes where you are assigned as faculty, view students, and mark attendance.</p>
             <Link
               href="/dashboard/faculty/assigned-classes"
-              className="block w-full text-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-amber-600 hover:bg-amber-700"
+              className="block w-full text-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
             >
               View Assigned Classes
             </Link>
           </div>
 
           
-          
-          {/* Announcements */}
-          <div className="bg-white shadow rounded-lg p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center mb-4">
-              <div className="bg-blue-100 p-3 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-semibold">Announcements</h3>
-                <p className="text-sm text-gray-500">Communicate with students</p>
-              </div>
-            </div>
-            <p className="text-gray-500 mb-6">Create and manage announcements for your students and college.</p>
-            <Link
-              href="/dashboard/faculty/announcements/"
-              className="block w-full text-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-            >
-              Manage Announcement
-            </Link>
-          </div>
+          <NotificationSubscription />
           
           
         </div>
+
       </>
     );
   };
