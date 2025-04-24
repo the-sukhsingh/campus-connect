@@ -40,6 +40,7 @@ function LibraryManagementPage() {
         setRefreshing(false);
         return;
       }
+      
 
       setCollegeInfo(collegeData.college);
 
@@ -51,9 +52,10 @@ function LibraryManagementPage() {
       }
 
       const teachersData = await teachersResponse.json();
+      console.log("Teacher's data:", teachersData);
       const allTeachers = teachersData.teachers || [];
       // Filter out approved librarians only
-      const approvedTeachers = allTeachers.filter(t => t.collegeStatus === 'approved');
+      const approvedTeachers = allTeachers.filter(t => t.collegeStatus === 'linked');
       setLibrarians(approvedTeachers.filter((t) => t.role === 'librarian'));
 
       // Fetch library stats

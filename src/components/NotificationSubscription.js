@@ -84,7 +84,7 @@ export default function NotificationSubscription() {
   if (!canSubscribe) return null;
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
+    <div className="bg-white shadow rounded-lg p-6 h-full">
       <div className="flex items-center mb-4">
         <div className="bg-yellow-100 p-3 rounded-full">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -103,7 +103,7 @@ export default function NotificationSubscription() {
       <button
         onClick={handleSubscription}
         disabled={subscriptionStatus === 'subscribing'}
-        className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+        className={`inline-flex w-full justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
           subscribed ? 'bg-red-600 hover:bg-red-700' : 'bg-yellow-600 hover:bg-yellow-700'
         } ${subscriptionStatus === 'subscribing' ? 'opacity-70 cursor-not-allowed' : ''}`}
       >

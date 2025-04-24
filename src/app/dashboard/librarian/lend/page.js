@@ -9,9 +9,12 @@ import { useRouter } from 'next/navigation';
 function LendBookPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const urlBookCode = searchParams.get('uniqueCode');
+  const urlBookId = searchParams.get('bookId');
   const [activeTab, setActiveTab] = useState('quick');
   const [loading, setLoading] = useState(false);
-  const [uniqueCodeSearch, setUniqueCodeSearch] = useState('');
+  const [uniqueCodeSearch, setUniqueCodeSearch] = useState(urlBookCode || '');
   const [studentSearch, setStudentSearch] = useState('');
   const [foundBook, setFoundBook] = useState(null);
   const [foundStudent, setFoundStudent] = useState(null);
@@ -60,7 +63,14 @@ function LendBookPage() {
       fetchAdvBookCopies(advSelectedBook._id);
     }
   }, [advSelectedBook]);
-  
+
+  // Auto-search book when navigating from book details page
+  useEffect(() => {
+    if (urlBookCode && user) {
+      setUniqueCodeSearch(urlBookCode);
+      handleBookSearch(urlBookCode);
+    }
+  }, [user, urlBookCode]);
   // Fetch book copies for the found book
   const fetchBookCopies = async (bookId) => {
     if (!bookId || !user) return;
@@ -158,8 +168,10 @@ function LendBookPage() {
   };
   
   // Quick search - Find book by unique code
-  const handleBookSearch = async () => {
-    if (!uniqueCodeSearch.trim() || !user) {
+  const handleBookSearch = async (uniqueCodeSearch = uniqueCodeSearch) => {
+    if (!user) return;
+    console.log("Unique Code Search:", uniqueCodeSearch);
+    if (!uniqueCodeSearch.trim()) {
       setError('Please enter a valid book code');
       return;
     }
@@ -475,7 +487,20 @@ function LendBookPage() {
     <div className="p-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Lend Books to Students</h1>
+          <div className="flex items-center gap-4 mb-2">
+            {urlBookId && (
+              <button
+                onClick={() => router.push(`/dashboard/library/books/${urlBookId}`)}
+                className="text-indigo-600 hover:text-indigo-900 flex items-center"
+              >
+                <svg className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Book Details
+              </button>
+            )}
+            <h1 className="text-2xl font-bold">Lend Books to Students</h1>
+          </div>
           <p className="text-gray-600 mt-1">Issue books to students quickly and efficiently</p>
         </div>
         

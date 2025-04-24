@@ -13,6 +13,9 @@ const NotificationSubscription = dynamic(
   { ssr: false }
 );
 
+// Import the EmergencyNotificationButtons component
+import EmergencyNotificationButtons from '@/components/EmergencyNotificationButtons';
+
 function FacultyDashboard() {
   const { user, userRole } = useAuth();
   const [collegeInfo, setCollegeInfo] = useState(null);
@@ -22,36 +25,40 @@ function FacultyDashboard() {
     total: 0,
     students: 0
   });
+  const [classes, setClasses] = useState([]);
 
   // Fetch faculty data
   useEffect(() => {
     const fetchData = async () => {
       if (!user) return;
-      
+
       try {
         setLoading(true);
-      
+
         // Fetch college information for this faculty
         const collegeResponse = await fetch(`/api/user/teacher/college?uid=${user?.uid}`);
-        
+
         if (collegeResponse.ok) {
           const collegeData = await collegeResponse.json();
           setCollegeInfo(collegeData.college);
-          
+
           // If faculty is linked to a college and approved, fetch classes data
           if (collegeData.college && collegeData.status === 'approved') {
             const classesResponse = await fetch(`/api/user/teacher/classes?uid=${user?.uid}`);
-            
+
             if (classesResponse.ok) {
               const classesData = await classesResponse.json();
               setClassesCounts({
                 total: classesData.classes?.length || 0,
                 students: classesData.totalStudents || 0
               });
+
+              // Store the classes data in state for EmergencyNotificationButtons
+              setClasses(classesData.classes || []);
             }
           }
         }
-      } catch (error ) {
+      } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
@@ -60,7 +67,6 @@ function FacultyDashboard() {
 
     fetchData();
   }, [user]);
-
 
   // Display content based on loading and college/request status
   const renderContent = () => {
@@ -71,8 +77,6 @@ function FacultyDashboard() {
         </div>
       );
     }
-    
-
 
     // Approved faculty - show dashboard
     return (
@@ -84,6 +88,8 @@ function FacultyDashboard() {
             <p><span className="font-medium">Department:</span> {collegeInfo.department || 'Not specified'}</p>
           </div>
         </div>
+
+        
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Classes Management */}
@@ -137,12 +143,8 @@ function FacultyDashboard() {
             </Link>
           </div>
 
-          
           <NotificationSubscription />
-          
-          
         </div>
-
       </>
     );
   };
@@ -151,6 +153,30 @@ function FacultyDashboard() {
     <ProfileCompletionWrapper>
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-4">Faculty Dashboard</h1>
+
+        {/* Safety Alert Section */}
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="bg-red-100 p-3 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div className="ml-4">
+                <h2 className="text-lg font-semibold text-red-700">Safety Alerts</h2>
+                <p className="text-red-600">Create urgent safety notifications for students and staff</p>
+              </div>
+            </div>
+            <Link
+              href="/dashboard/safety-alerts"
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm font-medium flex items-center"
+            >
+              Create Safety Alert
+            </Link>
+          </div>
+        </div>
+
         <div className="bg-white shadow rounded-lg p-4 mb-6">
           <p className="text-gray-700">
             Welcome, <span className="font-semibold">{user?.displayName || user?.email}</span>! 
@@ -161,12 +187,12 @@ function FacultyDashboard() {
         </div>
 
         {message.text && (
-          <div 
+          <div
             className={`p-4 mb-6 border-l-4 ${
-              message.type === 'error' 
-                ? 'bg-red-100 border-red-500 text-red-700' 
+              message.type === 'error'
+                ? 'bg-red-100 border-red-500 text-red-700'
                 : 'bg-green-100 border-green-500 text-green-700'
-            }`} 
+            }`}
             role="alert"
           >
             <p className="font-medium">{message.text}</p>

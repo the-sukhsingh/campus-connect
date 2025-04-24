@@ -160,16 +160,72 @@ function ManageStudentsPage() {
 
   // Validate bulk student form
   const validateBulkStudentForm = () => {
-    const errors = bulkStudents.map((student) => {
+    const errors = bulkStudents.map((student, index) => {
       const studentErrors = {};
+      
+      // Required fields validation
       if (!student.email.trim()) {
         studentErrors.email = 'Email is required';
       } else if (!/\S+@\S+\.\S+/.test(student.email)) {
         studentErrors.email = 'Please enter a valid email address';
       }
+
       if (!student.displayName.trim()) {
         studentErrors.displayName = 'Name is required';
       }
+
+      if (!student.rollNo.trim()) {
+        studentErrors.rollNo = 'Roll number is required';
+      }
+
+      // Uniqueness validation within the form
+      const emailDuplicate = bulkStudents.find(
+        (s, i) => i !== index && s.email.toLowerCase() === student.email.toLowerCase()
+      );
+      if (emailDuplicate) {
+        studentErrors.email = 'Email address must be unique';
+      }
+
+      const rollNoDuplicate = bulkStudents.find(
+        (s, i) => i !== index && s.rollNo && s.rollNo === student.rollNo
+      );
+      if (rollNoDuplicate) {
+        studentErrors.rollNo = 'Roll number must be unique';
+      }
+
+      if (student.studentId) {
+        const studentIdDuplicate = bulkStudents.find(
+          (s, i) => i !== index && s.studentId && s.studentId === student.studentId
+        );
+        if (studentIdDuplicate) {
+          studentErrors.studentId = 'Student ID must be unique';
+        }
+      }
+
+      // Check for duplicates in existing students
+      const existingEmailDuplicate = approvedStudents.find(
+        s => s.student?.email?.toLowerCase() === student.email.toLowerCase()
+      );
+      if (existingEmailDuplicate) {
+        studentErrors.email = 'A student with this email already exists in the class';
+      }
+
+      const existingRollNoDuplicate = approvedStudents.find(
+        s => s.student?.rollNo === student.rollNo
+      );
+      if (existingRollNoDuplicate) {
+        studentErrors.rollNo = 'A student with this roll number already exists in the class';
+      }
+
+      if (student.studentId) {
+        const existingStudentIdDuplicate = approvedStudents.find(
+          s => s.student?.studentId === student.studentId
+        );
+        if (existingStudentIdDuplicate) {
+          studentErrors.studentId = 'A student with this ID already exists in the class';
+        }
+      }
+
       return studentErrors;
     });
 

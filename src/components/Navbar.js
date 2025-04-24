@@ -61,7 +61,7 @@ export default function Navbar() {
       student: [
         { name: 'Dashboard', href: '/dashboard/student', icon: '🏠' },
         { name: 'Attendance', href: '/dashboard/student/attendance', icon: '📊' },
-        { name: 'Notes', href: '/dashboard/student/notes', icon: '📝' },
+        { name: 'Notes', href: '/dashboard/notes', icon: '📝' },
         {
           name: 'Library',
           href: '/dashboard/student/books/catalog',
@@ -74,6 +74,7 @@ export default function Navbar() {
         { name: 'Announcements', href: '/dashboard/student/announcements', icon: '📢' },
         { name: 'Events', href: '/dashboard/student/events', icon: '🎉' },
         { name: 'Feedback', href: '/dashboard/feedback', icon: '💬' },
+        { name: 'Safety Alerts', href: '/dashboard/safety-alerts', icon: '🚨' }
       ],
       faculty: [
         { name: 'Dashboard', href: '/dashboard/faculty', icon: '🏠' },
@@ -87,11 +88,12 @@ export default function Navbar() {
             { name: 'Attendance', href: '/dashboard/faculty/attendance' }
           ]
         },
-        { name: 'Notes', href: '/dashboard/faculty/notes', icon: '📝' },
+        { name: 'Notes', href: '/dashboard/notes', icon: '📝' },
         { name: 'Space', href: '/dashboard/room-bookings', icon: '🚪' },
         { name: 'Announcements', href: '/dashboard/faculty/announcements', icon: '📢' },
         { name: 'Events', href: '/dashboard/events', icon: '🎭' },
         { name: 'Feedback', href: '/dashboard/feedback', icon: '💬' },
+        { name: 'Safety Alerts', href: '/dashboard/safety-alerts', icon: '🚨' }
       ],
       hod: [
         { name: 'Dashboard', href: '/dashboard/hod', icon: '🏠' },
@@ -104,12 +106,14 @@ export default function Navbar() {
           icon: '🚪',
           submenu: [
             { name: 'Manage Spaces', href: '/dashboard/hod/rooms' },
-            { name: 'Manage Space Bookings', href: '/dashboard/hod/room-bookings' }
+            { name: 'Manage Space Bookings', href: '/dashboard/hod/room-bookings' },
+            { name: 'Energy Usage', href: '/dashboard/hod/energy' }
           ]
         },
         { name: 'Announcements', href: '/dashboard/hod/announcements', icon: '📢' },
         { name: 'Events', href: '/dashboard/events', icon: '🎭' },
         { name: 'Feedback', href: '/dashboard/hod/feedback', icon: '💬' },
+        { name: 'Safety Alerts', href: '/dashboard/safety-alerts', icon: '🚨' }
       ],
       librarian: [
         { name: 'Dashboard', href: '/dashboard/librarian', icon: '🏠' },
@@ -119,6 +123,7 @@ export default function Navbar() {
         { name: 'Announcements', href: '/dashboard/librarian/announcements', icon: '📢' },
         { name: 'Events', href: '/dashboard/events', icon: '🎭' },
         { name: 'Feedback', href: '/dashboard/feedback', icon: '💬' },
+        { name: 'Safety Alerts', href: '/dashboard/safety-alerts', icon: '🚨' }
       ],
     };
 
@@ -517,65 +522,63 @@ export default function Navbar() {
         </div>
       </div>
 
+      {/* Mobile menu */}
       {isMenuOpen && (
         <div
-          className="md:hidden bg-gradient-to-b from-indigo-900 to-purple-900 py-2 px-3 space-y-1 animate-fadeDown shadow-inner"
+          className="md:hidden bg-gradient-to-b from-indigo-900 to-purple-900 py-4 px-3 space-y-3 animate-fadeDown shadow-inner fixed inset-x-0 top-[64px] max-h-[calc(100vh-64px)] overflow-y-auto z-40"
           role="menu"
           aria-orientation="vertical"
           aria-labelledby="mobile-menu-button"
         >
           {dbUser && (
-            <div className="bg-white/10 rounded-lg p-3 mb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-base font-bold">
+            <div className="bg-white/10 rounded-lg p-4 mb-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-lg font-bold">
                   {getUserInitials()}
                 </div>
-                <div className="flex-1">
-                  <p className="font-medium">{dbUser.name}</p>
-                  <p className="text-xs text-white/70">{dbUser.email}</p>
-                  <p className="text-xs font-medium bg-white/20 rounded-full px-2 py-0.5 mt-1 inline-block capitalize">{dbUser.role}</p>
+                <div>
+                  <div className="font-medium text-white">{dbUser?.displayName || user?.email}</div>
+                  <div className="text-xs text-white/70">{dbUser?.role || 'User'}</div>
                 </div>
               </div>
             </div>
           )}
 
-
-          <div className="bg-white/5 rounded-lg overflow-hidden">
-            {navLinks.map((link, index) => {
+          {/* Mobile navigation links */}
+          <div className="space-y-2">
+            {getNavLinks().map((link) => {
+              const isActive = pathname === link.href;
               const hasSubmenu = link.submenu && link.submenu.length > 0;
+              
               return (
-                <div key={link.href || index}>
-                  <div className="flex items-center">
+                <div key={link.name} className="rounded-md overflow-hidden">
+                  <div className="flex">
                     <Link
-                      href={link.href}
-                      onClick={(e) => handleNavigation(e, link.href)}
-                      className={`flex items-center flex-grow px-3 py-2.5 text-sm font-medium transition-all border-b border-white/10 ${
-                        isActive(link.href) ? 'bg-white/20 font-semibold' : 'hover:bg-white/10'
+                      href={hasSubmenu ? '#' : link.href}
+                      onClick={(e) => hasSubmenu ? (e.preventDefault(), setExpandedMobileSubmenu(expandedMobileSubmenu === link.name ? null : link.name)) : handleNavigation(e, link.href)}
+                      className={`flex items-center flex-grow p-4 text-base font-medium transition-all rounded-l-md ${
+                        isActive ? 'bg-white/20 font-semibold' : 'hover:bg-white/10'
                       }`}
                     >
-                      <span className="mr-3 text-lg" aria-hidden="true">{link.icon}</span>
+                      <span className="mr-3 text-xl" aria-hidden="true">{link.icon}</span>
                       {link.name}
-                    </Link>
-                    {hasSubmenu && (
-                      <button 
-                        className="px-4 py-2.5 border-b border-white/10"
-                        onClick={() => setExpandedMobileSubmenu(expandedMobileSubmenu === link.name ? null : link.name)}
-                      >
+                      {hasSubmenu && (
                         <ChevronDown 
-                          size={16} 
-                          className={`transition-transform ${expandedMobileSubmenu === link.name ? 'rotate-180' : ''}`} 
+                          size={16}
+                          className={`ml-auto transition-transform ${expandedMobileSubmenu === link.name ? 'rotate-180' : ''}`} 
                         />
-                      </button>
-                    )}
+                      )}
+                    </Link>
                   </div>
+                  
                   {hasSubmenu && expandedMobileSubmenu === link.name && (
-                    <div className="pl-6 bg-white/5">
+                    <div className="pl-10 bg-white/5 py-2 rounded-b-md">
                       {link.submenu.map((submenuItem) => (
                         <Link
                           key={submenuItem.href}
                           href={submenuItem.href}
                           onClick={(e) => handleNavigation(e, submenuItem.href)}
-                          className="block px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                          className="block py-3 px-4 text-base text-white/80 hover:text-white hover:bg-white/10 transition-colors rounded-md my-1"
                         >
                           {submenuItem.name}
                         </Link>
@@ -587,6 +590,16 @@ export default function Navbar() {
             })}
           </div>
 
+          {/* Mobile user menu */}
+          <div className="border-t border-white/10 pt-4 mt-4">
+            <button
+              onClick={logout}
+              className="flex items-center w-full p-3 text-white/90 hover:bg-white/10 rounded-md transition-colors"
+            >
+              <LogOut size={18} className="mr-3" />
+              <span>Sign Out</span>
+            </button>
+          </div>
         </div>
       )}
 

@@ -16,7 +16,7 @@ export async function GET(request) {
         { status: 400 }
       );
     }
-
+    
     const user = await getUserByFirebaseUid(uid);
     if (!user) {
       return NextResponse.json(

@@ -37,6 +37,11 @@ const BookCopySchema = new Schema(
       ref: 'College', 
       required: true 
     },
+    uniqueCode: {
+      type: String,
+      sparse: true, // Allows multiple null values but enforces uniqueness when value exists
+      trim: true
+    },
   },
   {
     timestamps: true,
@@ -49,5 +54,10 @@ BookCopySchema.index(
   { unique: true, name: 'book_copyNumber' }
 );
 
+// Add compound index for uniqueCode
+BookCopySchema.index({ uniqueCode: 1 }, { 
+  unique: true,
+  sparse: true // Allows multiple null values
+});
 
 export default mongoose.models.BookCopy || mongoose.model('BookCopy', BookCopySchema);

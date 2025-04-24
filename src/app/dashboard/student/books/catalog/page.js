@@ -2,47 +2,79 @@
 
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
 function BookCatalogPage() {
-  const { user,dbUser } = useAuth();
+  const { user, dbUser } = useAuth();
   const [books, setBooks] = useState([]);
+  const [filteredBooks, setFilteredBooks] = useState([]);
   const [totalBooks, setTotalBooks] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchField, setSearchField] = useState('all');
   const [selectedGenre, setSelectedGenre] = useState('');
   const [genres, setGenres] = useState([]);
   const [view, setView] = useState('grid');
 
-   // Fetch books from API
-   const fetchBooks = async () => {
+  // Client-side search and filter
+  const filterBooks = useCallback((query, field, genre) => {
+    if (!books) return;
+
+    let filtered = [...books];
+
+    if (query) {
+      const searchLower = query.toLowerCase();
+      filtered = filtered.filter(book => {
+        if (field === 'title') return book.title.toLowerCase().includes(searchLower);
+        if (field === 'author') return book.author.toLowerCase().includes(searchLower);
+        // All fields
+        return (
+          book.title.toLowerCase().includes(searchLower) ||
+          book.author.toLowerCase().includes(searchLower) ||
+          (book.ISBN && book.ISBN.toLowerCase().includes(searchLower)) ||
+          (book.uniqueCode && book.uniqueCode.toLowerCase().includes(searchLower))
+        );
+      });
+    }
+
+    if (genre) {
+      filtered = filtered.filter(book => book.genre === genre);
+    }
+
+    setFilteredBooks(filtered);
+    setTotalBooks(filtered.length);
+    setTotalPages(Math.ceil(filtered.length / 10));
+  }, [books]);
+
+  // Handle search parameters change
+  const handleSearch = (query, field, genre) => {
+    setSearchTerm(query);
+    setSearchField(field);
+    setSelectedGenre(genre);
+    setCurrentPage(1);
+    filterBooks(query, field, genre);
+  };
+
+  // Fetch all books initially
+  const fetchBooks = async () => {
+    if (!user) return;
     try {
       setIsLoading(true);
-      
-      let url = `/api/library/books?action=get-books&uid=${user?.uid}&page=${currentPage}`;
-      
-      if (searchTerm) {
-        url += `&query=${encodeURIComponent(searchTerm)}`;
-      }
-      
-      if (selectedGenre) {
-        url += `&genre=${encodeURIComponent(selectedGenre)}`;
-      }
-      
-      const response = await fetch(url);
-      
+      const response = await fetch(`/api/library/books?action=get-books&uid=${user?.uid}`);
+
       if (!response.ok) {
         throw new Error('Failed to fetch books');
       }
-      
+
       const data = await response.json();
       setBooks(data.books || []);
-      setTotalBooks(data.total || 0);
-      setTotalPages(data.pages || 1);
+      setFilteredBooks(data.books || []);
+      setTotalBooks(data.books?.length || 0);
+      setTotalPages(Math.ceil((data.books?.length || 0) / 10));
     } catch (err) {
       console.error('Error fetching books:', err);
       setError('Failed to load books. Please try again later.');
@@ -50,53 +82,38 @@ function BookCatalogPage() {
       setIsLoading(false);
     }
   };
-  
+
   // Fetch genres for filter dropdown
   const fetchGenres = async () => {
     try {
       if (!user) return;
-      
+
       const response = await fetch(`/api/library/books?action=get-genres&uid=${user?.uid}`);
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch genres');
       }
-      
+
       const data = await response.json();
       setGenres(data.genres || []);
     } catch (err) {
       console.error('Error fetching genres:', err);
     }
   };
-  
-  // Fetch books on component mount and when dependencies change
+
+  // Get paginated books for current view
+  const getPaginatedBooks = useCallback(() => {
+    const start = (currentPage - 1) * 10;
+    const end = start + 10;
+    return filteredBooks.slice(start, end);
+  }, [filteredBooks, currentPage]);
+
+  // Fetch books and genres when component mounts
   useEffect(() => {
     if (!user) return;
-    
     fetchBooks();
     fetchGenres();
-  }, [user, currentPage, searchTerm, selectedGenre]);
-  
- 
-  
-  // Handle search input
-  const handleSearch = (e) => {
-    e.preventDefault();
-    setCurrentPage(1); // Reset to first page on new search
-  };
-  
-  // Handle genre filter change
-  const handleGenreChange = (e) => {
-    setSelectedGenre(e.target.value);
-    setCurrentPage(1); // Reset to first page on filter change
-  };
-  
-  // Clear filters
-  const handleClearFilters = () => {
-    setSearchTerm('');
-    setSelectedGenre('');
-    setCurrentPage(1);
-  };
+  }, [user]);
 
   return (
     <div className="p-6">
@@ -105,7 +122,6 @@ function BookCatalogPage() {
           <h1 className="text-2xl font-bold">Library Book Catalog</h1>
           <p className="text-gray-600 mt-1">Browse all books available in the library</p>
         </div>
-        
       </div>
 
       {error && (
@@ -118,7 +134,13 @@ function BookCatalogPage() {
       <div className="bg-white rounded-lg shadow-md p-4 mb-6">
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div className="md:w-1/2">
-            <form onSubmit={handleSearch} className="flex gap-2">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSearch(searchTerm, searchField, selectedGenre);
+              }}
+              className="flex gap-2"
+            >
               <input
                 type="text"
                 value={searchTerm}
@@ -126,6 +148,15 @@ function BookCatalogPage() {
                 placeholder="Search by title, author, or ISBN"
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               />
+              <select
+                value={searchField}
+                onChange={(e) => setSearchField(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              >
+                <option value="all">All Fields</option>
+                <option value="title">Title</option>
+                <option value="author">Author</option>
+              </select>
               <button
                 type="submit"
                 className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
@@ -134,12 +165,12 @@ function BookCatalogPage() {
               </button>
             </form>
           </div>
-          
+
           <div className="flex flex-wrap gap-2 items-center">
             <div>
               <select
                 value={selectedGenre}
-                onChange={handleGenreChange}
+                onChange={(e) => setSelectedGenre(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               >
                 <option value="">All Genres</option>
@@ -150,24 +181,41 @@ function BookCatalogPage() {
                 ))}
               </select>
             </div>
-            
+
             {(searchTerm || selectedGenre) && (
               <button
-                onClick={handleClearFilters}
+                onClick={() => {
+                  setSearchTerm('');
+                  setSearchField('all');
+                  setSelectedGenre('');
+                  setCurrentPage(1);
+                  filterBooks('', 'all', '');
+                }}
                 className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
               >
                 Clear Filters
               </button>
             )}
-            
+
             <div className="border-l border-gray-300 pl-2 ml-2 flex items-center">
               <button
                 onClick={() => setView('grid')}
                 className={`p-2 rounded ${view === 'grid' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
                 aria-label="Grid view"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-gray-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                  />
                 </svg>
               </button>
               <button
@@ -175,8 +223,19 @@ function BookCatalogPage() {
                 className={`p-2 rounded ${view === 'list' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
                 aria-label="List view"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-gray-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
                 </svg>
               </button>
             </div>
@@ -190,7 +249,7 @@ function BookCatalogPage() {
           <div className="flex justify-center items-center p-8">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
           </div>
-        ) : books.length === 0 ? (
+        ) : getPaginatedBooks().length === 0 ? (
           <div className="p-8 text-center">
             <p className="text-gray-500">No books found matching your criteria.</p>
           </div>
@@ -198,7 +257,7 @@ function BookCatalogPage() {
           <>
             {view === 'grid' ? (
               <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {books && books.map((book) => (
+                {getPaginatedBooks().map((book) => (
                   <div
                     key={book._id}
                     className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
@@ -206,37 +265,39 @@ function BookCatalogPage() {
                     <div className="p-4">
                       <h3 className="font-semibold text-lg mb-1">{book.title}</h3>
                       <p className="text-gray-600 text-sm mb-2">by {book.author}</p>
-                      
+
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">
                           {book.genre}
                         </span>
-                        
-                        <span className={`text-xs px-2 py-1 rounded ${
-                          book.availableCopies > 0 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
+
+                        <span
+                          className={`text-xs px-2 py-1 rounded ${
+                            book.availableCopies > 0
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
+                        >
                           {book.availableCopies} / {book.copies} available
                         </span>
                       </div>
-                      
+
                       {book.ISBN && (
                         <p className="text-xs text-gray-500 mb-2">ISBN: {book.ISBN}</p>
                       )}
-                      
+
                       {book.description && (
                         <p className="text-sm text-gray-700 mt-2 line-clamp-2">
                           {book.description}
                         </p>
                       )}
-                      
+
                       {book.uniqueCode && (
                         <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center">
                           <div className="text-xs text-gray-500">
                             Code: <span className="font-mono font-medium">{book.uniqueCode}</span>
                           </div>
-                          
+
                           {book.availableCopies > 0 && (
                             <div className="text-xs text-indigo-600">Available</div>
                           )}
@@ -251,22 +312,34 @@ function BookCatalogPage() {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Book Details
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Genre
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Code
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Availability
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {books.map((book) => (
+                    {getPaginatedBooks().map((book) => (
                       <tr key={book._id}>
                         <td className="px-6 py-4">
                           <div className="text-sm font-medium text-gray-900">{book.title}</div>
@@ -287,11 +360,13 @@ function BookCatalogPage() {
                           {book.uniqueCode || '—'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            book.availableCopies > 0
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              book.availableCopies > 0
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}
+                          >
                             {book.availableCopies} / {book.copies} copies
                           </span>
                         </td>
@@ -301,7 +376,7 @@ function BookCatalogPage() {
                 </table>
               </div>
             )}
-            
+
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="px-6 py-4 flex items-center justify-between border-t border-gray-200">
@@ -316,7 +391,10 @@ function BookCatalogPage() {
                     </p>
                   </div>
                   <div>
-                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <nav
+                      className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                      aria-label="Pagination"
+                    >
                       <button
                         onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                         disabled={currentPage === 1}
@@ -327,11 +405,20 @@ function BookCatalogPage() {
                         }`}
                       >
                         <span className="sr-only">Previous</span>
-                        <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                        <svg
+                          className="h-5 w-5"
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </button>
-                      
+
                       {/* Page numbers - show limited numbers with ellipsis */}
                       {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                         let pageNum;
@@ -344,7 +431,7 @@ function BookCatalogPage() {
                         } else {
                           pageNum = currentPage - 2 + i;
                         }
-                        
+
                         return (
                           <button
                             key={pageNum}
@@ -359,7 +446,7 @@ function BookCatalogPage() {
                           </button>
                         );
                       })}
-                      
+
                       <button
                         onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                         disabled={currentPage === totalPages}
@@ -370,8 +457,17 @@ function BookCatalogPage() {
                         }`}
                       >
                         <span className="sr-only">Next</span>
-                        <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                        <svg
+                          className="h-5 w-5"
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4-4a1 1 0 01-1.414 0z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </button>
                     </nav>

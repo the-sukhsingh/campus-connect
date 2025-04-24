@@ -1,7 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
 
-
-
 // Define the schema
 const AnnouncementSchema = new Schema({
   title: {
@@ -12,6 +10,16 @@ const AnnouncementSchema = new Schema({
   content: {
     type: String,
     required: true
+  },
+  type: {
+    type: String,
+    enum: ['general', 'class', 'book'],
+    default: 'general'
+  },
+  bookId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Book',
+    default: null
   },
   createdBy: {
     type: Schema.Types.ObjectId,

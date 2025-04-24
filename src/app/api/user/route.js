@@ -146,7 +146,7 @@ export async function PUT(req) {
     await dbConnect();
     
     const data = await req.json();
-    const { firebaseUid, ...updateData } = data;
+    const { firebaseUid, targetUserId, ...updateData } = data;
     
     if (!firebaseUid) {
       return NextResponse.json({ 
@@ -161,10 +161,11 @@ export async function PUT(req) {
       department: updateData.department,
       semester: updateData.semester,
       batch: updateData.batch,
+      role: updateData.role,
     };
     
     const user = await UserModel.findOneAndUpdate(
-      { firebaseUid },
+      { _id: targetUserId },
       { $set: safeUpdateData },
       { new: true }
     ).populate('college');

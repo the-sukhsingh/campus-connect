@@ -16,7 +16,7 @@ export default function BookDetailsPage() {
   const [error, setError] = useState(null);
 
   const bookId = Array.isArray(params.id) ? params.id[0] : params.id;
-
+  console.log('Book ID:', bookId);
   // Fetch book details
   useEffect(() => {
     const fetchBookDetails = async () => {
@@ -24,7 +24,7 @@ export default function BookDetailsPage() {
 
       try {
         setLoading(true);
-        const response = await fetch(`/api/library/books/${bookId}?uid=${user?.uid}`);
+        const response = await fetch(`/api/library/books?bookId=${bookId}&uid=${user?.uid}&action=get-book`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch book details');
@@ -44,7 +44,7 @@ export default function BookDetailsPage() {
   }, [user, bookId]);
 
   // Check if user can borrow books (faculty members and librarians)
-  const canBorrowBooks = userRole === 'faculty' || userRole === 'librarian' || userRole === 'hod';
+  const canBorrowBooks = userRole === 'librarian';
 
   return (
     <div className="p-6">
@@ -99,6 +99,10 @@ export default function BookDetailsPage() {
                       <dt className="text-sm font-medium text-gray-500">Genre</dt>
                       <dd className="mt-1 text-sm text-gray-900">{book.genre}</dd>
                     </div>
+                    <div className="sm:col-span-1">
+                      <dt className="text-sm font-medium text-gray-500">Unique Code</dt>
+                      <dd className="mt-1 text-sm text-gray-900">{book.uniqueCode}</dd>
+                    </div>
                     {book.publishedYear && (
                       <div className="sm:col-span-1">
                         <dt className="text-sm font-medium text-gray-500">Published Year</dt>
@@ -143,10 +147,10 @@ export default function BookDetailsPage() {
                 <div className="mt-6">
                   {canBorrowBooks && book.availableCopies > 0 ? (
                     <Link 
-                      href={`/dashboard/library/books/${book._id}/borrow`}
+                      href={`/dashboard/librarian/lend?uniqueCode=${book.uniqueCode}&bookId=${book._id}`}
                       className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     >
-                      Borrow This Book
+                      Lend This Book
                     </Link>
                   ) : book.availableCopies === 0 ? (
                     <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
@@ -170,7 +174,7 @@ export default function BookDetailsPage() {
                           </svg>
                         </div>
                         <div className="ml-3">
-                          <p className="text-sm text-blue-700">Only faculty members, librarians, and HODs can borrow books.</p>
+                          <p className="text-sm text-blue-700">Only Librarian can lend this book.</p>
                         </div>
                       </div>
                     </div>

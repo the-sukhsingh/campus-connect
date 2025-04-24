@@ -28,6 +28,8 @@ const UserSchema = new Schema({
   rollNo: {
     type: String,
     trim: true,
+    sparse: true,  // Allow null/undefined values since this is only for students
+    unique: true   // Ensure rollNo is unique across the system
   },
   college: {
     type: Schema.Types.ObjectId,
@@ -47,6 +49,7 @@ const UserSchema = new Schema({
     type: String,
     trim: true,
     unique: true,
+    sparse: true  // Allow null/undefined values since this is only for students
   },
   department: {
     type: String,
@@ -87,9 +90,23 @@ const UserSchema = new Schema({
 });
 
 // Create compound indexes for better query performance
-// UserSchema.index({ college: 1, studentId: 1 }, { unique: true, sparse: true });
-// UserSchema.index({ college: 1, role: 1 });
-// UserSchema.index({ email: 1, college: 1 });
+UserSchema.index({ college: 1, studentId: 1 }, { unique: true, sparse: true });
+UserSchema.index({ college: 1, rollNo: 1 }, { unique: true, sparse: true });
+UserSchema.index({ college: 1, role: 1 });
+UserSchema.index({ email: 1, college: 1 }, { unique: true });
+
+// Add pre-save middleware to validate student-specific fields
+UserSchema.pre('save', async function(next) {
+  if (this.role === 'student') {
+    if (!this.rollNo) {
+      throw new Error('Roll number is required for students');
+    }
+    if (!this.studentId) {
+      throw new Error('Student ID is required for students');
+    }
+  }
+  next();
+});
 
 const UserModel = mongoose?.models?.User || mongoose.model('User', UserSchema);
 

@@ -158,11 +158,17 @@ export default function Home() {
                   <div className="font-medium">Library</div>
                   <div className="text-sm text-gray-500">Browse available books</div>
                 </Link>
-                {dbUser && dbUser.role === 'faculty' && (
-                  <Link href="/dashboard/faculty/attendance" className="block p-3 hover:bg-gray-50 rounded-md transition-colors">
-                    <div className="font-medium">Attendance</div>
-                    <div className="text-sm text-gray-500">Manage class attendance</div>
-                  </Link>
+                {dbUser && ['faculty', 'hod', 'librarian'].includes(dbUser.role) && (
+                  <>
+                    <Link href="/dashboard/safety-alerts" className="block p-3 bg-red-50 hover:bg-red-100 rounded-md transition-colors">
+                      <div className="font-medium text-red-700">Safety Alerts</div>
+                      <div className="text-sm text-red-600">Create or manage safety alerts</div>
+                    </Link>
+                    <Link href="/dashboard/faculty/attendance" className="block p-3 hover:bg-gray-50 rounded-md transition-colors">
+                      <div className="font-medium">Attendance</div>
+                      <div className="text-sm text-gray-500">Manage class attendance</div>
+                    </Link>
+                  </>
                 )}
                 {dbUser && dbUser.role === 'student' && (
                   <Link href="/dashboard/student/attendance" className="block p-3 hover:bg-gray-50 rounded-md transition-colors">
@@ -208,7 +214,7 @@ export default function Home() {
                           ) : (
                             <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full flex items-center">
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                               </svg>
                               General
                             </span>

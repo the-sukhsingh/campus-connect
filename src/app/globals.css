@@ -16,3 +16,49 @@
 .scrollDiv::-webkit-scrollbar-button {
     display: none;
 }
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+    /* Increase touch target sizes */
+    button, a, input[type="checkbox"], input[type="radio"], select {
+        touch-action: manipulation;
+    }
+
+    /* Fix for mobile form controls */
+    input, select, textarea {
+        font-size: 16px !important; /* Prevents iOS zoom on focus */
+    }
+
+    /* Improved scrolling */
+    html, body {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Better tap highlights */
+    a, button, [role="button"] {
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    }
+
+    /* Remove delay on touch interfaces */
+    .touch-manipulation {
+        touch-action: manipulation;
+    }
+}
+
+/* Mobile animation optimizations */
+@media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Dark mode detection - for future enhancements */
+@media (prefers-color-scheme: dark) {
+    .dark-mode-aware {
+        background-color: #121212;
+        color: #e0e0e0;
+    }
+}

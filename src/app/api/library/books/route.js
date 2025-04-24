@@ -2,12 +2,14 @@ import { NextResponse } from 'next/server';
 import { 
   addBook, 
   updateBook, 
+  generateBookCode,
   deleteBook, 
   getBook, 
   getBooks,
   getGenres,
   getBookByCode,
-  generateUniqueCodeForExistingBook
+  generateUniqueCodeForExistingBook,
+  validateUniqueCode
 } from '@/services/bookService';
 
 import {addBookCopies} from '@/services/bookCopyService'
@@ -60,7 +62,6 @@ export async function GET(req) {
       const searchField = searchParams.get('searchField') || '';
       
       const result = await getBooks(uid, page, limit, query, sort, genre, collegeId, searchField);
-      
       if (!result.success) {
         return NextResponse.json({ error: result.error }, { status: 400 });
       }
@@ -87,7 +88,7 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { firebaseUid, action, bookData, bookId } = body;
+    const { firebaseUid, action, bookData, bookId, books, collegeId } = body;
 
     console.log('Request body:', body);
     
@@ -95,29 +96,100 @@ export async function POST(req) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
     
-    if (action === 'add-book') {
-      if (!bookData) {
+    if (action === 'add-book' || action === 'add-books') {
+      if (!bookData && !books) {
         return NextResponse.json({ error: 'Book data is required' }, { status: 400 });
       }
-      
-      const result = await addBook(bookData, firebaseUid);
-      const copiesResult = await addBookCopies(
-        result.book._id.toString(), 
-        bookData.copies, 
-        {
-          status: 'available',
-          condition: 'good',
-        }, 
-        firebaseUid
-      );
 
-      
-      
-      if (!result.success) {
-        return NextResponse.json({ error: result.error }, { status: 400 });
+      // Handle multiple books
+      if (action === 'add-books' && Array.isArray(books)) {
+        const results = [];
+        const errors = [];
+
+        // Process each book
+        for (const book of books) {
+          try {
+            // Validate unique code if provided
+            if (book.uniqueCode) {
+              const isValid = await validateUniqueCode(book.uniqueCode, firebaseUid);
+              if (!isValid) {
+                errors.push({ book: book.title, error: `Unique code ${book.uniqueCode} is already in use` });
+                book.uniqueCode = await generateBookCode(collegeId); // Generate a new unique code
+              }
+            } else {
+              book.uniqueCode = await generateBookCode(collegeId);
+            }
+
+            // Add the book
+            const result = await addBook(book, firebaseUid);
+            if (result.success) {
+              // Add copies for the book
+              const copiesResult = await addBookCopies(
+                result.book._id.toString(),
+                book.copies,
+                {
+                  status: 'available',
+                  condition: 'good',
+                  uniqueCode: book.uniqueCode // Pass the custom unique code if provided
+                },
+                firebaseUid
+              );
+              
+              results.push({
+                book: result.book,
+                copies: copiesResult.success ? copiesResult.copies : [],
+                success: true
+              });
+            } else {
+              errors.push({ book: book.title, error: result.error });
+            }
+          } catch (error) {
+            errors.push({ book: book.title, error: error.message });
+          }
+        }
+
+        return NextResponse.json({
+          success: errors.length === 0,
+          results,
+          errors,
+          message: errors.length > 0 ? 'Some books failed to add' : 'All books added successfully'
+        });
       }
-      
-      return NextResponse.json(result);
+
+      // Handle single book
+      if (bookData) {
+        // Validate unique code if provided
+        if (bookData.uniqueCode) {
+          const isValid = await validateUniqueCode(bookData.uniqueCode, firebaseUid);
+          if (!isValid) {
+            return NextResponse.json({ 
+              success: false, 
+              error: `Unique code ${bookData.uniqueCode} is already in use` 
+            }, { status: 400 });
+          }
+        }
+
+        const result = await addBook(bookData, firebaseUid);
+        if (!result.success) {
+          return NextResponse.json({ error: result.error }, { status: 400 });
+        }
+
+        const copiesResult = await addBookCopies(
+          result.book._id.toString(),
+          bookData.copies,
+          {
+            status: 'available',
+            condition: 'good',
+            uniqueCode: bookData.uniqueCode // Pass the custom unique code if provided
+          },
+          firebaseUid
+        );
+
+        return NextResponse.json({
+          ...result,
+          copies: copiesResult.success ? copiesResult.copies : []
+        });
+      }
     }
     else if (action === 'update-book') {
       if (!bookId || !bookData) {
@@ -136,9 +208,9 @@ export async function POST(req) {
       if (!bookId) {
         return NextResponse.json({ error: 'Book ID is required' }, { status: 400 });
       }
-      
+      console.log('Deleting book with ID:', bookId);
       const result = await deleteBook(bookId, firebaseUid);
-      
+      console.log('Delete result:', result);
       if (!result.success) {
         return NextResponse.json({ error: result.error }, { status: 400 });
       }

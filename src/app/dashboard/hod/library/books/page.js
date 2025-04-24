@@ -24,7 +24,7 @@ function BooksListingPage() {
         
         // Fetch books
         const response = await fetch(`/api/library/books?uid=${user?.uid}&action=get-books`);
-        
+        console.log('Response:', response);
         if (!response.ok) {
           throw new Error('Failed to fetch books');
         }

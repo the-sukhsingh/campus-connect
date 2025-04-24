@@ -1,13 +1,15 @@
 import mongoose from 'mongoose';
 import dbConnect from '@/lib/dbConnect';
-import Book, { IBook } from '@/models/Book';
+import Book from '@/models/Book';
 import User from '@/models/User';
 import College from '@/models/College';
 import { nanoid } from 'nanoid';
 import BookBorrowing from '@/models/BookBorrowing';
+import { createAnnouncement } from './announcementService';
+import BookCopy from '@/models/BookCopy';
 
 // Generate unique book code
-const generateBookCode = async (collegeId) => {
+export const generateBookCode = async (collegeId) => {
   // Create a 6-character alphanumeric code
   let uniqueCode = nanoid(6).toUpperCase();
   
@@ -38,6 +40,34 @@ const generateBookCode = async (collegeId) => {
   
   return uniqueCode;
 };
+
+// Create a new book announcement
+async function announceNewBook(book, userId, shouldNotify = false) {
+  try {
+    // Only create announcement if notification is requested
+    if (!shouldNotify) {
+      return;
+    }
+
+    const title = `New Book Added: ${book.title}`;
+    const content = `A new book "${book.title}" by ${book.author} is now available in the library.\n\n` +
+                   `Genre: ${book.genre}\n` +
+                   `Copies Available: ${book.availableCopies}\n\n` +
+                   `Visit the library to check it out!`;
+
+    await createAnnouncement({
+      title,
+      content,
+      type: 'book',
+      bookId: book._id,
+      createdBy: userId,
+      collegeId: book.college
+    });
+  } catch (error) {
+    console.error('Error creating book announcement:', error);
+    throw error;
+  }
+}
 
 // Get all books with pagination and search
 export const getBooks = async (
@@ -275,6 +305,10 @@ export const addBook = async (bookData, firebaseUid) => {
     
     await newBook.save();
     
+    // Create announcement for the new book
+    const shouldNotify = bookData.sendNotification || false;
+    await announceNewBook(newBook, user._id, shouldNotify);
+    
     return {
       success: true,
       book: newBook
@@ -380,11 +414,22 @@ export const deleteBook = async (bookId, firebaseUid) => {
     // Check if book has borrowings
     // This would require importing the BookBorrowing model and checking if there are active borrowings
 
-    const bookBorrowings = await BookBorrowing.find({ book: bookId });
+    const bookBorrowings = await BookBorrowing.find({ book: bookId, status: 'borrowed' });
 
     if (bookBorrowings.length > 0) {
       return { success: false, error: 'Cannot delete book with active borrowings' };
     }
+
+    // Delete the bookcopies associated with this book
+    // This would require importing the BookCopy model and deleting the copies associated with this book
+
+    const bookCopies = await BookCopy.find({ book: bookId });
+
+    if (bookCopies.length > 0) {
+      await BookCopy.deleteMany({ book: bookId });
+    }
+
+    // Delete the book itself
 
     // For now, we'll just delete the book
     
@@ -479,3 +524,13 @@ export const generateUniqueCodeForExistingBook = async (bookId, firebaseUid) => 
     return { success: false, error: error.message };
   }
 };
+
+export async function validateUniqueCode(code, firebaseUid) {
+  try {
+    const existingBook = await BookCopy.findOne({ uniqueCode: code });
+    return !existingBook; // Returns true if code is available, false if already exists
+  } catch (error) {
+    console.error('Error validating unique code:', error);
+    throw error;
+  }
+}

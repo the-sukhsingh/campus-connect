@@ -1,6 +1,7 @@
 import dbConnect from '@/lib/dbConnect';
 import Announcement from '@/models/Announcement';
 import Class from '@/models/Class';
+import Book from '@/models/Book'; // Add this import
 import { 
   sendNotificationToCollege,
   sendNotificationToClass,
@@ -31,13 +32,26 @@ async function sendAnnouncementNotifications(announcement) {
     const body = announcement.content || 'New announcement available';
     const data = {
       announcementId: announcement._id.toString(),
-      url: `/`,
-      type: 'announcement',
+      url: announcement.type === 'book' ? `/dashboard/library/books/${announcement.bookId}` : '/',
+      type: announcement.type,
       createdAt: announcement.createdAt.toISOString()
     };
+    if (announcement.bookId) {
+      data.bookId = announcement.bookId.toString();
+    }
     
+    // Book announcement - send to all students in the college
+    if (announcement.type === 'book') {
+      await sendNotificationToCollege(
+        announcement.collegeId,
+        title,
+        body,
+        data,
+        'student'  // Only send to students
+      );
+    }
     // Class-specific announcement
-    if (announcement.classId) {
+    else if (announcement.classId) {
       await sendNotificationToClass(
         announcement.classId,
         title,
@@ -62,12 +76,9 @@ async function sendAnnouncementNotifications(announcement) {
         await sendNotificationToRole(role, title, body, data);
       }
     }
-    
-    return true;
   } catch (error) {
     console.error('Error sending announcement notifications:', error);
-    // Don't throw the error, just log it to prevent blocking the announcement creation
-    return false;
+    throw error;
   }
 }
 
@@ -82,7 +93,7 @@ export async function getAllAnnouncements(limit = 10, collegeId = null, userId =
     const query = {
       $or: [
         { expiryDate: { $gt: currentDate } },
-        { expiryDate: { $exists: false } } // To handle announcements created before adding expiryDate
+        { expiryDate: { $exists: false } }
       ]
     };
     
@@ -98,8 +109,8 @@ export async function getAllAnnouncements(limit = 10, collegeId = null, userId =
         // For faculty/HOD: Get classes they teach or are assigned to
         const classes = await Class.find({
           $or: [
-            { teacher: userId }, // Classes they created
-            { 'facultyAssignments.faculty': userId } // Classes they are assigned to
+            { teacher: userId },
+            { 'facultyAssignments.faculty': userId }
           ]
         }).select('_id');
         
@@ -120,45 +131,60 @@ export async function getAllAnnouncements(limit = 10, collegeId = null, userId =
     let finalQuery;
     
     if (userId) {
-      // For faculty/HOD users: See general announcements, their class announcements, and own announcements
       if (['faculty', 'hod'].includes(userRole) && userClasses.length > 0) {
         finalQuery = {
           $and: [
-            query, // Original time/college filters
+            query,
             {
               $or: [
-                { classId: null }, // Announcements not specific to any class
-                { classId: { $in: userClasses } }, // Announcements for their classes
-                { createdBy: userId } // Announcements created by them
+                { classId: null },
+                { classId: { $in: userClasses } },
+                { createdBy: userId }
               ]
             }
           ]
         };
       }
-      // For students: See general announcements, announcements for classes they're enrolled in, and own announcements
-      else if (userRole === 'student' && userClasses.length > 0) {
+      // For students: See general announcements, class announcements, and book announcements
+      else if (userRole === 'student') {
         finalQuery = {
           $and: [
-            query, // Original time/college filters
+            query,
             {
               $or: [
-                { classId: null }, // General announcements
-                { classId: { $in: userClasses } }, // Announcements for their enrolled classes
-                { createdBy: userId } // Announcements created by them (unlikely but possible)
+                { classId: null },
+                { classId: { $in: userClasses } },
+                { type: 'book' }, // Show all book announcements to students
+                { createdBy: userId }
               ]
             }
           ]
         };
       }
-      // For other roles (librarian, etc.): Only show general announcements and own announcements
+      // For librarians: Show general announcements, book announcements, and own announcements
+      else if (userRole === 'librarian') {
+        finalQuery = {
+          $and: [
+            query,
+            {
+              $or: [
+                { classId: null },
+                { type: 'book' },
+                { createdBy: userId }
+              ]
+            }
+          ]
+        };
+      }
+      // For other roles: Only show general announcements and own announcements
       else {
         finalQuery = {
           $and: [
-            query, // Original time/college filters
+            query,
             {
               $or: [
-                { classId: null }, // Only general announcements
-                { createdBy: userId } // Or announcements created by them
+                { classId: null },
+                { createdBy: userId }
               ]
             }
           ]
@@ -169,7 +195,7 @@ export async function getAllAnnouncements(limit = 10, collegeId = null, userId =
       finalQuery = {
         $and: [
           query,
-          { classId: null } // Only general announcements
+          { classId: null }
         ]
       };
     }
@@ -183,7 +209,11 @@ export async function getAllAnnouncements(limit = 10, collegeId = null, userId =
         path: 'classId',
         select: 'name department semester'
       })
-      .sort({ createdAt: -1 }) // Most recent first
+      .populate({
+        path: 'bookId',
+        select: 'title author genre availableCopies'
+      })
+      .sort({ createdAt: -1 })
       .limit(limit);
     
     return announcements;

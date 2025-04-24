@@ -82,68 +82,104 @@ export const getBookCopy = async (copyId, firebaseUid) => {
 };
 
 // Add book copies
-export const addBookCopies = async (bookId, numberOfCopies, initialData, firebaseUid) => {
+export async function addBookCopies(bookId, count, options = {}, firebaseUid) {
   try {
     await dbConnect();
-    
+
     const user = await User.findOne({ firebaseUid });
     if (!user) {
       return { success: false, error: 'User not found' };
     }
-    
-    // Validate object ID
-    if (!mongoose.Types.ObjectId.isValid(bookId)) {
-      return { success: false, error: 'Invalid book ID' };
-    }
-    
-    // Find the book
+
     const book = await Book.findById(bookId);
     if (!book) {
       return { success: false, error: 'Book not found' };
     }
-    
-    // Check permissions
-    if (user.role !== 'admin' && user.college?.toString() !== book.college.toString()) {
-      return { success: false, error: 'You do not have permission to add copies to this book' };
-    }
-    
-    // Get the highest current copy number
+
+    const copies = [];
+    const errors = [];
+
+    // Get the current highest copy number for this book
     const highestCopy = await BookCopy.findOne({ book: bookId })
       .sort({ copyNumber: -1 })
       .limit(1);
     
-    let startingCopyNumber = 1;
-    if (highestCopy) {
-      startingCopyNumber = highestCopy.copyNumber + 1;
+    let startNumber = highestCopy ? highestCopy.copyNumber + 1 : 1;
+
+    for (let i = 0; i < count; i++) {
+      try {
+        let uniqueCode = null;
+        
+        // If it's the first copy and a unique code was provided, use it
+        if (i === 0 && options.uniqueCode) {
+          uniqueCode = options.uniqueCode;
+        } else if (i > 0) {
+          // For additional copies, generate a unique code based on the book title
+          const baseCode = book.title
+            .substring(0, 3)
+            .toUpperCase()
+            .replace(/[^A-Z0-9]/g, '');
+          
+          let isUnique = false;
+          let attempts = 0;
+          
+          while (!isUnique && attempts < 100) {
+            const randomNum = Math.floor(1000 + Math.random() * 9000);
+            const potentialCode = `${baseCode}${randomNum}`;
+            
+            // Check if this code is already in use
+            const existingCopy = await BookCopy.findOne({ uniqueCode: potentialCode });
+            if (!existingCopy) {
+              uniqueCode = potentialCode;
+              isUnique = true;
+            }
+            attempts++;
+          }
+          
+          if (!isUnique) {
+            errors.push(`Failed to generate unique code for copy ${startNumber + i}`);
+            continue;
+          }
+        }
+
+        const copy = new BookCopy({
+          book: bookId,
+          copyNumber: startNumber + i,
+          status: options.status || 'available',
+          condition: options.condition || 'good',
+          college: book.college,
+          uniqueCode
+        });
+
+        await copy.save();
+        copies.push(copy);
+      } catch (error) {
+        console.error(`Error creating copy ${startNumber + i}:`, error);
+        errors.push(`Failed to create copy ${startNumber + i}: ${error.message}`);
+      }
     }
-    
-    // Create the new copies
-    const newCopies = [];
-    for (let i = 0; i < numberOfCopies; i++) {
-      const copyNumber = startingCopyNumber + i;
-      const copyData = {
-        ...initialData,
-        book: bookId,
-        copyNumber,
-        college: book.college,
-      };
-      
-      const newCopy = new BookCopy(copyData);
-      await newCopy.save();
-      newCopies.push(newCopy);
-    }
-    
-    
+
+    // Update the book's copy count and available copies
+    const totalCopies = await BookCopy.countDocuments({ book: bookId });
+    const availableCopies = await BookCopy.countDocuments({ 
+      book: bookId,
+      status: 'available'
+    });
+
+    book.copies = totalCopies;
+    book.availableCopies = availableCopies;
+    await book.save();
+
     return {
-      success: true,
-      copies: newCopies,
-      totalCopies: book.copies
+      success: errors.length === 0,
+      copies,
+      errors: errors.length > 0 ? errors : undefined
     };
   } catch (error) {
-    console.error('Error in addBookCopies service:', error);
+    console.error('Error in addBookCopies:', error);
     return { success: false, error: error.message };
   }
-};
+}
 
 // Update a book copy
 export const updateBookCopy = async (copyId, copyData, firebaseUid) => {
