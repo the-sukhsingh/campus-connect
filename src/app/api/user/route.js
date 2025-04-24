@@ -159,9 +159,11 @@ export async function PUT(req) {
     const safeUpdateData = {
       displayName: updateData.displayName,
       department: updateData.department,
-      semester: updateData.semester,
+      semester: updateData.currentSemester,
       batch: updateData.batch,
       role: updateData.role,
+      rollNo: updateData.rollNo,
+      studentId: updateData.studentId,
     };
     
     const user = await UserModel.findOneAndUpdate(

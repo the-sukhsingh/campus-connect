@@ -1,16 +1,16 @@
 'use client';
 
-import { withRoleProtection } from '@/utils/withRoleProtection';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { useState, useEffect } from 'react';
+import { withRoleProtection } from '@/utils/withRoleProtection';
 import Link from 'next/link';
-import { useRouter, useParams } from 'next/navigation';
 
-function EditAnnouncementPage() {
+function EditAnnouncementPage({ params }) {
   const { user } = useAuth();
   const router = useRouter();
-  const params = useParams();
-  const announcementId = params.id;
+  const unwrappedParams = React.use(params);
+  const announcementId = unwrappedParams.id;
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);

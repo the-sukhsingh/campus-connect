@@ -90,7 +90,7 @@ function ClassStudentsContent() {
           <h1 className="text-2xl font-bold">Class Students</h1>
           {classData && (
             <p className="text-gray-600 mt-1">
-              {classData.name} - {classData.department} ({classData.semester})
+              {classData.name} - {classData.department} ({classData.currentSemester} Sem)
             </p>
           )}
         </div>

@@ -61,7 +61,7 @@ export default function Navbar() {
       student: [
         { name: 'Dashboard', href: '/dashboard/student', icon: '🏠' },
         { name: 'Attendance', href: '/dashboard/student/attendance', icon: '📊' },
-        { name: 'Notes', href: '/dashboard/notes', icon: '📝' },
+        { name: 'Notes', href: '/dashboard/student/notes', icon: '📝' },
         {
           name: 'Library',
           href: '/dashboard/student/books/catalog',
@@ -88,7 +88,7 @@ export default function Navbar() {
             { name: 'Attendance', href: '/dashboard/faculty/attendance' }
           ]
         },
-        { name: 'Notes', href: '/dashboard/notes', icon: '📝' },
+        { name: 'Notes', href: '/dashboard/faculty/notes', icon: '📝' },
         { name: 'Space', href: '/dashboard/room-bookings', icon: '🚪' },
         { name: 'Announcements', href: '/dashboard/faculty/announcements', icon: '📢' },
         { name: 'Events', href: '/dashboard/events', icon: '🎭' },
@@ -100,6 +100,7 @@ export default function Navbar() {
         { name: 'College', href: '/dashboard/hod/college/manage', icon: '🏫' },
         { name: 'Teachers', href: '/dashboard/hod/teachers', icon: '👨‍🏫' },
         { name: 'Classes', href: '/dashboard/hod/classes', icon: '🧑‍🎓' },
+        { name: 'Notes', href: '/dashboard/faculty/notes', icon: '📝' },
         {
           name: 'Space',
           href: '/dashboard/hod/rooms',
@@ -249,15 +250,6 @@ export default function Navbar() {
 
           {user && dbUser && (
             <div className="hidden md:flex items-center ml-6 overflow-y-visible flex-1 max-w-4xl">
-              {scrollPosition > 10 && (
-                <button
-                  onClick={() => scrollNav('left')}
-                  className="absolute -left-4 top-1/2 -translate-y-1/2 bg-indigo-700/80 rounded-full p-1 shadow-md hover:bg-indigo-600 transition-colors z-10"
-                  aria-label="Scroll navigation left"
-                >
-                  <ChevronLeft size={18} />
-                </button>
-              )}
 
               <div
                 className="flex z-20 items-center gap-1 overflow-x-auto overflow-y-visible px-1 py-1.5 rounded-xl scrollbar-hide scrollDiv" 
@@ -316,15 +308,6 @@ export default function Navbar() {
                 })}
               </div>
 
-              {scrollPosition < maxScroll - 10 && (
-                <button
-                  onClick={() => scrollNav('right')}
-                  className="absolute -right-4 top-1/2 -translate-y-1/2 bg-indigo-700/80 rounded-full p-1 shadow-md hover:bg-indigo-600 transition-colors z-10"
-                  aria-label="Scroll navigation right"
-                >
-                  <ChevronRight size={18} />
-                </button>
-              )}
             </div>
           )}
 

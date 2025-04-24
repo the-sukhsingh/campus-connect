@@ -162,7 +162,7 @@ function StudentDashboard() {
                         <div>
                           <h4 className="font-medium">{classItem.name}</h4>
                           <p className="text-sm text-gray-600">
-                            {classItem.course} - {classItem.semester}
+                            {classItem.course} - Semester {classItem.currentSemester || 1} of {classItem.totalSemesters || 8}
                           </p>
                           <p className="text-xs text-gray-500 mt-1">Department: {classItem.department}</p>
                         </div>

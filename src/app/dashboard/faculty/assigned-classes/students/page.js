@@ -150,7 +150,7 @@ function ClassStudentsPage() {
           <h1 className="text-2xl font-bold">Class Students</h1>
           {classInfo && (
             <p className="text-gray-600 mt-1">
-              {classInfo.name} - {classInfo.department} ({classInfo.semester})
+              {classInfo.name} - {classInfo.department} (Semester {classInfo.currentSemester || 1} of {classInfo.totalSemesters || 8})
             </p>
           )}
         </div>

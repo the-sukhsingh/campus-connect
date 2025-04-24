@@ -28,7 +28,7 @@ export async function GET(request, { params }) {
       department: user.department,
       rollNo: user.rollNo,
       studentId: user.studentId,
-      semester: user.semester,
+      currentSemester: user.currentSemester,
       batch: user.batch,
       collegeStatus: user.collegeStatus,
       verificationMethod: user.verificationMethod,

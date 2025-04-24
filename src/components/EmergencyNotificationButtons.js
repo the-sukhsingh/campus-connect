@@ -331,7 +331,7 @@ export default function EmergencyNotificationButtons({ classes = [], collegeId =
               <option value="">Select a class</option>
               {classes.map((classItem) => (
                 <option key={classItem._id} value={classItem._id}>
-                  {classItem.name} - {classItem.department} ({classItem.semester})
+                  {classItem.name} - {classItem.department} ({classItem.currentSemester})
                 </option>
               ))}
             </select>

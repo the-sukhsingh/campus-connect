@@ -126,7 +126,7 @@ export async function POST(request) {
                 } else {
                     defaultPassword = 'student@123';
                 }
-
+                console.log('Default password for student:',student.rollNo , " is ", defaultPassword);
                 // Create Firebase user
                 const userRecord = await auth.createUser({
                             email: student.email.toLowerCase(),

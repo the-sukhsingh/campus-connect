@@ -46,7 +46,30 @@ export async function GET(request) {
     if (action === 'get-room-types') {
       await dbConnect();
       const collegeFilter = dbUser?.college ? { collegeId: dbUser.college } : {};
-      const roomTypes = await Room.distinct('type', collegeFilter);
+      
+      // Get all standard room types
+      const standardRoomTypes = await Room.distinct('type', collegeFilter);
+      
+      // Get all rooms with 'other' type that have otherType values
+      const otherRooms = await Room.find({ 
+        ...collegeFilter, 
+        type: 'other',
+        otherType: { $exists: true, $ne: '' }
+      }).select('otherType').lean();
+      
+      // Create a set of unique room types, including otherType values
+      const roomTypesSet = new Set(standardRoomTypes);
+      
+      // Add otherType values to the set
+      otherRooms.forEach(room => {
+        if (room.otherType) {
+          roomTypesSet.add(room.otherType);
+        }
+      });
+      
+      // Convert set back to array
+      const roomTypes = Array.from(roomTypesSet);
+      
       return NextResponse.json({ roomTypes });
     }
 
@@ -60,13 +83,47 @@ export async function GET(request) {
     
     // Apply additional filters if provided
     if (building) query.building = building;
-    if (type) query.type = type;
+    
+    // Special handling for room type filtering
+    if (type) {
+      // Check if the type matches a standard room type
+      const isStandardType = ['classroom', 'laboratory', 'conference', 'auditorium', 'other'].includes(type);
+      
+      if (isStandardType) {
+        // If it's a standard type, filter directly by type
+        query.type = type;
+      } else {
+        // If it's not a standard type, it might be a custom room type (otherType)
+        query.$or = [
+          { type: type }, // Still try to match against type (legacy data)
+          { type: 'other', otherType: type } // Match against otherType field
+        ];
+      }
+    }
+    
     if (capacity) query.capacity = { $gte: parseInt(capacity) };
+    
     if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { building: { $regex: search, $options: 'i' } }
-      ];
+      // If we already have an $or condition (from type filtering)
+      if (query.$or) {
+        // Create a new $and condition to combine with existing $or
+        query.$and = [
+          { $or: query.$or }, // Include existing $or condition
+          { $or: [
+            { name: { $regex: search, $options: 'i' } },
+            { building: { $regex: search, $options: 'i' } },
+            { otherType: { $regex: search, $options: 'i' } } // Include otherType in search
+          ]}
+        ];
+        // Remove the original $or as it's now part of $and
+        delete query.$or;
+      } else {
+        query.$or = [
+          { name: { $regex: search, $options: 'i' } },
+          { building: { $regex: search, $options: 'i' } },
+          { otherType: { $regex: search, $options: 'i' } } // Include otherType in search
+        ];
+      }
     }
     
     // Connect to database

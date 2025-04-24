@@ -100,10 +100,17 @@ export async function DELETE(request) {
       );
     }
 
+
     // Check if the student is in the class
     const studentRequest = classInfo.students.find(
-      (request) => request.student.toString() === studentId
+      (request) => {
+        console.log('request.student', request.student._id.toString())
+        console.log('studentId', studentId)
+        return request.student._id.toString() === studentId;
+      }
     );
+
+
     if (!studentRequest) {
       return NextResponse.json(
         { error: 'Student not found in this class' },
@@ -113,7 +120,7 @@ export async function DELETE(request) {
 
     // Remove the student request from the class
     classInfo.students = classInfo.students.filter(
-      (request) => request.student.toString() !== studentId
+      (request) => request.student._id.toString() !== studentId
     );
 
     await classInfo.save();

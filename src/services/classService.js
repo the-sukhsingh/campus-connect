@@ -3,7 +3,8 @@ import dbConnect from '@/lib/dbConnect';
 import Class from '@/models/Class';
 import User from '@/models/User';
 import CollegeModel from '@/models/College';
-import { getUserByFirebaseUid } from './userService';
+import { deleteUser, getUserByFirebaseUid } from './userService';
+import Attendance from '@/models/Attendance';
 
 // Create a new class
 export async function createClass(teacherId, collegeId, classData) {
@@ -18,7 +19,9 @@ export async function createClass(teacherId, collegeId, classData) {
       name: classData.name,
       course: classData.course,
       department: classData.department,
-      semester: classData.semester,
+      currentSemester: classData.currentSemester,
+      totalSemesters: classData.totalSemesters || 8, // Default to 8 if not provided
+      currentSemester: classData.currentSemester || 1, // Default to 1 if not provided
       batch: classData.batch,
       college: collegeId,
       teacher: teacherId,
@@ -337,9 +340,9 @@ export async function deleteClass(classId, facultyId) {
     if (!classObj) {
       throw new Error('Class not found');
     }
-    
+    console.log("classOBJ.teacher", classObj.teacher.toString(), facultyId);
     // Only allow the class owner to delete the class
-    if (classObj.teacher.toString() !== facultyId) {
+    if (classObj.teacher.toString() !== facultyId.toString()) {
       throw new Error('Unauthorized. Only the class creator can delete this class');
     }
     
@@ -368,7 +371,24 @@ export async function deleteClass(classId, facultyId) {
         { $pull: { classes: classId } }
       );
     }
+
+    // Delete the students of class
+    if (classObj.students && classObj.students.length > 0) {
+      const studentIds = classObj.students.map(
+        student => student.student
+      );
+
+      for (const studentId of studentIds) {
+        await deleteUser(studentId);
+      }
+
+    }
     
+    // Remove the attendance records for this class
+    await Attendance.deleteMany({ classId: classId });
+    
+
+
     // Delete the class
     await Class.findByIdAndDelete(classId);
     

@@ -122,7 +122,7 @@ export async function PATCH(request, { params }) {
       name: updateData.name,
       course: updateData.course, 
       department: updateData.department,
-      semester: updateData.semester,
+      currentSemester: updateData.currentSemester,
       batch: updateData.batch
     };
 

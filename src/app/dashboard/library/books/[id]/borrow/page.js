@@ -1,23 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import React from 'react';
 
-
-export default function BorrowBookPage() {
+export default function BookBorrowPage({ params }) {
   const { user, userRole } = useAuth();
-  const params = useParams();
   const router = useRouter();
+  const unwrappedParams = React.use(params);
+  const bookId = Array.isArray(unwrappedParams.id) ? unwrappedParams.id[0] : unwrappedParams.id;
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
   const [borrowing, setBorrowing] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [dueDate, setDueDate] = useState('');
-
-  const bookId = Array.isArray(params.id) ? params.id[0] : params.id;
 
   // Set default due date (14 days from now)
   useEffect(() => {

@@ -200,7 +200,7 @@ function CreateAnnouncementPage() {
                 ) : (
                   classes.map((classItem) => (
                     <option key={classItem._id} value={classItem._id}>
-                      {classItem.name} - {classItem.department} ({classItem.semester})
+                      {classItem.name} - {classItem.department} ({classItem.currentSemester || 1} of {classItem.totalSemesters || 8})
                       {classItem.teachingSubjects?.length > 0 && 
                         ` - ${classItem.teachingSubjects.join(', ')}`}
                     </option>

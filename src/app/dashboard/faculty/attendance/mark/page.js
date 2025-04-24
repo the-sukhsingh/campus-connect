@@ -372,7 +372,7 @@ function MarkAttendancePage() {
           </div>
           {classInfo && (
             <p className="text-gray-600 mt-1 text-sm">
-              {classInfo.name} · {classInfo.department} · {classInfo.semester}
+              {classInfo.name} · {classInfo.department} · {classInfo.currentSemester} sem 
             </p>
           )}
         </div>

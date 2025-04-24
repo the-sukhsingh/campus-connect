@@ -223,6 +223,32 @@ export async function cancelEventRegistration(eventId, userId) {
   }
 }
 
+// Unregister user from all events 
+// (for example, when a user is deleted or changes colleges)
+
+export async function unregisterUserFromAllEvents(userId) {
+  try {
+    await dbConnect();
+    const EventModel = mongoose.models.Event || Event;
+    
+    // Find all events where the user is an attendee
+    const events = await EventModel.find({ attendees: userId });
+    
+    // Remove the user from each event's attendees list
+    for (const event of events) {
+      event.attendees = event.attendees.filter(
+        (attendeeId) => attendeeId.toString() !== userId
+      );
+      await event.save();
+    }
+    
+    return { success: true, message: 'Successfully unregistered from all events' };
+  } catch (error) {
+    console.error('Error unregistering user from all events:', error);
+    throw error;
+  }
+}
+
 // Get events a user has registered for in their college
 export async function getRegisteredEvents(userId, collegeId) {
   try {

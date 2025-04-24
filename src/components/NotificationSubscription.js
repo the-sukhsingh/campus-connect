@@ -84,42 +84,65 @@ export default function NotificationSubscription() {
   if (!canSubscribe) return null;
 
   return (
-    <div className="bg-white shadow rounded-lg p-6 h-full">
-      <div className="flex items-center mb-4">
-        <div className="bg-yellow-100 p-3 rounded-full">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div className="group bg-gradient-to-br from-white to-amber-50 rounded-xl p-6 shadow-sm border border-amber-100 relative overflow-hidden transform hover:-translate-y-1 transition-all duration-2000 h-full max-h-80">
+      <div className="absolute -right-8 -top-8 w-24 h-24 bg-amber-500 opacity-10 rounded-full group-hover:scale-[12] transition-transform duration-600"></div>
+      
+      <div className="flex items-center mb-5 relative z-10">
+        <div className="bg-amber-100 p-3 rounded-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
         </div>
         <div className="ml-4">
-          <h2 className="text-lg font-semibold">Notifications</h2>
+          <h3 className="text-lg font-semibold text-amber-900">Notifications</h3>
+          <p className="text-sm text-amber-500">Stay updated with alerts</p>
         </div>
       </div>
-      <p className="text-gray-600 mb-4">
-        {subscribed 
-          ? "You are currently receiving notifications. You can unsubscribe at any time." 
-          : "Subscribe to receive important notifications about announcements and updates."}
-      </p>
+      
+      <div className="bg-white bg-opacity-60 p-4 rounded-lg mb-6 relative z-10">
+        <p className="text-amber-700">
+          {subscribed 
+            ? "You're actively receiving notifications. You can unsubscribe anytime." 
+            : "Subscribe to receive important announcements and updates."}
+        </p>
+      </div>
+      
       <button
         onClick={handleSubscription}
         disabled={subscriptionStatus === 'subscribing'}
-        className={`inline-flex w-full justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-          subscribed ? 'bg-red-600 hover:bg-red-700' : 'bg-yellow-600 hover:bg-yellow-700'
+        className={`relative z-10 w-full text-center py-2.5 px-4 rounded-lg text-sm font-medium text-white shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] ${
+          subscribed 
+            ? 'bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700' 
+            : 'bg-gradient-to-r from-amber-600 to-orange-500 hover:from-amber-700 hover:to-orange-600'
         } ${subscriptionStatus === 'subscribing' ? 'opacity-70 cursor-not-allowed' : ''}`}
       >
-        {subscriptionStatus === 'subscribing' ? 'Processing...' : (subscribed ? 'Unsubscribe' : 'Subscribe to Notifications')}
+        {subscriptionStatus === 'subscribing' ? (
+          <div className="flex items-center justify-center">
+            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Processing
+          </div>
+        ) : (
+          subscribed ? 'Unsubscribe' : 'Subscribe to Notifications'
+        )}
       </button>
       
       {error && (
-        <p className="mt-2 text-sm text-red-600">{error}</p>
+        <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-lg relative z-10">
+          <p className="text-sm text-red-600 font-medium">{error}</p>
+        </div>
       )}
       
       {subscriptionStatus === 'subscribed' && (
-        <p className="mt-2 text-sm text-green-600">
-          {subscribed 
-            ? "Successfully subscribed to notifications!" 
-            : "Unsubscribed from notifications."}
-        </p>
+        <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded-lg animate-fadeIn relative z-10">
+          <p className="text-sm text-green-600 font-medium">
+            {subscribed 
+              ? "Successfully subscribed to notifications!" 
+              : "Unsubscribed from notifications."}
+          </p>
+        </div>
       )}
     </div>
   );

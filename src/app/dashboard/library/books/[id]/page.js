@@ -1,21 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { withRoleProtection } from '@/utils/withRoleProtection';
 
-
-
-export default function BookDetailsPage() {
+function BookDetailPage({ params }) {
   const { user, userRole } = useAuth();
-  const params = useParams();
   const router = useRouter();
+  const unwrappedParams = React.use(params);
+  const bookId = Array.isArray(unwrappedParams.id) ? unwrappedParams.id[0] : unwrappedParams.id;
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const bookId = Array.isArray(params.id) ? params.id[0] : params.id;
   console.log('Book ID:', bookId);
   // Fetch book details
   useEffect(() => {
@@ -192,3 +191,5 @@ export default function BookDetailsPage() {
     </div>
   );
 }
+
+export default withRoleProtection(BookDetailPage);

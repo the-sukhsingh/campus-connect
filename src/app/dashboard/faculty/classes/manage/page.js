@@ -205,7 +205,7 @@ function FacultyManagementPage() {
           <h1 className="text-2xl font-bold">Faculty Management</h1>
           {classData && (
             <p className="text-gray-600 mt-1">
-              {classData.name} - {classData.department} ({classData.semester})
+              {classData.name} - {classData.department} ({classData.currentSemester}) sem
             </p>
           )}
         </div>

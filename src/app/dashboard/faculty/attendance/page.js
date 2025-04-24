@@ -86,10 +86,12 @@ function AttendancePage() {
                 <div className="flex items-center space-x-3 mb-4">
                   <div className="p-2 bg-indigo-50 rounded-lg">
                     <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-800">{classItem.name}</h3>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800">{classItem.name}</h3>
+                  </div>
                 </div>
                 
                 <div className="space-y-2 mb-6">
@@ -103,7 +105,13 @@ function AttendancePage() {
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                    Batch: {classItem.batch} - {classItem.semester}
+                    Batch: {classItem.batch}
+                  </p>
+                  <p className="text-gray-600 flex items-center">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                    Semester: {classItem.currentSemester || 1} of {classItem.totalSemesters || 8}
                   </p>
                 </div>
                 
@@ -117,6 +125,39 @@ function AttendancePage() {
                   </svg>
                   Mark Attendance
                 </Link>
+
+                <div className="mt-3 flex space-x-2 text-sm">
+                  {classItem.facultyAssignments && classItem.facultyAssignments.length > 0 && (
+                    <div className="w-full flex flex-col space-y-2">
+                      <Link
+                        href={`/dashboard/faculty/assigned-classes/students?classId=${classItem._id}`}
+                        className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                      >
+                        View Students
+                      </Link>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => window.open(`/api/export/attendance?uid=${user?.uid}&classId=${classItem._id}&subject=${encodeURIComponent(classItem.facultyAssignments[0].subject)}&format=csv`, '_blank')}
+                          className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none transition-colors"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                          </svg>
+                          CSV
+                        </button>
+                        <button
+                          onClick={() => window.open(`/api/export/attendance?uid=${user?.uid}&classId=${classItem._id}&subject=${encodeURIComponent(classItem.facultyAssignments[0].subject)}&format=pdf`, '_blank')}
+                          className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none transition-colors"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                          </svg>
+                          PDF
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))}

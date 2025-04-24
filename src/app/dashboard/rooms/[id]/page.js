@@ -4,12 +4,14 @@ import { useAuth } from '@/context/AuthContext';
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import React from 'react';
 
 export default function RoomDetailPage() {
   const { user, dbUser } = useAuth();
   const router = useRouter();
   const params = useParams();
-  const roomId = params.id;
+  const unwrappedParams = React.use(params);
+  const roomId = unwrappedParams.id;
 
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -282,7 +284,13 @@ export default function RoomDetailPage() {
 
   // Format room type for display
   const formatRoomType = (type) => {
-    return type ? type.charAt(0).toUpperCase() + type.slice(1) : '';
+    if (!type) return '';
+    
+    if (type === 'other' && room.otherType) {
+      return room.otherType.charAt(0).toUpperCase() + room.otherType.slice(1);
+    }
+    
+    return type.charAt(0).toUpperCase() + type.slice(1);
   };
 
   // Handle booking form input changes

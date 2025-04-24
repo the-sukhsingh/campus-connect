@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Edit, Trash2 } from 'lucide-react';
 
 function TeachersManagementPage() {
   const { user } = useAuth();
@@ -27,7 +28,7 @@ function TeachersManagementPage() {
     department: '',
     isLibrarian: false,
   });
-  
+
   // State for Edit Faculty functionality
   const [showEditModal, setShowEditModal] = useState(false);
   const [editTeacherId, setEditTeacherId] = useState(null);
@@ -36,7 +37,7 @@ function TeachersManagementPage() {
     department: '',
     isLibrarian: false,
   });
-  
+
   const [validationErrors, setValidationErrors] = useState({});
   const [editValidationErrors, setEditValidationErrors] = useState({});
 
@@ -75,8 +76,8 @@ function TeachersManagementPage() {
       console.log("Teacher's data:", teachersData.teachers);
       setTeachers(teachersData.teachers || []);
 
-      
-    } catch (error ) {
+
+    } catch (error) {
       console.error('Error fetching data:', error);
       setMessage({ type: 'error', text: 'Failed to load data. Please try again.' });
     } finally {
@@ -105,8 +106,6 @@ function TeachersManagementPage() {
       [teacherId]: isLibrarian
     });
   };
-
-  
 
   // Handle refresh action
   const handleRefresh = () => {
@@ -142,7 +141,7 @@ function TeachersManagementPage() {
       ...newFacultyData,
       [name]: type === 'checkbox' ? checked : value
     });
-    
+
     // Clear validation error when field is edited
     if (validationErrors[name]) {
       setValidationErrors({
@@ -155,21 +154,21 @@ function TeachersManagementPage() {
   // Validate the new faculty form
   const validateFacultyForm = () => {
     const errors = {};
-    
+
     if (!newFacultyData.email.trim()) {
       errors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(newFacultyData.email)) {
       errors.email = 'Please enter a valid email address';
     }
-    
+
     if (!newFacultyData.displayName.trim()) {
       errors.displayName = 'Name is required';
     }
-    
+
     if (!newFacultyData.department) {
       errors.department = 'Department is required';
     }
-    
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -177,14 +176,14 @@ function TeachersManagementPage() {
   // Handle creating a new faculty account
   const handleCreateFaculty = async (e) => {
     e.preventDefault();
-    
+
     if (!validateFacultyForm()) {
       return;
     }
-    
+
     try {
       setIsSubmitting(true);
-      
+
       const response = await fetch('/api/user/create', {
         method: 'POST',
         headers: {
@@ -203,14 +202,14 @@ function TeachersManagementPage() {
           }
         }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to create faculty account');
       }
-      
+
       const data = await response.json();
-      
+
       // Add the new faculty to the teachers list
       if (data.user) {
         setTeachers(prev => [
@@ -221,7 +220,7 @@ function TeachersManagementPage() {
           }
         ]);
       }
-      
+
       // Close the modal and reset form
       setShowAddModal(false);
       setNewFacultyData({
@@ -230,18 +229,18 @@ function TeachersManagementPage() {
         department: collegeInfo.departments?.[0] || '',
         isLibrarian: false,
       });
-      
+
       // Show success message
       setMessage({
         type: 'success',
         text: `Faculty account created successfully! An email with login instructions has been sent to ${newFacultyData.email}.`
       });
-      
+
       // Clear the message after 5 seconds
       setTimeout(() => {
         setMessage({ type: '', text: '' });
       }, 5000);
-      
+
     } catch (error) {
       setMessage({
         type: 'error',
@@ -262,7 +261,7 @@ function TeachersManagementPage() {
     });
     setShowEditModal(true);
   };
-  
+
   // Handle input change for edit form
   const handleEditInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -270,7 +269,7 @@ function TeachersManagementPage() {
       ...editFacultyData,
       [name]: type === 'checkbox' ? checked : value
     });
-    
+
     // Clear validation error when field is edited
     if (editValidationErrors[name]) {
       setEditValidationErrors({
@@ -279,34 +278,34 @@ function TeachersManagementPage() {
       });
     }
   };
-  
+
   // Validate edit faculty form
   const validateEditFacultyForm = () => {
     const errors = {};
-    
+
     if (!editFacultyData.displayName.trim()) {
       errors.displayName = 'Name is required';
     }
-    
+
     if (!editFacultyData.department) {
       errors.department = 'Department is required';
     }
-    
+
     setEditValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
-  
+
   // Handle updating a teacher
   const handleUpdateTeacher = async (e) => {
     e.preventDefault();
-    
+
     if (!validateEditFacultyForm()) {
       return;
     }
-    
+
     try {
       setIsSubmitting(true);
-      
+
       const response = await fetch('/api/user/college/teachers/manage', {
         method: 'PATCH',
         headers: {
@@ -322,28 +321,28 @@ function TeachersManagementPage() {
           }
         }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to update teacher');
       }
-      
+
       const data = await response.json();
-      
+
       // Update the teacher in the list
-      setTeachers(prevTeachers => 
-        prevTeachers.map(teacher => 
-          teacher._id === editTeacherId 
+      setTeachers(prevTeachers =>
+        prevTeachers.map(teacher =>
+          teacher._id === editTeacherId
             ? {
-                ...teacher,
-                displayName: editFacultyData.displayName,
-                department: editFacultyData.department,
-                role: editFacultyData.isLibrarian ? 'librarian' : 'faculty'
-              } 
+              ...teacher,
+              displayName: editFacultyData.displayName,
+              department: editFacultyData.department,
+              role: editFacultyData.isLibrarian ? 'librarian' : 'faculty'
+            }
             : teacher
         )
       );
-      
+
       // Close modal and reset state
       setShowEditModal(false);
       setEditTeacherId(null);
@@ -352,18 +351,18 @@ function TeachersManagementPage() {
         department: '',
         isLibrarian: false,
       });
-      
+
       // Show success message
       setMessage({
         type: 'success',
         text: 'Teacher updated successfully!'
       });
-      
+
       // Clear message after 5 seconds
       setTimeout(() => {
         setMessage({ type: '', text: '' });
       }, 5000);
-      
+
     } catch (error) {
       setMessage({
         type: 'error',
@@ -373,16 +372,16 @@ function TeachersManagementPage() {
       setIsSubmitting(false);
     }
   };
-  
+
   // Handle deleting a teacher
   const handleDeleteTeacher = async (teacherId, teacherName) => {
     if (!window.confirm(`Are you sure you want to delete ${teacherName || 'this teacher'}? This action cannot be undone and will remove their account completely.`)) {
       return;
     }
-    
+
     try {
       setIsSubmitting(true);
-      
+
       const response = await fetch('/api/user/college/teachers/manage', {
         method: 'DELETE',
         headers: {
@@ -393,28 +392,28 @@ function TeachersManagementPage() {
           teacherId: teacherId
         }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to delete teacher');
       }
-      
+
       // Remove the teacher from the list
-      setTeachers(prevTeachers => 
+      setTeachers(prevTeachers =>
         prevTeachers.filter(teacher => teacher._id !== teacherId)
       );
-      
+
       // Show success message
       setMessage({
         type: 'success',
         text: 'Teacher removed successfully!'
       });
-      
+
       // Clear message after 5 seconds
       setTimeout(() => {
         setMessage({ type: '', text: '' });
       }, 5000);
-      
+
     } catch (error) {
       setMessage({
         type: 'error',
@@ -424,7 +423,7 @@ function TeachersManagementPage() {
       setIsSubmitting(false);
     }
   };
-  
+
   // Handle pending teacher action (approve/reject)
   const handleTeacherAction = async (teacherId, action) => {
     // Implementation for handling pending teacher requests
@@ -441,6 +440,32 @@ function TeachersManagementPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Download Buttons */}
+          {collegeInfo && (
+            <div className="flex gap-2">
+              <button
+                onClick={() => window.open(`/api/export/teachers?uid=${user?.uid}&collegeId=${collegeInfo._id}&format=csv`, '_blank')}
+                className="inline-flex items-center gap-1 bg-green-50 hover:bg-green-100 text-green-600 py-2 px-3 rounded border border-green-200 transition-colors"
+                title="Download as CSV"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                </svg>
+                CSV
+              </button>
+              <button
+                onClick={() => window.open(`/api/export/teachers?uid=${user?.uid}&collegeId=${collegeInfo._id}&format=pdf`, '_blank')}
+                className="inline-flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2 px-3 rounded border border-blue-200 transition-colors"
+                title="Download as PDF"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                </svg>
+                PDF
+              </button>
+            </div>
+          )}
+
           {/* Add Faculty Button */}
           {collegeInfo && (
             <button
@@ -454,7 +479,7 @@ function TeachersManagementPage() {
               Add Faculty
             </button>
           )}
-          
+
           <button
             onClick={handleRefresh}
             disabled={refreshing}
@@ -466,18 +491,15 @@ function TeachersManagementPage() {
             </svg>
             {refreshing ? 'Refreshing...' : 'Refresh'}
           </button>
-
-         
         </div>
       </div>
 
       {message.text && (
         <div
-          className={`p-4 mb-6 border-l-4 ${
-            message.type === 'error'
+          className={`p-4 mb-6 border-l-4 ${message.type === 'error'
               ? 'bg-red-100 border-red-500 text-red-700'
               : 'bg-green-100 border-green-500 text-green-700'
-          }`}
+            }`}
           role="alert"
         >
           <p className="font-medium">{message.text}</p>
@@ -513,228 +535,99 @@ function TeachersManagementPage() {
         </div>
       ) : (
         <>
-          {/* Teachers tab navigation */}
-          <div className="border-b border-gray-200 mb-6">
-            <nav className="flex -mb-px space-x-8">
-              <button
-                onClick={() => setActiveTab('all')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'all'
-                    ? 'border-indigo-500 text-indigo-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                All Teachers
-              </button>
-            </nav>
-          </div>
-
-          {activeTab === 'all' ? (
-            <div className="bg-white shadow rounded-lg overflow-hidden">
-              <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-                <h3 className="text-lg leading-6 font-medium text-gray-900">All Teachers</h3>
-                <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                  Showing all teachers approved for your college
-                </p>
-              </div>
-              {teachers.length === 0 ? (
-                <div className="px-4 py-5 sm:p-6 text-center text-gray-500">
-                  No teachers have been approved yet.
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Name
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Email
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Department
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Role
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Joined
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {teachers.map((teacher) => (
-                        <tr key={teacher._id}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">
-                              {teacher.displayName || 'Unnamed Teacher'}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">{teacher.email}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">
-                              {teacher.department || 'Not specified'}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">
-                              {teacher.role || 'Not specified'}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              Approved
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {formatDate(teacher.createdAt)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => openEditModal(teacher)}
-                                className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteTeacher(teacher._id, teacher.displayName)}
-                                className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+          <div className="bg-white shadow rounded-lg overflow-hidden">
+            <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">All Teachers</h3>
+              <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                Showing all teachers approved for your college
+              </p>
             </div>
-          ) : (
-            <div className="bg-white shadow rounded-lg overflow-hidden">
-              <div className="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
-                <div>
-                  <h3 className="text-lg leading-6 font-medium text-gray-900">Pending Teacher Requests</h3>
-                  <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                    Review and manage teacher requests to join your college
-                  </p>
-                </div>
-                <button
-                  onClick={handleRefresh}
-                  disabled={refreshing}
-                  className="inline-flex items-center p-2 border border-transparent rounded-md text-indigo-600 hover:bg-indigo-50"
-                  title="Refresh pending requests"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                </button>
+            {teachers.length === 0 ? (
+              <div className="px-4 py-5 sm:p-6 text-center text-gray-500">
+                No teachers have been approved yet.
               </div>
-              {pendingTeachers.length === 0 ? (
-                <div className="px-4 py-5 sm:p-6 text-center text-gray-500">
-                  No pending teacher requests at this time.
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Name
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Email
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Request Date
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Department
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Librarian
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {pendingTeachers.map((teacher) => (
-                        <tr key={teacher._id}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">
-                              {teacher.displayName || 'Unnamed Teacher'}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">{teacher.email}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {formatDate(teacher.createdAt)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <select
-                              value={selectedDepartments[teacher._id] || ''}
-                              onChange={(e) => handleDepartmentChange(teacher._id, e.target.value)}
-                              className="text-sm border-gray-300 rounded-md"
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Name
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Email
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Department
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Role
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Joined
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {teachers.map((teacher) => (
+                      <tr key={teacher._id}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">
+                            {teacher.displayName || 'Unnamed Teacher'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-500">{teacher.email}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-500">
+                            {teacher.department || 'Not specified'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-500">
+                            {teacher.role || 'Not specified'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Approved
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {formatDate(teacher.createdAt)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => openEditModal(teacher)}
+                              className="inline-flex items-center justify-center p-2 rounded-md text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                              title="Edit teacher"
                             >
-                              {collegeInfo.departments?.map((department) => (
-                                <option key={department} value={department}>
-                                  {department}
-                                </option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <input
-                              type="checkbox"
-                              checked={librarianSelections[teacher._id] || false}
-                              onChange={(e) => handleLibrarianChange(teacher._id, e.target.checked)}
-                              className="form-checkbox h-5 w-5 text-indigo-600"
-                            />
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => handleTeacherAction(teacher._id, 'approve')}
-                                disabled={isSubmitting}
-                                className={`inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none ${
-                                  isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                                }`}
-                              >
-                                Approve
-                              </button>
-                              <button
-                                onClick={() => handleTeacherAction(teacher._id, 'reject')}
-                                disabled={isSubmitting}
-                                className={`inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none ${
-                                  isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                                }`}
-                              >
-                                Reject
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          )}
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteTeacher(teacher._id, teacher.displayName)}
+                              className="inline-flex items-center justify-center p-2 rounded-md text-red-600 bg-red-50 hover:bg-red-100 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+                              title="Delete teacher"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
 
         </>
       )}
@@ -743,13 +636,13 @@ function TeachersManagementPage() {
       {showAddModal && (
         <div className="fixed inset-0 overflow-y-auto z-50 flex items-center justify-center">
           <div className="fixed inset-0 bg-black/30 bg-opacity-50 transition-opacity" onClick={() => setShowAddModal(false)}></div>
-          
+
           <div className="relative bg-white rounded-lg max-w-lg w-full mx-4 shadow-xl transform transition-all">
             <div className="px-6 py-5 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium text-gray-900">Create Faculty Account</h3>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="text-gray-400 hover:text-gray-500"
                   onClick={() => setShowAddModal(false)}
                 >
@@ -760,7 +653,7 @@ function TeachersManagementPage() {
                 </button>
               </div>
             </div>
-            
+
             <form onSubmit={handleCreateFaculty}>
               <div className="px-6 py-5 space-y-4">
                 <div>
@@ -778,7 +671,7 @@ function TeachersManagementPage() {
                     <p className="mt-1 text-sm text-red-600">{validationErrors.email}</p>
                   )}
                 </div>
-                
+
                 <div>
                   <label htmlFor="displayName" className="block text-sm font-medium text-gray-700">Full Name</label>
                   <input
@@ -794,7 +687,7 @@ function TeachersManagementPage() {
                     <p className="mt-1 text-sm text-red-600">{validationErrors.displayName}</p>
                   )}
                 </div>
-                
+
                 <div>
                   <label htmlFor="department" className="block text-sm font-medium text-gray-700">Department</label>
                   <select
@@ -814,7 +707,7 @@ function TeachersManagementPage() {
                     <p className="mt-1 text-sm text-red-600">{validationErrors.department}</p>
                   )}
                 </div>
-                
+
                 <div className="flex items-center">
                   <input
                     type="checkbox"
@@ -828,7 +721,7 @@ function TeachersManagementPage() {
                     Assign as librarian
                   </label>
                 </div>
-                
+
                 <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
                   <div className="flex">
                     <div className="flex-shrink-0">
@@ -844,7 +737,7 @@ function TeachersManagementPage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="px-6 py-4 bg-gray-50 text-right border-t border-gray-200">
                 <button
                   type="button"
@@ -856,9 +749,8 @@ function TeachersManagementPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className={`inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
-                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
+                  className={`inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                 >
                   {isSubmitting ? (
                     <>
@@ -882,13 +774,13 @@ function TeachersManagementPage() {
       {showEditModal && (
         <div className="fixed inset-0 overflow-y-auto z-50 flex items-center justify-center">
           <div className="fixed inset-0 bg-black/30 bg-opacity-50 transition-opacity" onClick={() => setShowEditModal(false)}></div>
-          
+
           <div className="relative bg-white rounded-lg max-w-lg w-full mx-4 shadow-xl transform transition-all">
             <div className="px-6 py-5 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium text-gray-900">Edit Teacher Details</h3>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="text-gray-400 hover:text-gray-500"
                   onClick={() => setShowEditModal(false)}
                 >
@@ -899,7 +791,7 @@ function TeachersManagementPage() {
                 </button>
               </div>
             </div>
-            
+
             <form onSubmit={handleUpdateTeacher}>
               <div className="px-6 py-5 space-y-4">
                 <div>
@@ -917,7 +809,7 @@ function TeachersManagementPage() {
                     <p className="mt-1 text-sm text-red-600">{editValidationErrors.displayName}</p>
                   )}
                 </div>
-                
+
                 <div>
                   <label htmlFor="department" className="block text-sm font-medium text-gray-700">Department</label>
                   <select
@@ -937,7 +829,7 @@ function TeachersManagementPage() {
                     <p className="mt-1 text-sm text-red-600">{editValidationErrors.department}</p>
                   )}
                 </div>
-                
+
                 <div className="flex items-center">
                   <input
                     type="checkbox"
@@ -952,7 +844,7 @@ function TeachersManagementPage() {
                   </label>
                 </div>
               </div>
-              
+
               <div className="px-6 py-4 bg-gray-50 text-right border-t border-gray-200">
                 <button
                   type="button"
@@ -964,9 +856,8 @@ function TeachersManagementPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className={`inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
-                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
+                  className={`inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                 >
                   {isSubmitting ? (
                     <>

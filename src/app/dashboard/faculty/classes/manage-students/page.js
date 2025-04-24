@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -25,6 +26,19 @@ function ManageStudentsPage() {
     { email: '', displayName: '', rollNo: '', studentId: '' }
   ]);
   const [bulkValidationErrors, setBulkValidationErrors] = useState([{}]);
+
+  // Student editing state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingStudent, setEditingStudent] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    displayName: '',
+    rollNo: '',
+    studentId: '',
+    department: '',
+    currentSemester: '',
+    batch: ''
+  });
+  const [editValidationErrors, setEditValidationErrors] = useState({});
 
   useEffect(() => {
     if (!user || !classId) return;
@@ -108,6 +122,138 @@ function ManageStudentsPage() {
     }
   };
 
+  const handleEditStudent = (student) => {
+    setEditingStudent(student);
+    setEditFormData({
+      displayName: student.displayName || '',
+      rollNo: student.rollNo || '',
+      studentId: student.studentId || '',
+    });
+    setEditValidationErrors({});
+    setShowEditModal(true);
+  };
+
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear validation error when field is edited
+    if (editValidationErrors[name]) {
+      setEditValidationErrors({
+        ...editValidationErrors,
+        [name]: ''
+      });
+    }
+  };
+
+  const validateEditForm = () => {
+    const errors = {};
+    
+    if (!editFormData.displayName.trim()) {
+      errors.displayName = 'Name is required';
+    }
+    
+    if (!editFormData.rollNo.trim()) {
+      errors.rollNo = 'Roll number is required';
+    }
+    
+    // Check for duplicates in existing students
+    const existingRollNoDuplicate = approvedStudents.find(
+      s => s.student?.rollNo === editFormData.rollNo && s.student?._id !== editingStudent._id
+    );
+    
+    if (existingRollNoDuplicate) {
+      errors.rollNo = 'A student with this roll number already exists in the class';
+    }
+
+    if (editFormData.studentId) {
+      const existingStudentIdDuplicate = approvedStudents.find(
+        s => s.student?.studentId === editFormData.studentId && s.student?._id !== editingStudent._id
+      );
+      if (existingStudentIdDuplicate) {
+        errors.studentId = 'A student with this ID already exists in the class';
+      }
+    }
+    
+    setEditValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleUpdateStudent = async (e) => {
+    e.preventDefault();
+    
+    if (!validateEditForm()) {
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      const response = await fetch('/api/user', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firebaseUid: user?.uid,
+          targetUserId: editingStudent._id,
+          ...editFormData
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update student information');
+      }
+      
+      const data = await response.json();
+      
+      // Update the student in the list
+      setApprovedStudents(prev => 
+        prev.map(s => {
+          if (s.student._id === editingStudent._id) {
+            return {
+              ...s,
+              student: {
+                ...s.student,
+                displayName: editFormData.displayName,
+                rollNo: editFormData.rollNo,
+                studentId: editFormData.studentId,
+                department: editFormData.department,
+                currentSemester: editFormData.semester,
+                batch: editFormData.batch
+              }
+            };
+          }
+          return s;
+        })
+      );
+      
+      // Close the modal and show success message
+      setShowEditModal(false);
+      
+      setMessage({
+        type: 'success',
+        text: 'Student information updated successfully'
+      });
+      
+      // Clear the message after 3 seconds
+      setTimeout(() => {
+        setMessage({ type: '', text: '' });
+      }, 3000);
+      
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error.message || 'Failed to update student. Please try again.'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Filter students by search term
   const filteredStudents = approvedStudents.filter((student) => {
@@ -127,7 +273,6 @@ function ManageStudentsPage() {
       day: 'numeric',
     });
   };
-
 
   // Handle bulk student input change
   const handleBulkStudentChange = (index, field, value) => {
@@ -320,16 +465,40 @@ function ManageStudentsPage() {
           <h1 className="text-2xl font-bold">Manage Class Students</h1>
           {classData && (
             <p className="text-gray-600 mt-1">
-              {classData.name} ({classData.semester}) - {classData.department}
+              {classData.name} ({classData.currentSemester}) - {classData.department}
             </p>
           )}
         </div>
-        <Link
-          href="/dashboard/faculty/classes"
-          className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded transition-colors"
-        >
-          Back to Classes
-        </Link>
+        <div className="flex items-center gap-2">
+          <div className="flex gap-2">
+            <button
+              onClick={() => window.open(`/api/export/students?uid=${user?.uid}&classId=${classId}&format=csv`, '_blank')}
+              className="inline-flex items-center gap-1 bg-green-50 hover:bg-green-100 text-green-600 py-2 px-3 rounded border border-green-200 transition-colors"
+              title="Download as CSV"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+              </svg>
+              CSV
+            </button>
+            <button
+              onClick={() => window.open(`/api/export/students?uid=${user?.uid}&classId=${classId}&format=pdf`, '_blank')}
+              className="inline-flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2 px-3 rounded border border-blue-200 transition-colors"
+              title="Download as PDF"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+              </svg>
+              PDF
+            </button>
+          </div>
+          <Link
+            href="/dashboard/faculty/classes"
+            className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded transition-colors"
+          >
+            Back to Classes
+          </Link>
+        </div>
       </div>
 
       {message.text && (
@@ -464,7 +633,14 @@ function ManageStudentsPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <button
-                              onClick={() => handleRemoveStudent(student._id)}
+                              onClick={() => handleEditStudent(student.student)}
+                              disabled={isSubmitting}
+                              className={`text-blue-600 hover:text-blue-900 mr-4 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleRemoveStudent(student.student._id)}
                               disabled={isSubmitting}
                               className={`text-red-600 hover:text-red-900 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
@@ -620,6 +796,102 @@ function ManageStudentsPage() {
                 </button>
               </div>
               
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Student Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="text-lg font-medium text-gray-900">Edit Student Information</h3>
+              <button 
+                type="button" 
+                className="text-gray-400 hover:text-gray-500"
+                onClick={() => setShowEditModal(false)}
+              >
+                <span className="sr-only">Close</span>
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <form onSubmit={handleUpdateStudent} className="px-6 py-4 space-y-4">
+              <div>
+                <label htmlFor="displayName" className="block text-sm font-medium text-gray-700">Name*</label>
+                <input
+                  type="text"
+                  id="displayName"
+                  name="displayName"
+                  value={editFormData.displayName}
+                  onChange={handleEditInputChange}
+                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
+                    editValidationErrors.displayName ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+                {editValidationErrors.displayName && (
+                  <p className="mt-1 text-xs text-red-500">{editValidationErrors.displayName}</p>
+                )}
+              </div>
+              
+              <div>
+                <label htmlFor="rollNo" className="block text-sm font-medium text-gray-700">Roll No*</label>
+                <input
+                  type="text"
+                  id="rollNo"
+                  name="rollNo"
+                  value={editFormData.rollNo}
+                  onChange={handleEditInputChange}
+                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
+                    editValidationErrors.rollNo ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+                {editValidationErrors.rollNo && (
+                  <p className="mt-1 text-xs text-red-500">{editValidationErrors.rollNo}</p>
+                )}
+              </div>
+              
+              <div>
+                <label htmlFor="studentId" className="block text-sm font-medium text-gray-700">Student ID</label>
+                <input
+                  type="text"
+                  id="studentId"
+                  name="studentId"
+                  value={editFormData.studentId}
+                  onChange={handleEditInputChange}
+                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
+                    editValidationErrors.studentId ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+                {editValidationErrors.studentId && (
+                  <p className="mt-1 text-xs text-red-500">{editValidationErrors.studentId}</p>
+                )}
+              </div>
+              
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={`inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Updating...
+                    </>
+                  ) : (
+                    'Update Student'
+                  )}
+                </button>
+              </div>
             </form>
           </div>
         </div>

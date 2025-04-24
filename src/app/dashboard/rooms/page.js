@@ -109,11 +109,15 @@ export default function RoomsListingPage() {
 
   // Format room type for display
   const formatRoomType = (type) => {
+    if (!type) return '';
+    
+    // Check if this is from a room with otherType
+    if (rooms.some(room => room.type === 'other' && room.otherType === type)) {
+      return type.charAt(0).toUpperCase() + type.slice(1);
+    }
+    
     return type.charAt(0).toUpperCase() + type.slice(1);
   };
-
-
-
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -127,72 +131,120 @@ export default function RoomsListingPage() {
 
       <div className="flex flex-col lg:flex-row">
         {/* Sidebar with filters */}
-        <div className="w-full lg:w-64 bg-white p-6 border-r border-gray-200">
-          <h2 className="text-lg font-medium mb-4">Filters</h2>
+        <div className="w-full lg:w-72 bg-gradient-to-b from-indigo-50 to-white p-6 rounded-lg shadow-md mb-6 lg:mb-0 lg:mr-6">
+          <h2 className="text-xl font-bold text-indigo-800 mb-6 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            Smart Filters
+          </h2>
           
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="building" className="block text-sm font-medium text-gray-700 mb-1">
-                Building
+          <div className="space-y-5">
+            <div className="group">
+              <label htmlFor="building" className="block text-sm font-medium text-indigo-700 mb-2 transition-transform group-hover:translate-x-1">
+                Building Location
               </label>
-              <select
-                id="building"
-                name="building"
-                value={filters.building}
-                onChange={handleFilterChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="">All Buildings</option>
-                {buildings.map((building) => (
-                  <option key={building} value={building}>
-                    {building}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  id="building"
+                  name="building"
+                  value={filters.building}
+                  onChange={handleFilterChange}
+                  className="w-full pl-4 pr-10 py-3 border-0 bg-white bg-opacity-90 rounded-lg shadow-sm ring-1 ring-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700 appearance-none"
+                >
+                  <option value="">All Buildings</option>
+                  {buildings.map((building) => (
+                    <option key={building} value={building}>
+                      {building}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-indigo-500">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
             </div>
             
-            <div>
-              <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
-                Room Type
+            <div className="group">
+              <label htmlFor="type" className="block text-sm font-medium text-indigo-700 mb-2 transition-transform group-hover:translate-x-1">
+                Room Purpose
               </label>
-              <select
-                id="type"
-                name="type"
-                value={filters.type}
-                onChange={handleFilterChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="">All Types</option>
-                {roomTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {formatRoomType(type)}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  id="type"
+                  name="type"
+                  value={filters.type}
+                  onChange={handleFilterChange}
+                  className="w-full pl-4 pr-10 py-3 border-0 bg-white bg-opacity-90 rounded-lg shadow-sm ring-1 ring-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700 appearance-none"
+                >
+                  <option value="">All Types</option>
+                  {roomTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {formatRoomType(type)}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-indigo-500">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
             </div>
             
-            <div>
-              <label htmlFor="capacity" className="block text-sm font-medium text-gray-700 mb-1">
-                Minimum Capacity
+            <div className="group">
+              <label htmlFor="capacity" className="block text-sm font-medium text-indigo-700 mb-2 transition-transform group-hover:translate-x-1">
+                Guest Capacity
               </label>
-              <input
-                type="number"
-                id="capacity"
-                name="capacity"
-                value={filters.capacity}
-                onChange={handleFilterChange}
-                min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Any capacity"
-              />
+              <div className="relative mt-1">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="number"
+                  id="capacity"
+                  name="capacity"
+                  value={filters.capacity}
+                  onChange={handleFilterChange}
+                  min="1"
+                  className="w-full pl-10 pr-4 py-3 border-0 bg-white bg-opacity-90 rounded-lg shadow-sm ring-1 ring-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700"
+                  placeholder="Min. people"
+                />
+              </div>
             </div>
             
-            <div>
+            <div className="pt-2">
+              <div className="relative">
+                <input
+                  type="text"
+                  id="search"
+                  name="search"
+                  value={filters.search}
+                  onChange={handleFilterChange}
+                  className="w-full pl-10 pr-4 py-3 border-0 bg-white bg-opacity-90 rounded-lg shadow-sm ring-1 ring-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700"
+                  placeholder="Search rooms..."
+                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            
+            <div className="pt-4">
               <button
                 onClick={handleClearFilters}
-                className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+                className="w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all transform hover:scale-[1.02] flex items-center justify-center"
               >
-                Clear Filters
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Reset Filters
               </button>
             </div>
           </div>
@@ -233,70 +285,80 @@ export default function RoomsListingPage() {
                       {rooms.map((room) => (
                         <div 
                           key={room._id} 
-                          className="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                          className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group"
                         >
-                          <div className="h-48 bg-gray-200 overflow-hidden">
-                            <div 
-                              className="w-full h-full bg-cover bg-center" 
-                              style={{ 
-                                backgroundImage: `url(${ 
-                                  room.image || 
-                                  'https://images.unsplash.com/photo-1517164850305-99a3e65bb47e?auto=format&fit=crop&q=80&w=1000'
-                                })` 
-                              }}
-                            ></div>
-                          </div>
-                          <div className="p-6">
-                            <div className="flex justify-between items-start mb-2">
-                              <h3 className="text-xl font-semibold">{room.name}</h3>
-                              <span className={`text-xs px-2 py-1 rounded-full ${
-                                room.type === 'classroom' ? 'bg-blue-100 text-blue-800' :
-                                room.type === 'conference' ? 'bg-purple-100 text-purple-800' :
-                                room.type === 'lab' ? 'bg-green-100 text-green-800' :
-                                room.type === 'auditorium' ? 'bg-orange-100 text-orange-800' :
-                                'bg-gray-100 text-gray-800'
-                              }`}>
-                                {formatRoomType(room.type)}
+                          <div className="h-48 bg-gradient-to-r from-blue-100 to-indigo-100 relative overflow-hidden">
+                            {room.image ? (
+                              <div 
+                                className="w-full h-full bg-cover bg-center transform group-hover:scale-105 transition-transform duration-500" 
+                                style={{ backgroundImage: `url(${room.image})` }}
+                              ></div>
+                            ) : (
+                              <div className="w-full h-full bg-cover bg-center transform group-hover:scale-105 transition-transform duration-500" 
+                                style={{ 
+                                  backgroundImage: `url(https://images.unsplash.com/photo-1517164850305-99a3e65bb47e?auto=format&fit=crop&q=80&w=1000)` 
+                                }}
+                              ></div>
+                            )}
+                            <div className="absolute top-0 right-0 p-2">
+                              <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${
+                                room.type === 'classroom' ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white' :
+                                room.type === 'conference' ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white' :
+                                room.type === 'laboratory' ? 'bg-gradient-to-r from-green-600 to-green-700 text-white' :
+                                room.type === 'auditorium' ? 'bg-gradient-to-r from-orange-600 to-orange-700 text-white' :
+                                'bg-gradient-to-r from-gray-600 to-gray-700 text-white'
+                              } shadow-lg`}>
+                                {room.type === 'other' && room.otherType ? room.otherType.charAt(0).toUpperCase() + room.otherType.slice(1) : formatRoomType(room.type)}
                               </span>
                             </div>
-                            
-                            <p className="text-sm text-gray-600 mb-4">
-                              {room.building}, Floor {room.floor}
-                            </p>
-                            
-                            <div className="flex items-center text-sm text-gray-600 mb-4">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                              </svg>
-                              Capacity: {room.capacity} people
+                          </div>
+                          
+                          <div className="p-6">
+                            <div className="flex justify-between items-start mb-2">
+                              <h3 className="text-xl font-bold text-gray-800 group-hover:text-indigo-700 transition-colors">{room.name}</h3>
+                              <div className="flex items-center text-sm text-indigo-600 font-medium">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <span>{room.building}, Floor {room.floor}</span>
+                              </div>
                             </div>
                             
+                            <div className="flex items-center text-sm bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg mb-4 w-fit">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                              </svg>
+                              <span className="font-semibold">{room.capacity}</span> <span className="ml-1">guests maximum</span>
+                            </div>
+                            
+                            {/* Amenities */}
                             {room.amenities && room.amenities.length > 0 ? (
-                              <div className="flex flex-wrap gap-2 mb-4">
+                              <div className="flex flex-wrap gap-2 mb-5">
                                 {room.amenities.slice(0, 3).map((amenity, index) => (
-                                  <span key={index} className="inline-flex items-center rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 text-xs">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <span key={index} className="inline-flex items-center rounded-full bg-blue-50 text-blue-700 px-3 py-1 text-xs font-medium transition-all hover:bg-blue-100">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                     </svg>
                                     {amenity}
                                   </span>
                                 ))}
                                 {room.amenities.length > 3 && (
-                                  <span className="inline-flex items-center rounded-full bg-gray-50 text-gray-600 px-2 py-0.5 text-xs">
+                                  <span className="inline-flex items-center rounded-full bg-gray-100 text-gray-800 px-3 py-1 text-xs font-medium hover:bg-gray-200 transition-all cursor-help" title={room.amenities.slice(3).join(", ")}>
                                     +{room.amenities.length - 3} more
                                   </span>
                                 )}
                               </div>
                             ) : (
-                              <div className="mb-4 flex flex-wrap gap-2">
-                                <span className="inline-flex items-center rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 text-xs">
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <div className="mb-5 flex flex-wrap gap-2">
+                                <span className="inline-flex items-center rounded-full bg-blue-50 text-blue-700 px-3 py-1 text-xs font-medium transition-all hover:bg-blue-100">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                   </svg>
                                   Projector
                                 </span>
-                                <span className="inline-flex items-center rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 text-xs">
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <span className="inline-flex items-center rounded-full bg-blue-50 text-blue-700 px-3 py-1 text-xs font-medium transition-all hover:bg-blue-100">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                   </svg>
                                   WiFi
@@ -306,7 +368,7 @@ export default function RoomsListingPage() {
                             
                             <Link 
                               href={`/dashboard/rooms/${room._id}`}
-                              className="inline-flex justify-center items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors w-full">
+                              className="block w-full text-center px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-colors shadow-md hover:shadow-lg transform hover:scale-[1.01] font-medium">
                               View Details & Book
                             </Link>
                           </div>

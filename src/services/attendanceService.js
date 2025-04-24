@@ -421,7 +421,7 @@ export async function getStudentAttendanceSummary(studentId){
             _id: classData._id,
             name: classData.name,
             department: classData.department,
-            semester: classData.semester
+            currentSemester: classData.currentSemester || 1,
           },
           subject,
           totalDays,

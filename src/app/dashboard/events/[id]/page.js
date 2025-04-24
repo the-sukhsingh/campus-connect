@@ -356,7 +356,7 @@ export default function EventDetail() {
               </div>
               <div>
                 <p className="text-gray-900 font-medium">
-                  {event?.attendees?.length} {event?.attendees?.length === 1 ? 'person' : 'people'} attending
+                  Attendees ({event?.attendees?.length || 0})
                 </p>
                 {event?.maxAttendees > 0 && (
                   <p className="text-gray-500 text-sm">

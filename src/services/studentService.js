@@ -91,7 +91,7 @@ export async function joinClass(studentId, classId) {
       name: classObj.name,
       course: classObj.course,
       department: classObj.department,
-      semester: classObj.semester,
+      currentSemester: classObj.currentSemester,
       status: 'pending'
     };
   } catch (error) {

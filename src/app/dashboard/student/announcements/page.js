@@ -150,14 +150,7 @@ function StudentAnnouncementsPage() {
                 <p className="text-gray-700 whitespace-pre-wrap">{selectedAnnouncement.content}</p>
               </div>
             </div>
-            <div className="bg-gray-50 px-5 py-3 flex justify-end">
-              <button
-                onClick={closeModal}
-                className="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none"
-              >
-                Close
-              </button>
-            </div>
+           
           </div>
         </div>
       )}

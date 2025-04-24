@@ -3,6 +3,8 @@ import dbConnect from '@/lib/dbConnect';
 import UserModel from '@/models/User';
 import { isEmailFromCollege } from './collegeService';
 import { Types } from 'mongoose';
+import { auth } from 'firebase-admin';
+import { unregisterUserFromAllEvents } from './eventService'
 
 export async function saveUserToDb(user) {
 
@@ -137,7 +139,7 @@ export async function updateUserProfile(id, userData) {
     const safeData = {
       displayName: userData.displayName,
       department: userData.department,
-      semester: userData.semester,
+      currentSemester: userData.currentSemester,
       batch: userData.batch,
       rollNo: userData.rollNo || '',
       studentId: userData.studentId || '',
@@ -280,6 +282,47 @@ export async function linkStudentWithCollege(userId, collegeId, studentId, depar
       };
     }
 
+    throw error;
+  }
+}
+
+export async function deleteUser(userId){
+  try {
+    await dbConnect();
+
+
+    // Check if the user exists
+
+    const user = await UserModel.findById(userId);
+
+    if (!user) {
+      return {
+        success: false,
+        message: 'User not found'
+      };
+    }
+
+    // Delete the Firebase auth account
+
+    // Delete the user from our database
+    // Note: This does not remove the Firebase auth account
+    
+    await auth.deleteUser(user.firebaseUid).catch(error => {
+      console.error('Error deleting user from Firebase:', error);
+    });
+    
+    // Cancel any event registrations associated with the user
+    await unregisterUserFromAllEvents(userId);
+    
+    await UserModel.findByIdAndDelete(userId);
+
+
+    return {
+      success: true,
+      message: 'User has been deleted successfully'
+    };
+  } catch (error ) {
+    console.error('Error deleting user:', error);
     throw error;
   }
 }

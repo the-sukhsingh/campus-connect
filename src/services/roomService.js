@@ -39,6 +39,16 @@ export async function getRoomById(id) {
 export async function createRoom(roomData) {
   await dbConnect();
   
+  // Validate otherType field if room type is 'other'
+  if (roomData.type === 'other' && !roomData.otherType) {
+    throw new Error('When selecting "other" as room type, you must specify the otherType field');
+  }
+  
+  // Clear otherType if type is not 'other' to keep data clean
+  if (roomData.type !== 'other') {
+    roomData.otherType = '';
+  }
+  
   const room = new Room(roomData);
   await room.save();
   
@@ -52,6 +62,16 @@ export async function updateRoom(id, roomData) {
   }
   
   await dbConnect();
+  
+  // Validate otherType field if room type is 'other'
+  if (roomData.type === 'other' && !roomData.otherType) {
+    throw new Error('When selecting "other" as room type, you must specify the otherType field');
+  }
+  
+  // Clear otherType if type is not 'other' to keep data clean
+  if (roomData.type !== 'other') {
+    roomData.otherType = '';
+  }
   
   const room = await Room.findByIdAndUpdate(
     id,

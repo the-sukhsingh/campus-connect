@@ -58,10 +58,16 @@ const ClassSchema = new Schema({
     required: true,
     trim: true
   },
-  semester: {
-    type: String,
-    required: true,
-    trim: true
+
+  totalSemesters: {
+    type: Number,
+    // required: true,
+    default: 8
+  },
+  currentSemester: {
+    type: Number,
+    // required: true,
+    default: 1
   },
   batch: {
     type: String,

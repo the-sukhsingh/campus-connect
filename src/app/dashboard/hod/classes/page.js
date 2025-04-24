@@ -88,7 +88,7 @@ function ClassesManagePage() {
       const query = searchQuery.toLowerCase();
       return (
         classItem.name.toLowerCase().includes(query) ||
-        classItem.semester.toLowerCase().includes(query) ||
+        classItem.currentSemester.toString().includes(query) ||
         classItem.department.toLowerCase().includes(query) ||
         classItem.teacher.displayName.toLowerCase().includes(query) ||
         classItem.teacher.email.toLowerCase().includes(query)
@@ -247,7 +247,7 @@ function ClassesManagePage() {
                             {classItem.name}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {` ${classItem.semester}`}
+                            {` ${classItem.currentSemester || 1} of ${classItem.totalSemesters || 8}`}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
