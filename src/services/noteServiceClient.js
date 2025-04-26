@@ -1,5 +1,7 @@
 "use client";
 
+import { fetchWithOfflineSupport, queueSyncOperation, storeOfflineData } from '@/utils/offlineSync';
+
 /**
  * Get all notes with optional filtering
  * @param {object} filters - Optional filters (department, semester, subject, search)
@@ -114,6 +116,31 @@ export async function createNote(noteData, file, token) {
     throw error;
   }
 }
+
+// Helper function to open IndexedDB
+const openOfflineDB = () => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('offlineNotes', 1);
+    
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains('notes')) {
+        db.createObjectStore('notes', { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains('files')) {
+        db.createObjectStore('files', { keyPath: 'noteId' });
+      }
+    };
+    
+    request.onsuccess = (event) => {
+      resolve(event.target.result);
+    };
+    
+    request.onerror = (event) => {
+      reject(event.target.error);
+    };
+  });
+};
 
 /**
  * Update a note

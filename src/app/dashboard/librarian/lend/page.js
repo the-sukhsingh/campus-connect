@@ -4,6 +4,7 @@ import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useTheme } from '@/context/ThemeContext';
 import { useRouter } from 'next/navigation';
 
 function LendBookPage() {
@@ -25,6 +26,7 @@ function LendBookPage() {
   const [dueDate, setDueDate] = useState('');
   const [studentResults, setStudentResults] = useState([]);
   const [showStudentResults, setShowStudentResults] = useState(false);
+  const { theme } = useTheme();
   
   // Book copy state
   const [bookCopies, setBookCopies] = useState([]);
@@ -483,15 +485,48 @@ function LendBookPage() {
     setDueDate(defaultDueDate.toISOString().split('T')[0]);
   };
 
+    // Theme-based style classes
+    const cardStyle = theme === 'dark'
+    ? 'bg-gray-800 border-gray-700 shadow-slate-700/30'
+    : 'bg-white border-gray-200 shadow-gray-200/50';
+  
+  const headingStyle = theme === 'dark'
+    ? 'text-gray-100'
+    : 'text-gray-800';
+  
+  const inputStyle = theme === 'dark'
+    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-indigo-500'
+    : 'bg-gray-50 border-gray-300 text-gray-900 focus:border-indigo-600';
+  
+  const buttonPrimary = theme === 'dark'
+    ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+    : 'bg-indigo-600 hover:bg-indigo-700 text-white';
+  
+  const buttonSecondary = theme === 'dark'
+    ? 'bg-gray-700 hover:bg-gray-600 text-gray-200 border-gray-600'
+    : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300';
+  
+  const tabActive = theme === 'dark'
+    ? 'text-indigo-400 border-indigo-400'
+    : 'text-indigo-600 border-indigo-600';
+  
+  const tabInactive = theme === 'dark'
+    ? 'text-gray-400 hover:text-gray-300'
+    : 'text-gray-500 hover:text-gray-700';
+  
+  const resultCardStyle = theme === 'dark'
+    ? 'bg-gray-700 border-gray-600'
+    : 'bg-gray-50 border-gray-200';
+
   return (
-    <div className="p-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+    <div className={`p-6 ${theme === 'dark' ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'}`}>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <div className="flex items-center gap-4 mb-2">
             {urlBookId && (
               <button
                 onClick={() => router.push(`/dashboard/library/books/${urlBookId}`)}
-                className="text-indigo-600 hover:text-indigo-900 flex items-center"
+                className={`${theme === 'dark' ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-800'} flex items-center`}
               >
                 <svg className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -499,24 +534,25 @@ function LendBookPage() {
                 Back to Book Details
               </button>
             )}
-            <h1 className="text-2xl font-bold">Lend Books to Students</h1>
+            <h1 className={`text-2xl font-serif font-bold ${headingStyle}`}>Lend Books to Students</h1>
           </div>
-          <p className="text-gray-600 mt-1">Issue books to students quickly and efficiently</p>
+          <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mt-1 font-light italic`}>
+            Issue books to students quickly and efficiently
+          </p>
         </div>
-        
       </div>
 
       {error && (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
-          <p>{error}</p>
+        <div className={`${theme === 'dark' ? 'bg-red-900/30 border-red-700 text-red-200' : 'bg-red-100 border-red-500 text-red-700'} border-l-4 p-4 mb-6 rounded-r`} role="alert">
+          <p className="font-medium">{error}</p>
         </div>
       )}
 
       {success && (
-        <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6" role="alert">
+        <div className={`${theme === 'dark' ? 'bg-green-900/30 border-green-700 text-green-200' : 'bg-green-100 border-green-500 text-green-700'} border-l-4 p-4 mb-6 rounded-r`} role="alert">
           <div className="flex">
             <div className="py-1">
-              <svg className="h-6 w-6 text-green-500 mr-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className={`h-6 w-6 ${theme === 'dark' ? 'text-green-500' : 'text-green-500'} mr-4`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
               </svg>
             </div>
@@ -529,24 +565,20 @@ function LendBookPage() {
       )}
 
       {/* Tabs for Quick vs Advanced Lending */}
-      <div className="bg-white shadow-md rounded-lg overflow-hidden mb-6">
-        <div className="flex border-b border-gray-200">
+      <div className={`${cardStyle} border rounded-lg overflow-hidden mb-8 shadow`}>
+        <div className={`flex border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
           <button
             onClick={() => setActiveTab('quick')}
-            className={`py-3 px-6 text-sm font-medium ${
-              activeTab === 'quick'
-                ? 'text-indigo-600 border-b-2 border-indigo-600'
-                : 'text-gray-500 hover:text-gray-700'
+            className={`py-3 px-6 text-sm font-medium transition-colors duration-200 ${
+              activeTab === 'quick' ? tabActive : tabInactive
             }`}
           >
             Quick Lending (by Code)
           </button>
           <button
             onClick={() => setActiveTab('advanced')}
-            className={`py-3 px-6 text-sm font-medium ${
-              activeTab === 'advanced'
-                ? 'text-indigo-600 border-b-2 border-indigo-600'
-                : 'text-gray-500 hover:text-gray-700'
+            className={`py-3 px-6 text-sm font-medium transition-colors duration-200 ${
+              activeTab === 'advanced' ? tabActive : tabInactive
             }`}
           >
             Advanced Search
@@ -557,8 +589,10 @@ function LendBookPage() {
           {activeTab === 'quick' ? (
             /* Quick Lending UI */
             <div>
-              <div className="mb-6">
-                <h2 className="text-lg font-medium mb-4">Step 1: Find Book by Unique Code</h2>
+              <div className="mb-8">
+                <h2 className={`text-lg font-serif font-medium mb-4 ${headingStyle} border-b pb-2 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+                  Step 1: Find Book by Unique Code
+                </h2>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="grow">
                     <div className="relative">
@@ -567,7 +601,7 @@ function LendBookPage() {
                         value={uniqueCodeSearch}
                         onChange={(e) => setUniqueCodeSearch(e.target.value.toUpperCase())}
                         placeholder="Enter the book's unique code"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                        className={`w-full px-3 py-2.5 border rounded-md shadow-sm focus:outline-none focus:ring-2 ${inputStyle}`}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             e.preventDefault();
@@ -578,9 +612,9 @@ function LendBookPage() {
                     </div>
                   </div>
                   <button
-                    onClick={handleBookSearch}
+                    onClick={() => handleBookSearch()}
                     disabled={isSearchingBook || !uniqueCodeSearch.trim()}
-                    className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none ${
+                    className={`px-4 py-2.5 border border-transparent rounded-md shadow-sm text-sm font-medium transition-colors duration-200 ${buttonPrimary} ${
                       isSearchingBook || !uniqueCodeSearch.trim() ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                   >
@@ -601,34 +635,56 @@ function LendBookPage() {
               
               {foundBook && (
                 <>
-                  <div className="mb-6">
-                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                      <h3 className="text-md font-medium text-green-800 mb-2">✓ Book Found</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div className="mb-8">
+                    <div className={`${theme === 'dark' ? 'bg-green-900/20 border-green-700/50 text-green-300' : 'bg-green-50 border-green-200 text-green-800'} p-5 rounded-lg border`}>
+                      <h3 className={`text-md font-medium mb-3 ${theme === 'dark' ? 'text-green-300' : 'text-green-800'} flex items-center`}>
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        Book Found
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                          <p className="text-sm text-gray-700"><span className="font-medium">Title:</span> {foundBook.title}</p>
-                          <p className="text-sm text-gray-700"><span className="font-medium">Author:</span> {foundBook.author}</p>
-                          <p className="text-sm text-gray-700"><span className="font-medium">Code:</span> {foundBook.uniqueCode}</p>
+                          <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1.5`}>
+                            <span className="font-medium">Title:</span> {foundBook.title}
+                          </p>
+                          <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1.5`}>
+                            <span className="font-medium">Author:</span> {foundBook.author}
+                          </p>
+                          <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1.5`}>
+                            <span className="font-medium">Code:</span> {foundBook.uniqueCode}
+                          </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-700"><span className="font-medium">Genre:</span> {foundBook.genre}</p>
-                          <p className="text-sm text-gray-700">
+                          <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1.5`}>
+                            <span className="font-medium">Genre:</span> {foundBook.genre}
+                          </p>
+                          <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1.5`}>
                             <span className="font-medium">Availability:</span> 
-                            <span className={foundBook.availableCopies > 0 ? 'text-green-600' : 'text-red-600'}>
+                            <span className={foundBook.availableCopies > 0 
+                              ? (theme === 'dark' ? 'text-green-400' : 'text-green-600') 
+                              : (theme === 'dark' ? 'text-red-400' : 'text-red-600')
+                            }>
                               {' '}{foundBook.availableCopies} of {foundBook.copies}
                             </span>
                           </p>
-                          {foundBook.ISBN && <p className="text-sm text-gray-700"><span className="font-medium">ISBN:</span> {foundBook.ISBN}</p>}
+                          {foundBook.ISBN && (
+                            <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1.5`}>
+                              <span className="font-medium">ISBN:</span> {foundBook.ISBN}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
                   </div>
                   
                   {/* Book Copy Selection */}
-                  <div className="mb-6">
-                    <h2 className="text-lg font-medium mb-4">Step 2: Select Book Copy</h2>
+                  <div className="mb-8">
+                    <h2 className={`text-lg font-serif font-medium mb-4 ${headingStyle} border-b pb-2 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+                      Step 2: Select Book Copy
+                    </h2>
                     {isLoadingCopies ? (
-                      <div className="flex items-center text-gray-600">
+                      <div className={`flex items-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                         <svg className="animate-spin -ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -638,7 +694,7 @@ function LendBookPage() {
                     ) : bookCopies.length > 0 ? (
                       <div>
                         <div className="mb-4">
-                          <label htmlFor="bookCopy" className="block text-sm font-medium text-gray-700 mb-1">
+                          <label htmlFor="bookCopy" className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                             Available Copies
                           </label>
                           <select
@@ -646,7 +702,7 @@ function LendBookPage() {
                             name="bookCopy"
                             value={selectedBookCopy ? selectedBookCopy._id : ''}
                             onChange={handleBookCopyChange}
-                            className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:w-auto"
+                            className={`block w-full py-2.5 px-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 sm:w-auto ${inputStyle}`}
                           >
                             {bookCopies.map(copy => (
                               <option key={copy._id} value={copy._id}>
@@ -656,22 +712,24 @@ function LendBookPage() {
                           </select>
                         </div>
                         {selectedBookCopy && (
-                          <div className="bg-blue-50 p-3 rounded-md border border-blue-200 text-sm">
-                            <p><span className="font-medium">Selected:</span> Copy #{selectedBookCopy.copyNumber}</p>
-                            <p><span className="font-medium">Condition:</span> {selectedBookCopy.condition}</p>
+                          <div className={`${theme === 'dark' ? 'bg-blue-900/20 border-blue-700/50 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-800'} p-4 rounded-md border text-sm`}>
+                            <p className="mb-1"><span className="font-medium">Selected:</span> Copy #{selectedBookCopy.copyNumber}</p>
+                            <p className="mb-1"><span className="font-medium">Condition:</span> {selectedBookCopy.condition}</p>
                             {selectedBookCopy.notes && <p><span className="font-medium">Notes:</span> {selectedBookCopy.notes}</p>}
                           </div>
                         )}
                       </div>
                     ) : (
-                      <div className="p-4 bg-yellow-50 text-yellow-800 border border-yellow-200 rounded-md">
+                      <div className={`p-4 ${theme === 'dark' ? 'bg-yellow-900/20 border-yellow-700/50 text-yellow-300' : 'bg-yellow-50 border-yellow-200 text-yellow-800'} border rounded-md`}>
                         No available copies of this book were found. All copies may be borrowed or unavailable.
                       </div>
                     )}
                   </div>
                   
-                  <div className="mb-6">
-                    <h2 className="text-lg font-medium mb-4">Step 3: Find Student</h2>
+                  <div className="mb-8">
+                    <h2 className={`text-lg font-serif font-medium mb-4 ${headingStyle} border-b pb-2 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+                      Step 3: Find Student
+                    </h2>
                     <div className="flex flex-col sm:flex-row gap-4">
                       <div className="grow">
                         <div className="relative">
@@ -680,7 +738,7 @@ function LendBookPage() {
                             value={studentSearch}
                             onChange={(e) => setStudentSearch(e.target.value)}
                             placeholder="Search by name, email or roll number"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                            className={`w-full px-3 py-2.5 border rounded-md shadow-sm focus:outline-none focus:ring-2 ${inputStyle}`}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 e.preventDefault();
@@ -689,16 +747,16 @@ function LendBookPage() {
                             }}
                           />
                           {showStudentResults && studentResults.length > 0 && (
-                            <div className="absolute z-10 mt-1 w-full bg-white shadow-lg border rounded-md max-h-60 overflow-auto">
+                            <div className={`absolute z-10 mt-1 w-full border rounded-md max-h-60 overflow-auto shadow-lg ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                               {studentResults.map((student) => (
                                 <div
                                   key={student._id}
-                                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b last:border-0"
+                                  className={`px-4 py-3 cursor-pointer border-b last:border-0 ${theme === 'dark' ? 'hover:bg-gray-700 border-gray-700' : 'hover:bg-gray-100 border-gray-200'}`}
                                   onClick={() => handleSelectStudent(student)}
                                 >
-                                  <div className="font-medium">{student.displayName}</div>
-                                  <div className="text-xs text-gray-600">{student.email}</div>
-                                  {student.rollNo && <div className="text-xs text-gray-600">Roll No: {student.rollNo}</div>}
+                                  <div className={`font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>{student.displayName}</div>
+                                  <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{student.email}</div>
+                                  {student.rollNo && <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Roll No: {student.rollNo}</div>}
                                 </div>
                               ))}
                             </div>
@@ -708,7 +766,7 @@ function LendBookPage() {
                       <button
                         onClick={handleStudentSearch}
                         disabled={isSearchingStudent || !studentSearch.trim()}
-                        className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none ${
+                        className={`px-4 py-2.5 border border-transparent rounded-md shadow-sm text-sm font-medium transition-colors duration-200 ${buttonPrimary} ${
                           isSearchingStudent || !studentSearch.trim() ? 'opacity-50 cursor-not-allowed' : ''
                         }`}
                       >
@@ -728,22 +786,41 @@ function LendBookPage() {
                   </div>
                   
                   {foundStudent && (
-                    <div className="mb-6">
-                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                        <h3 className="text-md font-medium text-blue-800 mb-2">✓ Student Selected</h3>
+                    <div className="mb-8">
+                      <div className={`${theme === 'dark' ? 'bg-blue-900/20 border-blue-700/50 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-800'} p-5 rounded-lg border`}>
+                        <h3 className={`text-md font-medium mb-3 flex items-center ${theme === 'dark' ? 'text-blue-300' : 'text-blue-800'}`}>
+                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                          </svg>
+                          Student Selected
+                        </h3>
                         <div>
-                          <p className="text-sm text-gray-700"><span className="font-medium">Name:</span> {foundStudent.displayName}</p>
-                          <p className="text-sm text-gray-700"><span className="font-medium">Email:</span> {foundStudent.email}</p>
-                          {foundStudent.rollNo && <p className="text-sm text-gray-700"><span className="font-medium">Roll No:</span> {foundStudent.rollNo}</p>}
-                          {foundStudent.department && <p className="text-sm text-gray-700"><span className="font-medium">Department:</span> {foundStudent.department}</p>}
+                          <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1.5`}>
+                            <span className="font-medium">Name:</span> {foundStudent.displayName}
+                          </p>
+                          <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1.5`}>
+                            <span className="font-medium">Email:</span> {foundStudent.email}
+                          </p>
+                          {foundStudent.rollNo && (
+                            <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1.5`}>
+                              <span className="font-medium">Roll No:</span> {foundStudent.rollNo}
+                            </p>
+                          )}
+                          {foundStudent.department && (
+                            <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1.5`}>
+                              <span className="font-medium">Department:</span> {foundStudent.department}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
                   )}
                   
                   {foundStudent && (
-                    <div className="mb-6">
-                      <h2 className="text-lg font-medium mb-4">Step 4: Set Due Date</h2>
+                    <div className="mb-8">
+                      <h2 className={`text-lg font-serif font-medium mb-4 ${headingStyle} border-b pb-2 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+                        Step 4: Set Due Date
+                      </h2>
                       <div>
                         <input
                           type="date"
@@ -752,10 +829,10 @@ function LendBookPage() {
                           value={dueDate}
                           onChange={(e) => setDueDate(e.target.value)}
                           min={new Date().toISOString().split('T')[0]}
-                          className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                          className={`px-3 py-2.5 border rounded-md shadow-sm focus:outline-none focus:ring-2 ${inputStyle}`}
                           required
                         />
-                        <p className="mt-1 text-sm text-gray-500">
+                        <p className={`mt-2 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                           Default due date is set to 14 days from today.
                         </p>
                       </div>
@@ -767,7 +844,7 @@ function LendBookPage() {
                       <button
                         type="button"
                         onClick={handleReset}
-                        className="mr-4 px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
+                        className={`mr-4 px-4 py-2.5 border rounded-md shadow-sm text-sm font-medium transition-colors duration-200 ${buttonSecondary}`}
                       >
                         Cancel
                       </button>
@@ -775,7 +852,7 @@ function LendBookPage() {
                         type="button"
                         onClick={handleQuickLendBook}
                         disabled={loading}
-                        className={`px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none ${
+                        className={`px-6 py-2.5 border border-transparent rounded-md shadow-sm text-sm font-medium transition-colors duration-200 ${theme === 'dark' ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'} ${
                           loading ? 'opacity-50 cursor-not-allowed' : ''
                         }`}
                       >
@@ -797,11 +874,12 @@ function LendBookPage() {
               )}
             </div>
           ) : (
-            /* Advanced Search UI */
+            /* Advanced Search UI - similar theming would continue here */
+                        /* Advanced Search UI */
             <div>
               {!advSelectedBook || !advSelectedStudent ? (
                 <div>
-                  <h2 className="text-lg font-medium mb-4">
+                  <h2 className={`text-lg font-serif font-medium mb-4 ${headingStyle} border-b pb-2 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
                     Step {advSelectedBook ? '2: Select a Student' : '1: Select a Book'}
                   </h2>
                   
@@ -813,14 +891,10 @@ function LendBookPage() {
                           id="search-book-adv"
                           value="book"
                           checked={advSearchType === 'book'}
-                          onChange={() => {
-                            setAdvSearchType('book');
-                            setAdvSearchResults([]);
-                            setAdvSearchTerm('');
-                          }}
-                          className="h-4 w-4 text-indigo-600 border-gray-300"
+                          onChange={() => setAdvSearchType('book')}
+                          className={`h-4 w-4 ${theme === 'dark' ? 'text-indigo-500 bg-gray-700 border-gray-600' : 'text-indigo-600 border-gray-300'}`}
                         />
-                        <label htmlFor="search-book-adv" className="ml-2 text-gray-700">
+                        <label htmlFor="search-book-adv" className={`ml-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                           Search for Book
                         </label>
                       </div>
@@ -833,14 +907,10 @@ function LendBookPage() {
                           id="search-student-adv"
                           value="student"
                           checked={advSearchType === 'student'}
-                          onChange={() => {
-                            setAdvSearchType('student');
-                            setAdvSearchResults([]);
-                            setAdvSearchTerm('');
-                          }}
-                          className="h-4 w-4 text-indigo-600 border-gray-300"
+                          onChange={() => setAdvSearchType('student')}
+                          className={`h-4 w-4 ${theme === 'dark' ? 'text-indigo-500 bg-gray-700 border-gray-600' : 'text-indigo-600 border-gray-300'}`}
                         />
-                        <label htmlFor="search-student-adv" className="ml-2 text-gray-700">
+                        <label htmlFor="search-student-adv" className={`ml-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                           Search for Student
                         </label>
                       </div>
@@ -858,7 +928,7 @@ function LendBookPage() {
                             ? "Search for books by title, author, or ISBN"
                             : "Search for students by name, email, or roll number"
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                        className={`w-full px-3 py-2.5 border rounded-md shadow-sm focus:outline-none focus:ring-2 ${inputStyle}`}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             e.preventDefault();
@@ -870,7 +940,7 @@ function LendBookPage() {
                     <button
                       onClick={handleAdvancedSearch}
                       disabled={isAdvSearching || !advSearchTerm.trim()}
-                      className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none ${
+                      className={`px-4 py-2.5 border border-transparent rounded-md shadow-sm text-sm font-medium transition-colors duration-200 ${buttonPrimary} ${
                         isAdvSearching || !advSearchTerm.trim() ? 'opacity-50 cursor-not-allowed' : ''
                       }`}
                     >
@@ -878,7 +948,7 @@ function LendBookPage() {
                         <span className="flex items-center">
                           <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
                           Searching...
                         </span>
@@ -887,74 +957,73 @@ function LendBookPage() {
                       )}
                     </button>
                   </div>
-
-                  {/* Advanced Search Results */}
+            
                   {advSearchResults.length > 0 && (
                     <div className="mt-6">
-                      <h3 className="text-md font-medium mb-2">
+                      <h3 className={`text-md font-medium mb-3 ${headingStyle}`}>
                         Search Results ({advSearchResults.length})
                       </h3>
                       
-                      <div className="bg-gray-50 border rounded-lg overflow-hidden">
+                      <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-lg overflow-hidden shadow`}>
                         <div className="overflow-x-auto">
                           <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                            <thead className={theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}>
                               <tr>
                                 {advSearchType === 'book' ? (
                                   <>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
                                       Title
                                     </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
                                       Author
                                     </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
                                       Code
                                     </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
                                       Available
                                     </th>
                                   </>
                                 ) : (
                                   <>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
                                       Name
                                     </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
                                       Email/Roll No
                                     </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
                                       Department
                                     </th>
                                   </>
                                 )}
-                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th scope="col" className={`px-6 py-3 text-right text-xs font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
                                   Action
                                 </th>
                               </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody className={`${theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'}`}>
                               {advSearchResults.map((result) => (
-                                <tr key={result._id}>
+                                <tr key={result._id} className={theme === 'dark' ? 'hover:bg-gray-750' : 'hover:bg-gray-50'}>
                                   {advSearchType === 'book' ? (
                                     <>
                                       <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900">{result.title}</div>
+                                        <div className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>{result.title}</div>
                                         {result.ISBN && (
-                                          <div className="text-xs text-gray-500">ISBN: {result.ISBN}</div>
+                                          <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>ISBN: {result.ISBN}</div>
                                         )}
                                       </td>
-                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>
                                         {result.author}
                                       </td>
-                                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
                                         {result.uniqueCode || 'N/A'}
                                       </td>
                                       <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                           result.availableCopies > 0
-                                            ? 'bg-green-100 text-green-800'
-                                            : 'bg-red-100 text-red-800'
+                                            ? theme === 'dark' ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-800'
+                                            : theme === 'dark' ? 'bg-red-900/30 text-red-400' : 'bg-red-100 text-red-800'
                                         }`}>
                                           {result.availableCopies} / {result.copies}
                                         </span>
@@ -963,15 +1032,15 @@ function LendBookPage() {
                                   ) : (
                                     <>
                                       <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900">{result.displayName}</div>
+                                        <div className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>{result.displayName}</div>
                                       </td>
                                       <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-500">{result.email}</div>
+                                        <div className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>{result.email}</div>
                                         {result.rollNo && (
-                                          <div className="text-xs text-gray-500">Roll No: {result.rollNo}</div>
+                                          <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Roll No: {result.rollNo}</div>
                                         )}
                                       </td>
-                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>
                                         {result.department || 'N/A'}
                                       </td>
                                     </>
@@ -979,18 +1048,12 @@ function LendBookPage() {
                                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <button
                                       onClick={() => {
-                                        if (advSearchType === 'book') {
-                                          if (result.availableCopies <= 0) {
-                                            setError('This book is not available for lending');
-                                            return;
-                                          }
-                                          handleAdvSelectBook(result);
-                                        } else {
-                                          handleAdvSelectStudent(result);
-                                        }
+                                        advSearchType === 'book' 
+                                          ? handleAdvSelectBook(result) 
+                                          : handleAdvSelectStudent(result);
                                       }}
                                       disabled={advSearchType === 'book' && result.availableCopies <= 0}
-                                      className={`text-indigo-600 hover:text-indigo-900 ${
+                                      className={`${theme === 'dark' ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-900'} ${
                                         advSearchType === 'book' && result.availableCopies <= 0
                                           ? 'opacity-50 cursor-not-allowed'
                                           : ''
@@ -1009,30 +1072,52 @@ function LendBookPage() {
                   )}
                 </div>
               ) : (
-                // Step 3: Review and Submit
                 <div>
-                  <h2 className="text-lg font-medium mb-4">Step 3: Review and Confirm</h2>
+                  <h2 className={`text-lg font-serif font-medium mb-4 ${headingStyle} border-b pb-2 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+                    Step 3: Review and Confirm
+                  </h2>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div className="bg-gray-50 p-4 rounded-lg border">
-                      <h3 className="text-md font-medium mb-2">Book Details</h3>
+                    <div className={`${theme === 'dark' ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-gray-200'} p-5 rounded-lg border`}>
+                      <h3 className={`text-md font-medium mb-3 ${headingStyle}`}>Book Details</h3>
                       <div className="space-y-2">
-                        <p><span className="font-medium">Title:</span> {advSelectedBook.title}</p>
-                        <p><span className="font-medium">Author:</span> {advSelectedBook.author}</p>
-                        <p><span className="font-medium">Genre:</span> {advSelectedBook.genre}</p>
-                        <p><span className="font-medium">Available Copies:</span> {advSelectedBook.availableCopies} / {advSelectedBook.copies}</p>
-                        {advSelectedBook.ISBN && <p><span className="font-medium">ISBN:</span> {advSelectedBook.ISBN}</p>}
-                        {advSelectedBook.uniqueCode && <p><span className="font-medium">Unique Code:</span> {advSelectedBook.uniqueCode}</p>}
+                        <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
+                          <span className="font-medium">Title:</span> {advSelectedBook.title}
+                        </p>
+                        <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
+                          <span className="font-medium">Author:</span> {advSelectedBook.author}
+                        </p>
+                        <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
+                          <span className="font-medium">Genre:</span> {advSelectedBook.genre}
+                        </p>
+                        <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
+                          <span className="font-medium">Available Copies:</span>{' '}
+                          <span className={advSelectedBook.availableCopies > 0 
+                            ? (theme === 'dark' ? 'text-green-400' : 'text-green-600') 
+                            : (theme === 'dark' ? 'text-red-400' : 'text-red-600')}
+                          >
+                            {advSelectedBook.availableCopies} / {advSelectedBook.copies}
+                          </span>
+                        </p>
+                        {advSelectedBook.ISBN && (
+                          <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
+                            <span className="font-medium">ISBN:</span> {advSelectedBook.ISBN}
+                          </p>
+                        )}
+                        {advSelectedBook.uniqueCode && (
+                          <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
+                            <span className="font-medium">Unique Code:</span> {advSelectedBook.uniqueCode}
+                          </p>
+                        )}
                       </div>
                       
-                      {/* Book Copy Selection for Advanced */}
-                      <div className="mt-4 border-t pt-3">
-                        <h4 className="text-sm font-medium mb-2">Select Book Copy</h4>
+                      <div className={`mt-4 border-t pt-4 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+                        <h4 className={`text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Select Book Copy</h4>
                         {isAdvLoadingCopies ? (
-                          <div className="flex items-center text-sm text-gray-600">
+                          <div className={`flex items-center text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                             <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
                             Loading copies...
                           </div>
@@ -1040,7 +1125,7 @@ function LendBookPage() {
                           <select
                             value={advSelectedBookCopy ? advSelectedBookCopy._id : ''}
                             onChange={handleAdvBookCopyChange}
-                            className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            className={`block w-full py-2 px-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 ${inputStyle}`}
                           >
                             {advBookCopies.map(copy => (
                               <option key={copy._id} value={copy._id}>
@@ -1049,24 +1134,47 @@ function LendBookPage() {
                             ))}
                           </select>
                         ) : (
-                          <p className="text-sm text-red-600">No available copies found.</p>
+                          <p className={`text-sm ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>No available copies found.</p>
                         )}
                       </div>
                     </div>
                     
-                    <div className="bg-gray-50 p-4 rounded-lg border">
-                      <h3 className="text-md font-medium mb-2">Student Details</h3>
+                    <div className={`${theme === 'dark' ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-gray-200'} p-5 rounded-lg border`}>
+                      <h3 className={`text-md font-medium mb-3 ${headingStyle}`}>Student Details</h3>
                       <div className="space-y-2">
-                        <p><span className="font-medium">Name:</span> {advSelectedStudent.displayName}</p>
-                        <p><span className="font-medium">Email:</span> {advSelectedStudent.email}</p>
-                        {advSelectedStudent.rollNo && <p><span className="font-medium">Roll No:</span> {advSelectedStudent.rollNo}</p>}
-                        <p><span className="font-medium">Department:</span> {advSelectedStudent.department || 'N/A'}</p>
+                        <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
+                          <span className="font-medium">Name:</span> {advSelectedStudent.displayName}
+                        </p>
+                        <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
+                          <span className="font-medium">Email:</span> {advSelectedStudent.email}
+                        </p>
+                        {advSelectedStudent.rollNo && (
+                          <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
+                            <span className="font-medium">Roll No:</span> {advSelectedStudent.rollNo}
+                          </p>
+                        )}
+                        <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
+                          <span className="font-medium">Department:</span> {advSelectedStudent.department || 'N/A'}
+                        </p>
+                      </div>
+                      
+                      <div className={`mt-4 border-t pt-4 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+                        <div className="flex items-start">
+                          <div className={`mt-1 ${theme === 'dark' ? 'text-amber-400' : 'text-amber-600'}`}>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                          </div>
+                          <p className={`ml-2 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                            Always verify student identity before proceeding with the lending process.
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="mb-6">
-                    <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 mb-1">
+                  <div className="mb-8">
+                    <label htmlFor="dueDate" className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                       Due Date
                     </label>
                     <input
@@ -1076,19 +1184,19 @@ function LendBookPage() {
                       value={dueDate}
                       onChange={(e) => setDueDate(e.target.value)}
                       min={new Date().toISOString().split('T')[0]}
-                      className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                      className={`px-3 py-2.5 border rounded-md shadow-sm focus:outline-none focus:ring-2 ${inputStyle}`}
                       required
                     />
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className={`mt-2 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                       Default due date is set to 14 days from today.
                     </p>
                   </div>
                   
-                  <div className="flex justify-end space-x-3">
+                  <div className="flex justify-end space-x-3 mt-8">
                     <button
                       type="button"
                       onClick={handleReset}
-                      className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
+                      className={`px-4 py-2.5 border rounded-md shadow-sm text-sm font-medium transition-colors duration-200 ${buttonSecondary}`}
                     >
                       Cancel
                     </button>
@@ -1096,7 +1204,7 @@ function LendBookPage() {
                       type="button"
                       onClick={handleAdvancedLendBook}
                       disabled={loading || !advSelectedBookCopy}
-                      className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none ${
+                      className={`px-6 py-2.5 border border-transparent rounded-md shadow-sm text-sm font-medium transition-colors duration-200 ${theme === 'dark' ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'} ${
                         (loading || !advSelectedBookCopy) ? 'opacity-50 cursor-not-allowed' : ''
                       }`}
                     >
@@ -1104,7 +1212,7 @@ function LendBookPage() {
                         <span className="flex items-center">
                           <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 7.962 7.962 7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
                           Processing...
                         </span>

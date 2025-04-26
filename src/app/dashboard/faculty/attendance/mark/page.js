@@ -2,12 +2,14 @@
 
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 function MarkAttendancePage() {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
   const classId = searchParams.get('classId');
@@ -339,15 +341,23 @@ function MarkAttendancePage() {
 
   if (!classId) {
     return (
-      <div className="p-4 max-w-6xl mx-auto">
-        <div className="bg-red-50 rounded-lg shadow-sm p-6 flex flex-col items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className={`p-4 max-w-6xl mx-auto ${theme === 'dark' ? 'bg-[var(--background)] text-white' : ''}`}>
+        <div className={`rounded-lg shadow-sm p-6 flex flex-col items-center ${
+          theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-red-50'
+        }`}>
+          <svg xmlns="http://www.w3.org/2000/svg" className={`h-12 w-12 mb-4 ${
+            theme === 'dark' ? 'text-red-400' : 'text-red-500'
+          }`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
           <p className="text-lg font-medium text-center mb-6">No class selected</p>
           <Link 
             href="/dashboard/faculty/attendance" 
-            className="transition-all duration-300 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full shadow hover:shadow-lg flex items-center space-x-2"
+            className={`transition-all duration-300 px-5 py-2 rounded-full shadow hover:shadow-lg flex items-center space-x-2 ${
+              theme === 'dark' 
+                ? 'bg-blue-700 hover:bg-blue-600 text-white' 
+                : 'bg-blue-600 hover:bg-blue-700 text-white'
+            }`}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -360,25 +370,35 @@ function MarkAttendancePage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4">
+    <div className={`max-w-6xl mx-auto p-4 ${theme === 'dark' ? 'bg-[var(--background)] text-white' : ''}`}>
       {/* Header with class info */}
-      <div className="bg-white rounded-xl shadow-sm p-4 mb-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className={`rounded-xl shadow-sm p-4 mb-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${
+        theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white'
+      }`}>
         <div>
           <div className="flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 mr-2 ${
+              theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'
+            }`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
             <h1 className="text-xl font-bold">Mark Attendance</h1>
           </div>
           {classInfo && (
-            <p className="text-gray-600 mt-1 text-sm">
+            <p className={`mt-1 text-sm ${
+              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+            }`}>
               {classInfo.name} · {classInfo.department} · {classInfo.currentSemester} sem 
             </p>
           )}
         </div>
         <Link
           href="/dashboard/faculty/attendance"
-          className="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 px-5 rounded-full text-sm transition-all duration-200 flex items-center space-x-1 touch-manipulation"
+          className={`py-2.5 px-5 rounded-full text-sm transition-all duration-200 flex items-center space-x-1 ${
+            theme === 'dark' 
+              ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
+              : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+          }`}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -392,25 +412,31 @@ function MarkAttendancePage() {
         <div 
           className={`mb-5 rounded-lg p-4 border-l-4 shadow-sm transition-all duration-300 ${
             message.type === 'error' 
-              ? 'bg-red-50 border-red-500 text-red-700' 
+              ? theme === 'dark' 
+                ? 'bg-red-900/30 border-red-500 text-red-200' 
+                : 'bg-red-50 border-red-500 text-red-700'
               : message.type === 'success'
-                ? 'bg-green-50 border-green-500 text-green-700'
-                : 'bg-blue-50 border-blue-500 text-blue-700'
+                ? theme === 'dark'
+                  ? 'bg-green-900/30 border-green-500 text-green-200'
+                  : 'bg-green-50 border-green-500 text-green-700'
+                : theme === 'dark'
+                  ? 'bg-blue-900/30 border-blue-500 text-blue-200'
+                  : 'bg-blue-50 border-blue-500 text-blue-700'
           }`} 
           role="alert"
         >
           <div className="flex">
             <div className="flex-shrink-0">
               {message.type === 'error' ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${theme === 'dark' ? 'text-red-400' : 'text-red-400'}`} viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
               ) : message.type === 'success' ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${theme === 'dark' ? 'text-green-400' : 'text-green-400'}`} viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-400'}`} viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                 </svg>
               )}
@@ -423,19 +449,31 @@ function MarkAttendancePage() {
       )}
 
       {/* Attendance Form Card */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
+      <div className={`rounded-xl shadow-sm overflow-hidden mb-6 ${
+        theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white'
+      }`}>
         {/* Filters section - expandable on mobile */}
-        <div className="p-4 bg-gray-50 border-b">
+        <div className={`p-4 border-b ${
+          theme === 'dark' ? 'bg-gray-800/80 border-gray-700' : 'bg-gray-50 border-gray-200'
+        }`}>
           <div className="flex justify-between items-center md:hidden mb-3">
-            <h3 className="font-medium flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+            <h3 className={`font-medium flex items-center ${
+              theme === 'dark' ? 'text-gray-200' : 'text-gray-700'
+            }`}>
+              <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 mr-1.5 ${
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+              }`} viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" />
               </svg>
               Attendance Options
             </h3>
             <button 
               onClick={() => setShowFilters(!showFilters)}
-              className="bg-indigo-50 text-indigo-700 px-3.5 py-1.5 rounded-full text-sm flex items-center transition-colors hover:bg-indigo-100 touch-manipulation"
+              className={`px-3.5 py-1.5 rounded-full text-sm flex items-center transition-colors ${
+                theme === 'dark' 
+                  ? 'bg-indigo-900/50 text-indigo-300 hover:bg-indigo-800/60' 
+                  : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+              }`}
             >
               {showFilters ? (
                 <>
@@ -460,7 +498,9 @@ function MarkAttendancePage() {
               <div>
                 <label 
                   htmlFor="subject-select" 
-                  className="block text-sm font-medium text-gray-700 mb-1.5"
+                  className={`block text-sm font-medium mb-1.5 ${
+                    theme === 'dark' ? 'text-gray-200' : 'text-gray-700'
+                  }`}
                 >
                   Subject
                 </label>
@@ -468,7 +508,11 @@ function MarkAttendancePage() {
                   id="subject-select"
                   value={selectedSubject}
                   onChange={(e) => setSelectedSubject(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                  className={`w-full px-3.5 py-2.5 border rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-sm ${
+                    theme === 'dark' 
+                      ? 'bg-gray-700 border-gray-600 text-gray-200' 
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
                   required
                 >
                   {subjects.length === 0 ? (
@@ -486,7 +530,9 @@ function MarkAttendancePage() {
               <div>
                 <label 
                   htmlFor="attendance-date" 
-                  className="block text-sm font-medium text-gray-700 mb-1.5"
+                  className={`block text-sm font-medium mb-1.5 ${
+                    theme === 'dark' ? 'text-gray-200' : 'text-gray-700'
+                  }`}
                 >
                   Date
                 </label>
@@ -495,7 +541,11 @@ function MarkAttendancePage() {
                   type="date"
                   value={attendanceDate}
                   onChange={(e) => setAttendanceDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                  className={`w-full px-3.5 py-2.5 border rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-sm ${
+                    theme === 'dark' 
+                      ? 'bg-gray-700 border-gray-600 text-gray-200' 
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
                   required
                   max={new Date().toISOString().split('T')[0]}
                 />
@@ -506,20 +556,30 @@ function MarkAttendancePage() {
 
         {loading ? (
           <div className="flex justify-center items-center h-40">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500"></div>
+            <div className={`animate-spin rounded-full h-10 w-10 border-b-2 ${
+              theme === 'dark' ? 'border-indigo-400' : 'border-indigo-500'
+            }`}></div>
           </div>
         ) : (
           <div className="p-4">
             {!selectedSubject ? (
-              <div className="text-center py-12 text-gray-500">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className={`text-center py-12 ${
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+              }`}>
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-12 w-12 mx-auto mb-3 ${
+                  theme === 'dark' ? 'text-gray-600' : 'text-gray-400'
+                }`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <p>Please select a subject to mark attendance.</p>
               </div>
             ) : students.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className={`text-center py-12 ${
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+              }`}>
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-12 w-12 mx-auto mb-3 ${
+                  theme === 'dark' ? 'text-gray-600' : 'text-gray-400'
+                }`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
                 <p>No students enrolled in this class.</p>
@@ -528,7 +588,11 @@ function MarkAttendancePage() {
               <>
                 {/* Lock status warning */}
                 {(isLocked || recordExists) && (
-                  <div className="mb-4 flex items-center p-4 bg-amber-50 rounded-lg border border-amber-200 text-amber-800">
+                  <div className={`mb-4 flex items-center p-4 rounded-lg border ${
+                    theme === 'dark' 
+                      ? 'bg-amber-900/30 border-amber-700/50 text-amber-200' 
+                      : 'bg-amber-50 border-amber-200 text-amber-800'
+                  }`}>
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                     </svg>
@@ -539,18 +603,28 @@ function MarkAttendancePage() {
                 {/* Quick selection buttons */}
                 {(!isLocked && !recordExists) && (
                   <div className="mb-4 flex flex-wrap gap-2 justify-end">
-                    <span className="text-sm text-gray-500 self-center mr-2">Quick select:</span>
+                    <span className={`text-sm self-center mr-2 ${
+                      theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                    }`}>Quick select:</span>
                     <button
                       type="button"
                       onClick={() => markAllStudents('present')}
-                      className="bg-green-100 hover:bg-green-200 text-green-800 text-xs rounded-full px-3 py-1 transition-colors duration-200"
+                      className={`text-xs rounded-full px-3 py-1 transition-colors duration-200 ${
+                        theme === 'dark' 
+                          ? 'bg-green-900/40 hover:bg-green-900/60 text-green-300' 
+                          : 'bg-green-100 hover:bg-green-200 text-green-800'
+                      }`}
                     >
                       All present
                     </button>
                     <button
                       type="button"
                       onClick={() => markAllStudents('absent')}
-                      className="bg-red-100 hover:bg-red-200 text-red-800 text-xs rounded-full px-3 py-1 transition-colors duration-200"
+                      className={`text-xs rounded-full px-3 py-1 transition-colors duration-200 ${
+                        theme === 'dark' 
+                          ? 'bg-red-900/40 hover:bg-red-900/60 text-red-300' 
+                          : 'bg-red-100 hover:bg-red-200 text-red-800'
+                      }`}
                     >
                       All absent
                     </button>
@@ -562,9 +636,15 @@ function MarkAttendancePage() {
                   {students.map((student) => {
                     const status = getStudentStatus(student.student._id);
                     const statusColors = {
-                      present: 'bg-green-50 text-green-800 ring-green-600/20',
-                      absent: 'bg-red-50 text-red-800 ring-red-600/20',
-                      late: 'bg-yellow-50 text-yellow-800 ring-yellow-600/20'
+                      present: theme === 'dark' 
+                        ? 'bg-green-900/30 text-green-200 ring-green-600/30' 
+                        : 'bg-green-50 text-green-800 ring-green-600/20',
+                      absent: theme === 'dark' 
+                        ? 'bg-red-900/30 text-red-200 ring-red-600/30' 
+                        : 'bg-red-50 text-red-800 ring-red-600/20',
+                      late: theme === 'dark' 
+                        ? 'bg-yellow-900/30 text-yellow-200 ring-yellow-600/30' 
+                        : 'bg-yellow-50 text-yellow-800 ring-yellow-600/20'
                     };
                     
                     return (
@@ -590,8 +670,12 @@ function MarkAttendancePage() {
                             disabled={isLocked || recordExists}
                             className={`flex-1 py-2.5 px-2 text-sm font-medium rounded-md ${
                               status === 'present'
-                                ? 'bg-green-600 text-white'
-                                : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                                ? theme === 'dark' 
+                                  ? 'bg-green-700 text-white' 
+                                  : 'bg-green-600 text-white'
+                                : theme === 'dark'
+                                  ? 'bg-gray-700 text-gray-200 border border-gray-600 hover:bg-gray-600'
+                                  : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
                             } ${(isLocked || recordExists) ? 'opacity-60 cursor-not-allowed' : ''} transition-all duration-200 touch-manipulation`}
                             aria-label="Mark present"
                           >
@@ -603,8 +687,12 @@ function MarkAttendancePage() {
                             disabled={isLocked || recordExists}
                             className={`flex-1 py-2.5 px-2 text-sm font-medium rounded-md ${
                               status === 'absent'
-                                ? 'bg-red-600 text-white'
-                                : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                                ? theme === 'dark' 
+                                  ? 'bg-red-700 text-white' 
+                                  : 'bg-red-600 text-white'
+                                : theme === 'dark'
+                                  ? 'bg-gray-700 text-gray-200 border border-gray-600 hover:bg-gray-600'
+                                  : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
                             } ${(isLocked || recordExists) ? 'opacity-60 cursor-not-allowed' : ''} transition-all duration-200 touch-manipulation`}
                             aria-label="Mark absent"
                           >
@@ -616,8 +704,12 @@ function MarkAttendancePage() {
                             disabled={isLocked || recordExists}
                             className={`flex-1 py-2.5 px-2 text-sm font-medium rounded-md ${
                               status === 'late'
-                                ? 'bg-yellow-500 text-white'
-                                : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                                ? theme === 'dark' 
+                                  ? 'bg-yellow-600 text-white' 
+                                  : 'bg-yellow-500 text-white'
+                                : theme === 'dark'
+                                  ? 'bg-gray-700 text-gray-200 border border-gray-600 hover:bg-gray-600'
+                                  : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
                             } ${(isLocked || recordExists) ? 'opacity-60 cursor-not-allowed' : ''} transition-all duration-200 touch-manipulation`}
                             aria-label="Mark late"
                           >
@@ -630,63 +722,115 @@ function MarkAttendancePage() {
                 </div>
                 
                 {/* Attendance Summary */}
-                <div className="mt-6 bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Attendance Summary</h3>
+                <div className={`mt-6 rounded-lg p-4 ${
+                  theme === 'dark' ? 'bg-gray-800/70' : 'bg-gray-50'
+                }`}>
+                  <h3 className={`text-sm font-medium mb-3 ${
+                    theme === 'dark' ? 'text-gray-200' : 'text-gray-700'
+                  }`}>Attendance Summary</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    <div className="bg-white rounded-md shadow-sm p-4 flex items-center border border-gray-100">
-                      <div className="rounded-full bg-gray-100 p-2.5 mr-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                    <div className={`rounded-md shadow-sm p-4 flex items-center ${
+                      theme === 'dark' 
+                        ? 'bg-gray-700 border border-gray-600' 
+                        : 'bg-white border border-gray-100'
+                    }`}>
+                      <div className={`rounded-full p-2.5 mr-3 ${
+                        theme === 'dark' ? 'bg-gray-600' : 'bg-gray-100'
+                      }`}>
+                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${
+                          theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                        }`} viewBox="0 0 20 20" fill="currentColor">
                           <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                         </svg>
                       </div>
                       <div>
-                        <div className="text-xs font-medium text-gray-500">Total Students</div>
-                        <div className="text-xl font-semibold">{students.length}</div>
+                        <div className={`text-xs font-medium ${
+                          theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                        }`}>Total Students</div>
+                        <div className={`text-xl font-semibold ${
+                          theme === 'dark' ? 'text-white' : 'text-gray-800'
+                        }`}>{students.length}</div>
                       </div>
                     </div>
-                    <div className="bg-white rounded-md shadow-sm p-4 flex items-center border-l-4 border-green-500 border-t border-r border-b">
-                      <div className="rounded-full bg-green-100 p-2.5 mr-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" viewBox="0 0 20 20" fill="currentColor">
+                    <div className={`rounded-md shadow-sm p-4 flex items-center border-l-4 border-green-500 border-t border-r border-b ${
+                      theme === 'dark' ? 'bg-gray-700 border-t-gray-600 border-r-gray-600 border-b-gray-600' : 'bg-white'
+                    }`}>
+                      <div className={`rounded-full p-2.5 mr-3 ${
+                        theme === 'dark' ? 'bg-green-900/40' : 'bg-green-100'
+                      }`}>
+                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${
+                          theme === 'dark' ? 'text-green-400' : 'text-green-600'
+                        }`} viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                         </svg>
                       </div>
                       <div>
-                        <div className="text-xs font-medium text-gray-500">Present</div>
+                        <div className={`text-xs font-medium ${
+                          theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                        }`}>Present</div>
                         <div className="flex items-baseline">
-                          <span className="text-xl font-semibold">{getAttendanceStatusCount('present')}</span>
-                          <span className="text-xs text-gray-500 ml-1">
+                          <span className={`text-xl font-semibold ${
+                            theme === 'dark' ? 'text-white' : 'text-gray-800'
+                          }`}>{getAttendanceStatusCount('present')}</span>
+                          <span className={`text-xs ml-1 ${
+                            theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                          }`}>
                             ({Math.round((getAttendanceStatusCount('present') / students.length) * 100) || 0}%)
                           </span>
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white rounded-md shadow-sm p-4 flex items-center border-l-4 border-red-500 border-t border-r border-b">
-                      <div className="rounded-full bg-red-100 p-2.5 mr-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
+                    <div className={`rounded-md shadow-sm p-4 flex items-center border-l-4 border-red-500 border-t border-r border-b ${
+                      theme === 'dark' ? 'bg-gray-700 border-t-gray-600 border-r-gray-600 border-b-gray-600' : 'bg-white'
+                    }`}>
+                      <div className={`rounded-full p-2.5 mr-3 ${
+                        theme === 'dark' ? 'bg-red-900/40' : 'bg-red-100'
+                      }`}>
+                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${
+                          theme === 'dark' ? 'text-red-400' : 'text-red-600'
+                        }`} viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                         </svg>
                       </div>
                       <div>
-                        <div className="text-xs font-medium text-gray-500">Absent</div>
+                        <div className={`text-xs font-medium ${
+                          theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                        }`}>Absent</div>
                         <div className="flex items-baseline">
-                          <span className="text-xl font-semibold">{getAttendanceStatusCount('absent')}</span>
-                          <span className="text-xs text-gray-500 ml-1">
+                          <span className={`text-xl font-semibold ${
+                            theme === 'dark' ? 'text-white' : 'text-gray-800'
+                          }`}>{getAttendanceStatusCount('absent')}</span>
+                          <span className={`text-xs ml-1 ${
+                            theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                          }`}>
                             ({Math.round((getAttendanceStatusCount('absent') / students.length) * 100) || 0}%)
                           </span>
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white rounded-md shadow-sm p-4 flex items-center border-l-4 border-yellow-500 border-t border-r border-b">
-                      <div className="rounded-full bg-yellow-100 p-2.5 mr-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-600" viewBox="0 0 20 20" fill="currentColor">
+                    <div className={`rounded-md shadow-sm p-4 flex items-center border-l-4 border-yellow-500 border-t border-r border-b ${
+                      theme === 'dark' ? 'bg-gray-700 border-t-gray-600 border-r-gray-600 border-b-gray-600' : 'bg-white'
+                    }`}>
+                      <div className={`rounded-full p-2.5 mr-3 ${
+                        theme === 'dark' ? 'bg-yellow-900/40' : 'bg-yellow-100'
+                      }`}>
+                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${
+                          theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'
+                        }`} viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                         </svg>
                       </div>
                       <div>
-                        <div className="text-xs font-medium text-gray-500">Late</div>
+                        <div className={`text-xs font-medium ${
+                          theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                        }`}>Late</div>
                         <div className="flex items-baseline">
-                          <span className="text-xl font-semibold">{getAttendanceStatusCount('late')}</span>
-                          <span className="text-xs text-gray-500 ml-1">
+                          <span className={`text-xl font-semibold ${
+                            theme === 'dark' ? 'text-white' : 'text-gray-800'
+                          }`}>{getAttendanceStatusCount('late')}</span>
+                          <span className={`text-xs ml-1 ${
+                            theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                          }`}>
                             ({Math.round((getAttendanceStatusCount('late') / students.length) * 100) || 0}%)
                           </span>
                         </div>
@@ -701,7 +845,11 @@ function MarkAttendancePage() {
                     type="submit"
                     onClick={handleSubmit}
                     disabled={isSubmitting || students.length === 0 || !selectedSubject || isLocked || recordExists}
-                    className={`inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+                    className={`inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white ${
+                      theme === 'dark'
+                        ? 'bg-indigo-600 hover:bg-indigo-500 focus:ring-offset-gray-900'
+                        : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-offset-white'
+                    } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
                       (isSubmitting || students.length === 0 || !selectedSubject || isLocked || recordExists) ? 'opacity-50 cursor-not-allowed' : ''
                     } transition-all duration-200`}
                   >
@@ -732,12 +880,20 @@ function MarkAttendancePage() {
       </div>
 
       {/* Previous Attendance Records Section */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="px-4 py-3 bg-gray-50 border-b flex justify-between items-center">
-          <h2 className="text-lg font-medium text-gray-800">Previous Records</h2>
+      <div className={`rounded-xl shadow-sm overflow-hidden ${
+        theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white'
+      }`}>
+        <div className={`px-4 py-3 border-b flex justify-between items-center ${
+          theme === 'dark' ? 'bg-gray-800/80 border-gray-700' : 'bg-gray-50 border-gray-200'
+        }`}>
+          <h2 className={`text-lg font-medium ${
+            theme === 'dark' ? 'text-white' : 'text-gray-800'
+          }`}>Previous Records</h2>
           <button
             onClick={() => setShowPreviousAttendance(!showPreviousAttendance)}
-            className="text-indigo-600 hover:text-indigo-800 text-sm flex items-center focus:outline-none transition-colors duration-200"
+            className={`text-sm flex items-center focus:outline-none transition-colors duration-200 ${
+              theme === 'dark' ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-800'
+            }`}
           >
             {showPreviousAttendance ? 'Hide' : 'Show'}
             <svg
@@ -759,39 +915,47 @@ function MarkAttendancePage() {
           <div className="p-4">
             {loadingPrevious ? (
               <div className="flex justify-center items-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${
+                  theme === 'dark' ? 'border-indigo-400' : 'border-indigo-500'
+                }`}></div>
               </div>
             ) : previousAttendance.length > 0 ? (
               <>
                 {/* Status Legend */}
-                <div className="text-xs mb-4 flex flex-wrap gap-4 pb-3 border-b">
+                <div className={`text-xs mb-4 flex flex-wrap gap-4 pb-3 border-b ${
+                  theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
+                }`}>
                   <span className="inline-flex items-center">
                     <span className="h-3 w-3 rounded-full bg-green-500 mr-1"></span>
-                    Present
+                    <span className={theme === 'dark' ? 'text-gray-300' : ''}>Present</span>
                   </span>
                   <span className="inline-flex items-center">
                     <span className="h-3 w-3 rounded-full bg-red-500 mr-1"></span>
-                    Absent
+                    <span className={theme === 'dark' ? 'text-gray-300' : ''}>Absent</span>
                   </span>
                   <span className="inline-flex items-center">
                     <span className="h-3 w-3 rounded-full bg-yellow-500 mr-1"></span>
-                    Late
+                    <span className={theme === 'dark' ? 'text-gray-300' : ''}>Late</span>
                   </span>
                 </div>
               
                 {/* Responsive attendance table */}
                 <div className="overflow-x-auto -mx-4 sm:-mx-0">
                   <div className="inline-block min-w-full align-middle">
-                    <table className="min-w-full text-sm">
+                    <table className={`min-w-full text-sm ${theme === 'dark' ? 'text-gray-300' : ''}`}>
                       <thead>
-                        <tr className="bg-gray-50">
-                          <th className="px-3 py-3 border-b border-gray-200 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <tr className={theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50'}>
+                          <th className={`px-3 py-3 border-b text-left text-xs font-medium uppercase tracking-wider ${
+                            theme === 'dark' ? 'border-gray-600 text-gray-400' : 'border-gray-200 text-gray-500'
+                          }`}>
                             Student
                           </th>
                           {previousAttendance.map((record) => (
                             <th
                               key={record._id}
-                              className="px-1 py-3 border-b border-gray-200 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                              className={`px-1 py-3 border-b text-center text-xs font-medium uppercase tracking-wider ${
+                                theme === 'dark' ? 'border-gray-600 text-gray-400' : 'border-gray-200 text-gray-500'
+                              }`}
                             >
                               <div className="whitespace-nowrap">
                                 {new Date(record.date).toLocaleDateString(undefined, {
@@ -803,12 +967,16 @@ function MarkAttendancePage() {
                           ))}
                         </tr>
                       </thead>
-                      <tbody className="bg-white">
+                      <tbody className={theme === 'dark' ? 'bg-gray-800' : 'bg-white'}>
                         {students.map((student) => (
-                          <tr key={student._id} className="hover:bg-gray-50">
-                            <td className="px-3 py-2 border-b border-gray-200 text-gray-900 max-w-[200px] truncate">
+                          <tr key={student._id} className={theme === 'dark' ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'}>
+                            <td className={`px-3 py-2 border-b max-w-[200px] truncate ${
+                              theme === 'dark' ? 'border-gray-700 text-gray-200' : 'border-gray-200 text-gray-900'
+                            }`}>
                               {student.student.displayName || 'Unnamed'}
-                              <span className="text-gray-400 text-xs ml-1">{student.student.rollNo}</span>
+                              <span className={`text-xs ml-1 ${
+                                theme === 'dark' ? 'text-gray-400' : 'text-gray-400'
+                              }`}>{student.student.rollNo}</span>
                             </td>
                             {previousAttendance.map((record) => {
                               const studentRecord = record.attendanceRecords.find(
@@ -819,7 +987,9 @@ function MarkAttendancePage() {
                               return (
                                 <td
                                   key={record._id + student._id}
-                                  className="px-1 py-2 border-b border-gray-200 text-center"
+                                  className={`px-1 py-2 border-b text-center ${
+                                    theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
+                                  }`}
                                 >
                                   <span
                                     className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-white text-xs ${
@@ -839,13 +1009,19 @@ function MarkAttendancePage() {
                   </div>
                 </div>
                 
-                <div className="mt-4 text-sm text-gray-500 text-center">
+                <div className={`mt-4 text-sm text-center ${
+                  theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                }`}>
                   Showing last {previousAttendance.length} attendance records for {selectedSubject}
                 </div>
               </>
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className={`text-center py-8 ${
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+              }`}>
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-12 w-12 mx-auto mb-3 ${
+                  theme === 'dark' ? 'text-gray-600' : 'text-gray-300'
+                }`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <p>No previous attendance records found for this subject.</p>

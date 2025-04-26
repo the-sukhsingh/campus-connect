@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function SafetyAlertForm({ onSuccess, collegeId = null }) {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const [loading, setLoading] = useState({
     safetyAlert: false,
     collegeAlert: false,
@@ -143,10 +145,10 @@ export default function SafetyAlertForm({ onSuccess, collegeId = null }) {
   };
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
+    <div className={`container mx-auto px-4 py-8 ${theme === 'dark' ? 'text-gray-200 bg-[var(--background)]' : 'text-gray-800'}`}>
       {/* Tabs for switching between safety alert and emergency notifications */}
       <div className="mb-6">
-        <div className="flex border-b border-gray-200">
+        <div className="flex">
           <button
             type="button"
             onClick={() => setActiveTab('safety')}
@@ -231,7 +233,7 @@ export default function SafetyAlertForm({ onSuccess, collegeId = null }) {
               required
               value={formData.severity}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm p-2"
+              className={`mt-1 block w-full rounded-md border border-gray-300 shadow-sm p-2 ${theme === 'dark' ? 'bg-gray-800 text-gray-200' : 'bg-white text-gray-800'}`}
             >
               <option value="low">Low - General Caution</option>
               <option value="medium">Medium - Immediate Attention Needed</option>

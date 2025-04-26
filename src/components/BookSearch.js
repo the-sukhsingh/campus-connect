@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import debounce from 'lodash/debounce';
+import { useTheme } from '../context/ThemeContext';
 
 const BookSearch = ({
   onSearch,
@@ -10,6 +11,7 @@ const BookSearch = ({
   defaultGenre = '',
   showGenreFilter = false
 }) => {
+  const { theme } = useTheme();
   const [searchQuery, setSearchQuery] = useState(defaultQuery);
   const [searchField, setSearchField] = useState(defaultField);
   const [selectedGenre, setSelectedGenre] = useState(defaultGenre);
@@ -41,11 +43,19 @@ const BookSearch = ({
     setSelectedGenre('');
   };
 
+  const themeStyles = {
+    container: `${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} p-4 rounded-lg shadow-md transition-colors duration-200`,
+    label: `block text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'} mb-1`,
+    input: `w-full px-3 py-2 border ${theme === 'dark' ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-800'} rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`,
+    select: `w-full px-3 py-2 border ${theme === 'dark' ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-800'} rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`,
+    resetButton: `px-4 py-2 rounded-md ${theme === 'dark' ? 'text-gray-200 bg-gray-700 hover:bg-gray-600' : 'text-gray-700 bg-gray-200 hover:bg-gray-300'} focus:outline-none transition-colors duration-200`
+  };
+
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md">
+    <div className={themeStyles.container}>
       <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1">
-          <label htmlFor="searchQuery" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="searchQuery" className={themeStyles.label}>
             Search
           </label>
           <input
@@ -54,19 +64,19 @@ const BookSearch = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Type to search books..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            className={themeStyles.input}
           />
         </div>
         
         <div className="md:w-40">
-          <label htmlFor="searchField" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="searchField" className={themeStyles.label}>
             Search By
           </label>
           <select
             id="searchField"
             value={searchField}
             onChange={(e) => setSearchField(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            className={themeStyles.select}
           >
             <option value="all">All Fields</option>
             <option value="title">Title</option>
@@ -76,14 +86,14 @@ const BookSearch = ({
         
         {showGenreFilter && (
           <div className="md:w-48">
-            <label htmlFor="genre" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="genre" className={themeStyles.label}>
               Genre
             </label>
             <select
               id="genre"
               value={selectedGenre}
               onChange={(e) => setSelectedGenre(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className={themeStyles.select}
             >
               <option value="">All Genres</option>
               {genres.map((genre) => (
@@ -100,7 +110,7 @@ const BookSearch = ({
             type="button"
             onClick={handleReset}
             disabled={isLoading || (!searchQuery && !selectedGenre && searchField === 'all')}
-            className={`px-4 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none ${
+            className={`${themeStyles.resetButton} ${
               isLoading || (!searchQuery && !selectedGenre && searchField === 'all')
                 ? 'opacity-50 cursor-not-allowed'
                 : ''

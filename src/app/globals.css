@@ -1,5 +1,43 @@
 @import "tailwindcss";
 
+
+:root {
+  --background: #ffffff;
+  --foreground: #111827;
+  --card: #ffffff;
+  --card-foreground: #111827;
+  --navbar-bg: #f9fafb;
+  --navbar-text: #111827;
+  --navbar-hover: #f3f4f6;
+  --navbar-active: #e5e7eb;
+  --dropdown-bg: #ffffff;
+  --dropdown-border: #e5e7eb;
+}
+
+.dark {
+  --background: #111827;
+  --foreground: #f9fafb;
+  --card: #1f2937;
+  --card-foreground: #f9fafb;
+  --navbar-bg: #1e1e2d;
+  --navbar-text: #f9fafb;
+  --navbar-hover: #2a2a3c;
+  --navbar-active: #323248;
+  --dropdown-bg: #1e1e2d;
+  --dropdown-border: #323248;
+}
+
+
+body{
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+  line-height: 1.5;
+}
+
+
 @layer utilities {
   .animation-delay-2000 {
     animation-delay: 2s;
@@ -73,7 +111,6 @@
     }
 }
 
-
 /* Dark mode detection - for future enhancements */
 @media (prefers-color-scheme: dark) {
     .dark-mode-aware {
@@ -81,3 +118,4 @@
         color: #e0e0e0;
     }
 }
+

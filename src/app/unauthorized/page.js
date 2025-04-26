@@ -2,13 +2,15 @@
 
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function UnauthorizedPage() {
   const { user, userRole } = useAuth();
+  const { theme } = useTheme();
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
-      <div className="bg-white shadow-xl rounded-lg p-8 max-w-lg">
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center bg-[var(--background)] text-[var(--foreground)]">
+      <div className="bg-[var(--card)] shadow-xl rounded-lg p-8 max-w-lg text-[var(--card-foreground)]">
         <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
         <div className="mb-6">
           <svg 
@@ -26,12 +28,12 @@ export default function UnauthorizedPage() {
             />
           </svg>
           
-          <p className="text-gray-700 mb-4">
+          <p className="text-[var(--muted-foreground)] mb-4">
             You don&apos;t have permission to access this page.
           </p>
           
           {user && (
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-[var(--muted-foreground)] mb-4">
               Logged in as: {user.email} 
               {userRole && <span className="ml-1">({userRole})</span>}
             </p>
@@ -39,12 +41,12 @@ export default function UnauthorizedPage() {
         </div>
         
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 justify-center">
-          <Link href="/" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+          <Link href="/" className="bg-[var(--primary)] text-[var(--primary-foreground)] px-4 py-2 rounded hover:bg-[var(--primary-hover)] transition-colors">
             Go to Home
           </Link>
           
           {!user && (
-            <Link href="/auth" className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors">
+            <Link href="/auth" className="bg-[var(--secondary)] text-[var(--secondary-foreground)] px-4 py-2 rounded hover:bg-[var(--secondary-hover)] transition-colors">
               Log In
             </Link>
           )}

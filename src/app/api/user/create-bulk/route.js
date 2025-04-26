@@ -98,13 +98,20 @@ export async function POST(request) {
                 // Check if user already exists in Firebase
                 try {
                     const existingFirebaseUser = await firebaseAuth.getUserByEmail(student.email);
-                    if (existingFirebaseUser) {
+
+                    // If user exists, check if they are already in the system
+                    // If they are, we skip creating them again
+
+                    const existingUserInDb = await User.findOne({ firebaseUid: existingFirebaseUser.uid });
+
+                    if (existingFirebaseUser && existingUserInDb) {
                         errors.push({ email: student.email, error: 'User already exists in the system' });
                         continue;
                     }
                 } catch (error) {
                     // User doesn't exist, which is what we want
                     if (error.code !== 'auth/user-not-found') {
+                        console.error(`Error checking Firebase user ${student.email}:`, error);
                         errors.push({ email: student.email, error: `Firebase error: ${error.message}` });
                         continue;
                     }

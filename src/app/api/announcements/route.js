@@ -103,14 +103,16 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { firebaseUid, action, announcement, announcementId, classId } = body;
-    
+    const { firebaseUid, action, announcement, announcementId } = body;
+      console.log("Firebase, action, announcement, announcementId, classId", firebaseUid, action, announcement, announcementId, classId);
     if (!firebaseUid) {
       return NextResponse.json(
         { error: 'User ID is required' }, 
         { status: 400 }
       );
     }
+
+    const { classId } = announcement || '';
     
     // Get the MongoDB user document for the Firebase user
     const dbUser = await getUserByFirebaseUid(firebaseUid);

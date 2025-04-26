@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { requestNotificationPermission } from '@/config/firebase';
 
 export default function NotificationSubscription() {
   const { user, dbUser } = useAuth();
+  const { theme } = useTheme();
   const [subscriptionStatus, setSubscriptionStatus] = useState('idle'); // 'idle', 'subscribing', 'subscribed', 'error'
   const [subscribed, setSubscribed] = useState(false);
   const [error, setError] = useState(null);
@@ -84,23 +86,28 @@ export default function NotificationSubscription() {
   if (!canSubscribe) return null;
 
   return (
-    <div className="group bg-gradient-to-br from-white to-amber-50 rounded-xl p-6 shadow-sm border border-amber-100 relative overflow-hidden transform hover:-translate-y-1 transition-all duration-2000 h-full max-h-80">
-      <div className="absolute -right-8 -top-8 w-24 h-24 bg-amber-500 opacity-10 rounded-full group-hover:scale-[12] transition-transform duration-600"></div>
+    <div className={`group ${theme === 'dark' 
+          ? 'bg-gradient-to-br from-slate-800 to-slate-900 border-slate-700' 
+          : 'bg-gradient-to-br from-white to-amber-50 border-amber-100'} 
+        rounded-xl p-6 shadow-sm border relative overflow-hidden transform hover:-translate-y-1 transition-all duration-2000 h-full max-h-72`}>
+      <div className={`absolute -right-8 -top-8 w-24 h-24 ${
+          theme === 'dark' ? 'bg-amber-600' : 'bg-amber-500'
+        } opacity-20 rounded-full group-hover:scale-[12] transition-transform duration-500`}></div>
       
       <div className="flex items-center mb-5 relative z-10">
-        <div className="bg-amber-100 p-3 rounded-lg">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className={`${theme === 'dark' ? 'bg-amber-900' : 'bg-amber-100'} p-3 rounded-lg`}>
+          <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${theme === 'dark' ? 'text-amber-400' : 'text-amber-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
         </div>
         <div className="ml-4">
-          <h3 className="text-lg font-semibold text-amber-900">Notifications</h3>
-          <p className="text-sm text-amber-500">Stay updated with alerts</p>
+          <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-amber-300' : 'text-amber-900'}`}>Notifications</h3>
+          <p className={`text-sm ${theme === 'dark' ? 'text-amber-400/70' : 'text-amber-500'}`}>Stay updated with alerts</p>
         </div>
       </div>
       
-      <div className="bg-white bg-opacity-60 p-4 rounded-lg mb-6 relative z-10">
-        <p className="text-amber-700">
+      <div className={`${theme === 'dark' ? 'bg-slate-800/50' : 'bg-white bg-opacity-60'} p-4 rounded-lg mb-6 relative z-10`}>
+        <p className={`${theme === 'dark' ? 'text-amber-300/90' : 'text-amber-700'}`}>
           {subscribed 
             ? "You're actively receiving notifications. You can unsubscribe anytime." 
             : "Subscribe to receive important announcements and updates."}
@@ -112,8 +119,12 @@ export default function NotificationSubscription() {
         disabled={subscriptionStatus === 'subscribing'}
         className={`relative z-10 w-full text-center py-2.5 px-4 rounded-lg text-sm font-medium text-white shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] ${
           subscribed 
-            ? 'bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700' 
-            : 'bg-gradient-to-r from-amber-600 to-orange-500 hover:from-amber-700 hover:to-orange-600'
+            ? theme === 'dark'
+              ? 'bg-gradient-to-r from-red-800 to-rose-800 hover:from-red-900 hover:to-rose-900'
+              : 'bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700'
+            : theme === 'dark'
+              ? 'bg-gradient-to-r from-amber-700 to-orange-600 hover:from-amber-800 hover:to-orange-700'
+              : 'bg-gradient-to-r from-amber-600 to-orange-500 hover:from-amber-700 hover:to-orange-600'
         } ${subscriptionStatus === 'subscribing' ? 'opacity-70 cursor-not-allowed' : ''}`}
       >
         {subscriptionStatus === 'subscribing' ? (
@@ -130,14 +141,14 @@ export default function NotificationSubscription() {
       </button>
       
       {error && (
-        <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-lg relative z-10">
-          <p className="text-sm text-red-600 font-medium">{error}</p>
+        <div className={`mt-3 p-2 ${theme === 'dark' ? 'bg-red-900/30 border-red-800' : 'bg-red-50 border-red-200'} border rounded-lg relative z-10`}>
+          <p className={`text-sm ${theme === 'dark' ? 'text-red-300' : 'text-red-600'} font-medium`}>{error}</p>
         </div>
       )}
       
       {subscriptionStatus === 'subscribed' && (
-        <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded-lg animate-fadeIn relative z-10">
-          <p className="text-sm text-green-600 font-medium">
+        <div className={`mt-3 p-2 ${theme === 'dark' ? 'bg-green-900/30 border-green-800' : 'bg-green-50 border-green-200'} border rounded-lg animate-fadeIn relative z-10`}>
+          <p className={`text-sm ${theme === 'dark' ? 'text-green-300' : 'text-green-600'} font-medium`}>
             {subscribed 
               ? "Successfully subscribed to notifications!" 
               : "Unsubscribed from notifications."}

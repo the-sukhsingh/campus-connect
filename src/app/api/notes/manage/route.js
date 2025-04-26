@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { getUserByFirebaseUid } from '@/services/userService';
 import { createNote, updateNote, deleteNote } from '@/services/noteService';
 import dbConnect from '@/lib/dbConnect';
+import Class from '@/models/Class';
 
 // POST - Create a new note
 export async function POST(request) {
@@ -39,14 +40,20 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Unauthorized: Only faculty can upload notes' }, { status: 403 });
     }
     
-    // Parse the form data
     const formData = await request.formData();
+    
+    const classObj = await Class.findById(formData.get('classId'));
+    if (!classObj) {
+      return NextResponse.json({ error: 'Class not found' }, { status: 404 });
+    }
+
+    // Parse the form data
     const title = formData.get('title');
     const description = formData.get('description');
     const subject = formData.get('subject');
     const department = formData.get('department');
-    const semester = formData.get('semester');
     const classId = formData.get('classId'); // Get class ID if provided
+    const semester = classObj.currentSemester;
     const tags = formData.get('tags') ? JSON.parse(formData.get('tags')) : [];
     const file = formData.get('file');
     

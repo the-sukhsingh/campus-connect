@@ -1,14 +1,15 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 function ManageStudentsPage() {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
   const classId = searchParams.get('classId');
@@ -416,6 +417,7 @@ function ManageStudentsPage() {
       }
 
       const data = await response.json();
+      console.log('Bulk student creation response:', data);
 
       // Refresh the student list with newly created students
       if (data.users) {
@@ -459,12 +461,12 @@ function ManageStudentsPage() {
   };
 
   return (
-    <div className="p-6">
+    <div className={`p-6 ${theme === 'dark' ? 'text-gray-200' : ''}`}>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Manage Class Students</h1>
+          <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>Manage Class Students</h1>
           {classData && (
-            <p className="text-gray-600 mt-1">
+            <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mt-1`}>
               {classData.name} ({classData.currentSemester}) - {classData.department}
             </p>
           )}
@@ -473,7 +475,7 @@ function ManageStudentsPage() {
           <div className="flex gap-2">
             <button
               onClick={() => window.open(`/api/export/students?uid=${user?.uid}&classId=${classId}&format=csv`, '_blank')}
-              className="inline-flex items-center gap-1 bg-green-50 hover:bg-green-100 text-green-600 py-2 px-3 rounded border border-green-200 transition-colors"
+              className={`inline-flex items-center gap-1 ${theme === 'dark' ? 'bg-green-900/20 hover:bg-green-900/30 text-green-400 border-green-800' : 'bg-green-50 hover:bg-green-100 text-green-600 border-green-200'} py-2 px-3 rounded border transition-colors`}
               title="Download as CSV"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -483,7 +485,7 @@ function ManageStudentsPage() {
             </button>
             <button
               onClick={() => window.open(`/api/export/students?uid=${user?.uid}&classId=${classId}&format=pdf`, '_blank')}
-              className="inline-flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2 px-3 rounded border border-blue-200 transition-colors"
+              className={`inline-flex items-center gap-1 ${theme === 'dark' ? 'bg-blue-900/20 hover:bg-blue-900/30 text-blue-400 border-blue-800' : 'bg-blue-50 hover:bg-blue-100 text-blue-600 border-blue-200'} py-2 px-3 rounded border transition-colors`}
               title="Download as PDF"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -494,7 +496,7 @@ function ManageStudentsPage() {
           </div>
           <Link
             href="/dashboard/faculty/classes"
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded transition-colors"
+            className={`${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'} py-2 px-4 rounded transition-colors`}
           >
             Back to Classes
           </Link>
@@ -505,8 +507,8 @@ function ManageStudentsPage() {
         <div 
           className={`p-4 mb-6 border-l-4 ${
             message.type === 'error' 
-              ? 'bg-red-100 border-red-500 text-red-700' 
-              : 'bg-green-100 border-green-500 text-green-700'
+              ? theme === 'dark' ? 'bg-red-900/30 border-red-700 text-red-300' : 'bg-red-100 border-red-500 text-red-700'
+              : theme === 'dark' ? 'bg-green-900/30 border-green-700 text-green-300' : 'bg-green-100 border-green-500 text-green-700'
           }`} 
           role="alert"
         >
@@ -516,27 +518,26 @@ function ManageStudentsPage() {
 
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+          <div className={`animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 ${theme === 'dark' ? 'border-indigo-400' : 'border-indigo-500'}`}></div>
         </div>
       ) : (
         <div className="space-y-6">
-
-
           {/* Enrolled Students Section */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 flex flex-col md:flex-row justify-between md:items-center space-y-4 md:space-y-0">
+          <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'} rounded-lg shadow-md overflow-hidden border`}>
+            <div className={`px-6 py-4 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} border-b flex flex-col md:flex-row justify-between md:items-center space-y-4 md:space-y-0`}>
               <div>
-                <h2 className="text-lg font-semibold">Enrolled Students</h2>
-                <p className="text-sm text-gray-500">
+                <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>Enrolled Students</h2>
+                <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                   {approvedStudents.length} student{approvedStudents.length !== 1 ? 's' : ''} enrolled
                 </p>
               </div>
               
               <div className="flex flex-col sm:flex-row gap-2">
-               
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none"
+                  className={`inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md ${
+                    theme === 'dark' ? 'text-white bg-green-600 hover:bg-green-700' : 'text-white bg-green-600 hover:bg-green-700'
+                  } focus:outline-none transition-colors duration-200`}
                 >
                   Add Students
                 </button>
@@ -545,20 +546,22 @@ function ManageStudentsPage() {
 
             
             {/* Search Bar */}
-            <div className="px-6 py-4 border-b border-gray-200">
+            <div className={`px-6 py-4 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} border-b`}>
               <div className="flex items-center">
                 <div className="max-w-lg w-full lg:max-w-xs relative">
                   <label htmlFor="search" className="sr-only">Search</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <svg className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
                       </svg>
                     </div>
                     <input
                       id="search"
                       name="search"
-                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      className={`block w-full pl-10 pr-3 py-2 border ${
+                        theme === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400 focus:border-indigo-500' : 'border-gray-300 text-gray-900 placeholder-gray-500 focus:border-indigo-500'
+                      } rounded-md leading-5 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 sm:text-sm transition-colors duration-200`}
                       placeholder="Search students"
                       type="search"
                       value={searchTerm}
@@ -570,79 +573,78 @@ function ManageStudentsPage() {
             </div>
             
             {approvedStudents.length === 0 ? (
-              <div className="px-6 py-4 text-center text-gray-500">
+              <div className={`px-6 py-4 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                 No students enrolled in this class yet
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
                     <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
                         <div className="flex items-center">
-                          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <label className={`block text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
                             Student
                           </label>
                         </div>
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
                         Roll No
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
                         Student ID
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
                         Joined On
                       </th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className={`px-6 py-3 text-right text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className={`${theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'}`}>
                     {filteredStudents.length === 0 ? (
                       <tr>
-                        <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
+                        <td colSpan={5} className={`px-6 py-4 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                           No students match your search
                         </td>
                       </tr>
                     ) : (
                       filteredStudents.map((student) => (
-                        <tr key={student._id}>
+                        <tr key={student._id} className={`${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} transition-colors duration-150`}>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
-                             
                               <div>
-                                <div className="text-sm font-medium text-gray-900">
+                                <div className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
                                   {student.student?.displayName || 'Unnamed Student'}
                                 </div>
-                                <div className="text-sm text-gray-500">
+                                <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                                   {student.student?.email}
                                 </div>
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{student.student?.rollNo || 'N/A'}</div>
+                          <td className={`px-6 py-4 whitespace-nowrap ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'} text-sm`}>
+                            {student.student?.rollNo || 'N/A'}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{student.student?.studentId || 'N/A'}</div>
+                          <td className={`px-6 py-4 whitespace-nowrap ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'} text-sm`}>
+                            {student.student?.studentId || 'N/A'}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                             {student.joinRequestDate ? formatDate(student.joinRequestDate) : 'Unknown'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <button
                               onClick={() => handleEditStudent(student.student)}
                               disabled={isSubmitting}
-                              className={`text-blue-600 hover:text-blue-900 mr-4 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              className={`${theme === 'dark' ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-900'} mr-4 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''} transition-colors duration-150`}
                             >
                               Edit
                             </button>
                             <button
                               onClick={() => handleRemoveStudent(student.student._id)}
                               disabled={isSubmitting}
-                              className={`text-red-600 hover:text-red-900 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              className={`${theme === 'dark' ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-900'} ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''} transition-colors duration-150`}
                             >
                               Remove
                             </button>
@@ -661,12 +663,12 @@ function ManageStudentsPage() {
       {/* Add Students Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-5xl border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="text-lg font-medium text-gray-900">Add Students in Bulk</h3>
+          <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-xl w-full max-w-5xl border`}>
+            <div className={`px-6 py-4 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} border-b flex justify-between items-center`}>
+              <h3 className={`text-lg font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>Add Students in Bulk</h3>
               <button 
                 type="button" 
-                className="text-gray-400 hover:text-gray-500"
+                className={`${theme === 'dark' ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-500'}`}
                 onClick={() => setShowAddModal(false)}
               >
                 <span className="sr-only">Close</span>
@@ -677,32 +679,36 @@ function ManageStudentsPage() {
             </div>
             
             <div className="px-6 pt-4 pb-2">
-              <p className="text-sm text-gray-600 mb-4">
+              <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
                 Add multiple students at once. All students will be enrolled in this class automatically.
               </p>
             </div>
             
             <form onSubmit={handleCreateBulkStudents} className="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
               <div className="overflow-x-auto mb-8">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className={`min-w-full divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                  <thead className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roll No*</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name*</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email*</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
+                      <th className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Roll No*</th>
+                      <th className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Name*</th>
+                      <th className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Email*</th>
+                      <th className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Student ID</th>
                       <th className="px-2 py-3 w-10"></th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className={`${theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'}`}>
                     {bulkStudents.map((student, index) => (
-                      <tr key={index} className="hover:bg-gray-50 transition-colors">
+                      <tr key={index} className={`${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} transition-colors`}>
                         <td className="px-2 py-2">
                           <input
                             type="text"
                             value={student.rollNo}
                             onChange={(e) => handleBulkStudentChange(index, 'rollNo', e.target.value)}
-                            className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                            className={`w-full px-2 py-1 border rounded-md text-sm focus:outline-none focus:ring-1 ${
+                              theme === 'dark' 
+                                ? 'bg-gray-700 border-gray-600 text-gray-100 focus:ring-indigo-400 focus:border-indigo-400' 
+                                : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                            } transition-colors duration-200`}
                             placeholder="Roll No"
                           />
                         </td>
@@ -711,9 +717,15 @@ function ManageStudentsPage() {
                             type="text"
                             value={student.displayName}
                             onChange={(e) => handleBulkStudentChange(index, 'displayName', e.target.value)}
-                            className={`w-full px-2 py-1 border rounded-md text-sm ${
-                              bulkValidationErrors[index]?.displayName ? 'border-red-500' : 'border-gray-300'
-                            } focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500`}
+                            className={`w-full px-2 py-1 border rounded-md text-sm focus:outline-none focus:ring-1 ${
+                              bulkValidationErrors[index]?.displayName 
+                                ? theme === 'dark' ? 'border-red-500' : 'border-red-500'
+                                : theme === 'dark' ? 'border-gray-600' : 'border-gray-300'
+                            } ${
+                              theme === 'dark' 
+                                ? 'bg-gray-700 text-gray-100 focus:ring-indigo-400 focus:border-indigo-400' 
+                                : 'focus:ring-indigo-500 focus:border-indigo-500'
+                            } transition-colors duration-200`}
                             placeholder="Full Name"
                           />
                           {bulkValidationErrors[index]?.displayName && (
@@ -725,9 +737,15 @@ function ManageStudentsPage() {
                             type="email"
                             value={student.email}
                             onChange={(e) => handleBulkStudentChange(index, 'email', e.target.value)}
-                            className={`w-full px-2 py-1 border rounded-md text-sm ${
-                              bulkValidationErrors[index]?.email ? 'border-red-500' : 'border-gray-300'
-                            } focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500`}
+                            className={`w-full px-2 py-1 border rounded-md text-sm focus:outline-none focus:ring-1 ${
+                              bulkValidationErrors[index]?.email 
+                                ? theme === 'dark' ? 'border-red-500' : 'border-red-500'
+                                : theme === 'dark' ? 'border-gray-600' : 'border-gray-300'
+                            } ${
+                              theme === 'dark' 
+                                ? 'bg-gray-700 text-gray-100 focus:ring-indigo-400 focus:border-indigo-400' 
+                                : 'focus:ring-indigo-500 focus:border-indigo-500'
+                            } transition-colors duration-200`}
                             placeholder="Email"
                           />
                           {bulkValidationErrors[index]?.email && (
@@ -740,7 +758,11 @@ function ManageStudentsPage() {
                             type="text"
                             value={student.studentId}
                             onChange={(e) => handleBulkStudentChange(index, 'studentId', e.target.value)}
-                            className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                            className={`w-full px-2 py-1 border rounded-md text-sm focus:outline-none focus:ring-1 ${
+                              theme === 'dark' 
+                                ? 'bg-gray-700 border-gray-600 text-gray-100 focus:ring-indigo-400 focus:border-indigo-400' 
+                                : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                            } transition-colors duration-200`}
                             placeholder="Optional"
                           />
                         </td>
@@ -749,7 +771,7 @@ function ManageStudentsPage() {
                             <button 
                               type="button"
                               onClick={() => removeBulkStudentRow(index)}
-                              className="text-red-600 hover:text-red-900"
+                              className={`${theme === 'dark' ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-900'}`}
                               title="Remove row"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -768,7 +790,9 @@ function ManageStudentsPage() {
                 <button
                   type="button"
                   onClick={addBulkStudentRow}
-                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none transition-colors"
+                  className={`inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md ${
+                    theme === 'dark' ? 'text-indigo-300 bg-indigo-900/30 hover:bg-indigo-900/50' : 'text-indigo-700 bg-indigo-100 hover:bg-indigo-200'
+                  } focus:outline-none transition-colors`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
@@ -778,9 +802,11 @@ function ManageStudentsPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className={`inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${
-                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
+                  className={`inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${
+                    theme === 'dark' ? 'bg-green-600 hover:bg-green-700' : 'bg-green-600 hover:bg-green-700'
+                  } focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                    theme === 'dark' ? 'focus:ring-green-500' : 'focus:ring-green-500'
+                  } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''} transition-colors duration-200`}
                 >
                   {isSubmitting ? (
                     <>
@@ -804,12 +830,12 @@ function ManageStudentsPage() {
       {/* Edit Student Modal */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="text-lg font-medium text-gray-900">Edit Student Information</h3>
+          <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'} rounded-lg shadow-xl p-6 w-full max-w-3xl border`}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className={`text-xl font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>Edit Student Information</h3>
               <button 
                 type="button" 
-                className="text-gray-400 hover:text-gray-500"
+                className={`${theme === 'dark' ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'} focus:outline-none`}
                 onClick={() => setShowEditModal(false)}
               >
                 <span className="sr-only">Close</span>
@@ -819,9 +845,9 @@ function ManageStudentsPage() {
               </button>
             </div>
             
-            <form onSubmit={handleUpdateStudent} className="px-6 py-4 space-y-4">
+            <form onSubmit={handleUpdateStudent} className="space-y-4">
               <div>
-                <label htmlFor="displayName" className="block text-sm font-medium text-gray-700">Name*</label>
+                <label htmlFor="displayName" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Name*</label>
                 <input
                   type="text"
                   id="displayName"
@@ -829,8 +855,8 @@ function ManageStudentsPage() {
                   value={editFormData.displayName}
                   onChange={handleEditInputChange}
                   className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
-                    editValidationErrors.displayName ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                    editValidationErrors.displayName ? 'border-red-500' : theme === 'dark' ? 'border-gray-600' : 'border-gray-300'
+                  } ${theme === 'dark' ? 'bg-gray-700 text-gray-100' : ''}`}
                 />
                 {editValidationErrors.displayName && (
                   <p className="mt-1 text-xs text-red-500">{editValidationErrors.displayName}</p>
@@ -838,7 +864,7 @@ function ManageStudentsPage() {
               </div>
               
               <div>
-                <label htmlFor="rollNo" className="block text-sm font-medium text-gray-700">Roll No*</label>
+                <label htmlFor="rollNo" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Roll No*</label>
                 <input
                   type="text"
                   id="rollNo"
@@ -846,8 +872,8 @@ function ManageStudentsPage() {
                   value={editFormData.rollNo}
                   onChange={handleEditInputChange}
                   className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
-                    editValidationErrors.rollNo ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                    editValidationErrors.rollNo ? 'border-red-500' : theme === 'dark' ? 'border-gray-600' : 'border-gray-300'
+                  } ${theme === 'dark' ? 'bg-gray-700 text-gray-100' : ''}`}
                 />
                 {editValidationErrors.rollNo && (
                   <p className="mt-1 text-xs text-red-500">{editValidationErrors.rollNo}</p>
@@ -855,7 +881,7 @@ function ManageStudentsPage() {
               </div>
               
               <div>
-                <label htmlFor="studentId" className="block text-sm font-medium text-gray-700">Student ID</label>
+                <label htmlFor="studentId" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Student ID</label>
                 <input
                   type="text"
                   id="studentId"
@@ -863,8 +889,8 @@ function ManageStudentsPage() {
                   value={editFormData.studentId}
                   onChange={handleEditInputChange}
                   className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
-                    editValidationErrors.studentId ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                    editValidationErrors.studentId ? 'border-red-500' : theme === 'dark' ? 'border-gray-600' : 'border-gray-300'
+                  } ${theme === 'dark' ? 'bg-gray-700 text-gray-100' : ''}`}
                 />
                 {editValidationErrors.studentId && (
                   <p className="mt-1 text-xs text-red-500">{editValidationErrors.studentId}</p>
@@ -875,7 +901,9 @@ function ManageStudentsPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className={`inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                  className={`inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${
+                    theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'
+                  } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
                     isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >

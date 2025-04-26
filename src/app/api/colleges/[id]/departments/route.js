@@ -30,7 +30,7 @@ export async function GET(request, { params }) {
     await dbConnect();
     
     // Get college ID from params
-    const { id } = params;
+    const { id } = await params;
     
     // Find college
     const college = await College.findById(id);

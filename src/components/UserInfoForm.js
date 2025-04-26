@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { updateUserProfile } from '@/services/userServiceClient';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function UserInfoForm({ onComplete }) {
   const { user, dbUser, userRole, handleUserDataMemoized } = useAuth();
+  const { theme } = useTheme();
   const router = useRouter();
   
   const [displayName, setDisplayName] = useState(dbUser?.displayName || user?.displayName || '');
@@ -125,9 +127,9 @@ export default function UserInfoForm({ onComplete }) {
   };
 
   return (
-    <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
-      <h1 className="text-2xl font-bold mb-6 text-center">Complete Your Profile</h1>
-      <p className="text-gray-600 mb-6 text-center">
+    <div className="bg-[var(--card)] text-[var(--card-foreground)] p-8 rounded-lg shadow-md max-w-md w-full">
+      <h1 className="text-2xl font-bold mb-6 text-center text-[var(--foreground)]">Complete Your Profile</h1>
+      <p className="text-[var(--muted-foreground)] mb-6 text-center">
         Please provide the following information to complete your profile.
       </p>
 
@@ -139,7 +141,7 @@ export default function UserInfoForm({ onComplete }) {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="displayName" className="block text-sm font-medium text-[var(--foreground)] mb-1">
             Full Name <span className="text-red-500">*</span>
           </label>
           <input
@@ -148,13 +150,15 @@ export default function UserInfoForm({ onComplete }) {
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             required
-            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="appearance-none block w-full px-3 py-2 border border-[var(--border)] rounded-md shadow-sm 
+            bg-[var(--input)] text-[var(--input-foreground)]
+            placeholder-[var(--muted-foreground)] focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] sm:text-sm"
             placeholder="Enter your full name"
           />
         </div>
 
         <div>
-          <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="role" className="block text-sm font-medium text-[var(--foreground)] mb-1">
             Role <span className="text-red-500">*</span>
           </label>
           <select
@@ -162,7 +166,9 @@ export default function UserInfoForm({ onComplete }) {
             value={role}
             onChange={(e) => setRole(e.target.value)}
             required
-            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="appearance-none block w-full px-3 py-2 border border-[var(--border)] rounded-md shadow-sm 
+            bg-[var(--input)] text-[var(--input-foreground)]
+            placeholder-[var(--muted-foreground)] focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] sm:text-sm"
           >
             <option value="student">Student</option>
             <option value="faculty">Faculty</option>
@@ -175,7 +181,7 @@ export default function UserInfoForm({ onComplete }) {
         {role === 'student' && (
           <>
             <div>
-              <label htmlFor="rollNo" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="rollNo" className="block text-sm font-medium text-[var(--foreground)] mb-1">
                 Roll Number <span className="text-red-500">*</span>
               </label>
               <input
@@ -184,13 +190,15 @@ export default function UserInfoForm({ onComplete }) {
                 value={rollNo}
                 onChange={(e) => setRollNo(e.target.value)}
                 required
-                className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="appearance-none block w-full px-3 py-2 border border-[var(--border)] rounded-md shadow-sm 
+                bg-[var(--input)] text-[var(--input-foreground)]
+                placeholder-[var(--muted-foreground)] focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] sm:text-sm"
                 placeholder="Enter your roll number"
               />
             </div>
 
             <div>
-              <label htmlFor="studentId" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="studentId" className="block text-sm font-medium text-[var(--foreground)] mb-1">
                 Student ID <span className="text-red-500">*</span>
               </label>
               <input
@@ -199,13 +207,15 @@ export default function UserInfoForm({ onComplete }) {
                 value={studentId}
                 onChange={(e) => setStudentId(e.target.value)}
                 required
-                className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="appearance-none block w-full px-3 py-2 border border-[var(--border)] rounded-md shadow-sm 
+                bg-[var(--input)] text-[var(--input-foreground)]
+                placeholder-[var(--muted-foreground)] focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] sm:text-sm"
                 placeholder="Enter your student ID"
               />
             </div>
 
             <div>
-              <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="department" className="block text-sm font-medium text-[var(--foreground)] mb-1">
                 Department
               </label>
               <input
@@ -213,14 +223,16 @@ export default function UserInfoForm({ onComplete }) {
                 type="text"
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
-                className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="appearance-none block w-full px-3 py-2 border border-[var(--border)] rounded-md shadow-sm 
+                bg-[var(--input)] text-[var(--input-foreground)]
+                placeholder-[var(--muted-foreground)] focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] sm:text-sm"
                 placeholder="Enter your department"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="semester" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="semester" className="block text-sm font-medium text-[var(--foreground)] mb-1">
                   Semester
                 </label>
                 <input
@@ -228,13 +240,15 @@ export default function UserInfoForm({ onComplete }) {
                   type="text"
                   value={semester}
                   onChange={(e) => setSemester(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="appearance-none block w-full px-3 py-2 border border-[var(--border)] rounded-md shadow-sm 
+                  bg-[var(--input)] text-[var(--input-foreground)]
+                  placeholder-[var(--muted-foreground)] focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] sm:text-sm"
                   placeholder="Current semester"
                 />
               </div>
 
               <div>
-                <label htmlFor="batch" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="batch" className="block text-sm font-medium text-[var(--foreground)] mb-1">
                   Batch
                 </label>
                 <input
@@ -242,7 +256,9 @@ export default function UserInfoForm({ onComplete }) {
                   type="text"
                   value={batch}
                   onChange={(e) => setBatch(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="appearance-none block w-full px-3 py-2 border border-[var(--border)] rounded-md shadow-sm 
+                  bg-[var(--input)] text-[var(--input-foreground)]
+                  placeholder-[var(--muted-foreground)] focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] sm:text-sm"
                   placeholder="Your batch"
                 />
               </div>
@@ -254,7 +270,9 @@ export default function UserInfoForm({ onComplete }) {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium 
+            text-[var(--primary-foreground)] bg-[var(--primary)] hover:bg-[var(--primary-hover)] 
+            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)] disabled:bg-[var(--muted)]"
           >
             {isSubmitting ? 'Saving...' : 'Save Profile Information'}
           </button>

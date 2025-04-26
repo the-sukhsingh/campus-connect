@@ -8,12 +8,17 @@ export async function createSafetyAlert(data) {
     await dbConnect();
     const alert = await SafetyAlert.create(data);
 
+    // Create a unique ID for this notification to help with deduplication
+    const notificationId = `safety_alert_created_${alert._id.toString()}_${Date.now()}`;
+
     // Send immediate notification to everyone in the college
     const notificationData = {
       type: 'safety_alert',
       alertId: alert._id.toString(),
       severity: alert.severity,
       url: `/dashboard/safety-alerts`,
+      id: notificationId, // Add unique ID to help client deduplicate
+      timestamp: new Date().toISOString() // Add timestamp to help with ordering
     };
 
     // Send push notification to all users in the college
@@ -90,10 +95,15 @@ export async function updateSafetyAlert(alertId, updates) {
 
     // If alert was resolved, send notification
     if (updates.status === 'resolved') {
+      // Create a unique ID for this notification to help with deduplication
+      const notificationId = `safety_alert_resolved_${alertId}_${Date.now()}`;
+      
       const notificationData = {
         type: 'safety_alert_resolved',
         alertId: alert._id.toString(),
         url: `/dashboard/safety-alerts/`,
+        id: notificationId, // Add unique ID to help client deduplicate
+        timestamp: new Date().toISOString() // Add timestamp to help with ordering
       };
 
       await sendNotificationToCollege(

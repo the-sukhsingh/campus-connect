@@ -1,39 +1,106 @@
 'use client'
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { onMessageListener, initializeMessaging } from '@/config/firebase';
 import { useAuth } from '@/context/AuthContext';
 import { useNotifications } from '@/context/NotificationContext';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function NotificationDisplay() {
   const { user } = useAuth();
   const { addNotification } = useNotifications();
+  const { theme } = useTheme();
   const [tempNotifications, setTempNotifications] = useState([]);
+  // Use useRef instead of state to track IDs across renders
+  const processedNotificationIds = useRef(new Set());
+  // Store timestamps for each processed notification to allow reprocessing after a certain time
+  const notificationTimestamps = useRef(new Map());
 
   useEffect(() => {
     if (!user) return;
+
+    console.log('Initializing notification display for user:', user.uid);
+
+    // Helper function to check if a notification has been recently processed
+    const isRecentlyProcessed = (id) => {
+      if (!processedNotificationIds.current.has(id)) {
+        return false;
+      }
+      
+      // If the notification was processed more than 5 seconds ago, allow reprocessing
+      const timestamp = notificationTimestamps.current.get(id);
+      if (timestamp && Date.now() - timestamp > 5000) {
+        processedNotificationIds.current.delete(id);
+        notificationTimestamps.current.delete(id);
+        return false;
+      }
+      
+      return true;
+    };
+
+    // Process a notification, ensuring deduplication
+    const processNotification = (notification) => {
+      if (!notification || !notification.id) {
+        console.warn('Invalid notification object:', notification);
+        return false;
+      }
+      
+      // Skip recently processed notifications
+      if (isRecentlyProcessed(notification.id)) {
+        console.log(`Skipping recently processed notification: ${notification.id}`);
+        return false;
+      }
+      
+      // Mark as processed with current timestamp
+      processedNotificationIds.current.add(notification.id);
+      notificationTimestamps.current.set(notification.id, Date.now());
+      
+      // Add to notification context for permanent storage
+      addNotification(notification);
+      
+      // Add to temporary display
+      setTempNotifications(prev => [
+        {
+          id: notification.id,
+          title: notification.title,
+          body: notification.body,
+          url: notification.url || '/',
+          timestamp: notification.timestamp || new Date().toISOString(),
+          read: false
+        },
+        ...prev
+      ]);
+      
+      // Auto-remove temporary notification after 10 seconds
+      setTimeout(() => {
+        setTempNotifications(prev => prev.filter(n => n.id !== notification.id));
+      }, 10000);
+      
+      return true;
+    };
 
     // Check for stored notifications from background messages
     const checkForStoredNotifications = () => {
       try {
         // First try to get notifications from localStorage
         const storedNotifications = localStorage.getItem('backgroundNotifications');
+        console.log('Checking localStorage for stored notifications:', storedNotifications);
         if (storedNotifications) {
           const parsedNotifications = JSON.parse(storedNotifications);
           if (Array.isArray(parsedNotifications) && parsedNotifications.length > 0) {
-            // Add to context and temp display
+            console.log(`Found ${parsedNotifications.length} stored notifications in localStorage`);
+            
+            // Process stored notifications
             parsedNotifications.forEach(notification => {
-              // Add to permanent storage through NotificationContext
-              addNotification(notification);
-              
-              // Add to temporary display popup
-              setTempNotifications(prev => [notification, ...prev]);
+              processNotification(notification);
             });
+            
             localStorage.removeItem('backgroundNotifications');
           }
         }
         
         // Then check for any notifications in IndexedDB via service worker
         if (navigator.serviceWorker.controller) {
+          console.log('Requesting notification sync from service worker');
           navigator.serviceWorker.controller.postMessage({
             type: 'REQUEST_NOTIFICATION_SYNC'
           });
@@ -47,31 +114,20 @@ export default function NotificationDisplay() {
     const setupMessageListener = () => {
       onMessageListener()
         .then((payload) => {
-          console.log('Received foreground message:', payload);
+          console.log('Received foreground message via Firebase:', payload);
           if (payload?.notification) {
             const { title, body } = payload.notification;
-            const id = Date.now().toString();
+            const id = payload.data?.id || Date.now().toString();
             
-            // Create notification object
-            const notification = { 
+            // Process the notification using our deduplication helper
+            processNotification({ 
               id, 
               title, 
               body, 
               url: payload.data?.url || '/', 
-              timestamp: new Date(),
+              timestamp: new Date().toISOString(),
               read: false
-            };
-            
-            // Add to notification context for permanent storage
-            addNotification(notification);
-            
-            // Add to temporary display
-            setTempNotifications(prev => [notification, ...prev]);
-            
-            // Auto-remove temporary notification after 10 seconds
-            setTimeout(() => {
-              setTempNotifications(prev => prev.filter(n => n.id !== id));
-            }, 10000);
+            });
           }
           
           // Re-establish the listener for next messages
@@ -98,66 +154,31 @@ export default function NotificationDisplay() {
         // Listen for the "notificationreceived" event from the service worker
         if ('serviceWorker' in navigator && 'BroadcastChannel' in window) {
           try {
+            console.log('Setting up BroadcastChannel for notifications');
             const channel = new BroadcastChannel('notifications-channel');
+            
             channel.addEventListener('message', (event) => {
+              if (!event.data) return;
+              
+              console.log('Received message via BroadcastChannel:', event.data.type);
+              
+              // Handle notification received from service worker
               if (event.data && event.data.type === 'NOTIFICATION_RECEIVED') {
-                const notification = event.data.notification;
-                
-                // Add to notification context for permanent storage
-                addNotification({
-                  id: notification.id || Date.now().toString(),
-                  title: notification.title,
-                  body: notification.body,
-                  url: notification.url || '/',
-                  timestamp: notification.timestamp || new Date().toISOString(),
-                  read: false
-                });
-                
-                // Add to temporary display
-                setTempNotifications(prev => [
-                  {
-                    id: notification.id || Date.now().toString(),
-                    title: notification.title,
-                    body: notification.body,
-                    url: notification.url || '/',
-                    timestamp: notification.timestamp || new Date().toISOString(),
-                    read: false
-                  },
-                  ...prev
-                ]);
-                
-                // Auto-remove temporary notification after 10 seconds
-                setTimeout(() => {
-                  setTempNotifications(prev => prev.filter(n => n.id !== notification.id));
-                }, 10000);
+                processNotification(event.data.notification);
               }
               
-              // Also handle SYNC_NOTIFICATIONS events here to ensure we show temporary notifications too
+              // Handle synced notifications from service worker
               if (event.data && event.data.type === 'SYNC_NOTIFICATIONS') {
                 if (event.data.notifications && Array.isArray(event.data.notifications)) {
+                  console.log(`Received ${event.data.notifications.length} notifications from sync`);
+                  
                   // Take the 3 most recent notifications to show as temporary popups
                   const recentNotifications = event.data.notifications
                     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
                     .slice(0, 3);
                   
                   recentNotifications.forEach(notification => {
-                    // Add to temporary display
-                    setTempNotifications(prev => [
-                      {
-                        id: notification.id,
-                        title: notification.title,
-                        body: notification.body,
-                        url: notification.url || '/',
-                        timestamp: notification.timestamp,
-                        read: false
-                      },
-                      ...prev
-                    ]);
-                    
-                    // Auto-remove temporary notification after 10 seconds
-                    setTimeout(() => {
-                      setTempNotifications(prev => prev.filter(n => n.id !== notification.id));
-                    }, 10000);
+                    processNotification(notification);
                   });
                 }
               }
@@ -176,6 +197,12 @@ export default function NotificationDisplay() {
     };
 
     initNotifications();
+
+    // Clean up function to prevent memory leaks
+    return () => {
+      processedNotificationIds.current.clear();
+      notificationTimestamps.current.clear();
+    };
 
   }, [user, addNotification]);
 
@@ -199,16 +226,16 @@ export default function NotificationDisplay() {
       {tempNotifications.map(notification => (
         <div 
           key={notification.id}
-          className="p-3 rounded-lg shadow-lg bg-white border-l-4 border-indigo-500 animate-slideIn"
+          className="p-3 rounded-lg shadow-lg bg-[var(--card)] text-[var(--card-foreground)] border-l-4 border-[var(--primary)] animate-slideIn"
         >
           <div className="flex justify-between items-start">
             <div 
               className="cursor-pointer flex-1"
               onClick={() => handleNotificationClick(notification.id, notification.url)}
             >
-              <h4 className="font-medium text-sm">{notification.title}</h4>
-              <p className="text-gray-600 text-xs mt-1">{notification.body}</p>
-              <p className="text-gray-400 text-xs mt-1">
+              <h4 className="font-medium text-sm text-[var(--foreground)]">{notification.title}</h4>
+              <p className="text-[var(--muted-foreground)] text-xs mt-1">{notification.body}</p>
+              <p className="text-[var(--muted-foreground)] text-xs mt-1 opacity-70">
                 {typeof notification.timestamp === 'string' 
                   ? new Date(notification.timestamp).toLocaleTimeString([], { 
                       hour: '2-digit', 
@@ -225,7 +252,7 @@ export default function NotificationDisplay() {
             </div>
             <button 
               onClick={() => handleDismiss(notification.id)}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
               aria-label="Close"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

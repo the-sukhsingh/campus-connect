@@ -5,13 +5,14 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import React from 'react';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function RoomDetailPage() {
   const { user, dbUser } = useAuth();
   const router = useRouter();
   const params = useParams();
-  const unwrappedParams = React.use(params);
-  const roomId = unwrappedParams.id;
+  const roomId = params.id;
+  const { theme } = useTheme();
 
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -21,7 +22,6 @@ export default function RoomDetailPage() {
 
   // For time slot selection
   const [selectedTimeSlots, setSelectedTimeSlots] = useState([]); // Changed to array for multiple selection
-  const [selectionStartSlot, setSelectionStartSlot] = useState(null); // Track the starting slot for range selection
 
   const [bookingData, setBookingData] = useState({
     title: '',
@@ -118,8 +118,6 @@ export default function RoomDetailPage() {
         setAvailabilityCalendar(calendar);
         console.log("Availability Calendar:", calendar);
 
-        // Set default selected date to today
-        setSelectedDate(calendar[0].date);
 
         // Set initial date in booking data
         setBookingData(prev => ({
@@ -146,7 +144,6 @@ export default function RoomDetailPage() {
 
     // Reset selections
     setSelectedTimeSlots([]);
-    setSelectionStartSlot(null);
 
     // Clone default time slots
     const updatedTimeSlots = [...timeSlots].map(slot => ({ ...slot, isAvailable: true, isSelected: false }));
@@ -185,7 +182,6 @@ export default function RoomDetailPage() {
     // If we're starting a new selection
     if (selectedTimeSlots.length === 0) {
       setSelectedTimeSlots([slot]);
-      setSelectionStartSlot(slot);
       
       // Update booking form with this time slot
       setBookingData(prev => ({
@@ -212,7 +208,6 @@ export default function RoomDetailPage() {
       // If deselecting a middle slot, reset selection to just this slot
       else {
         newSelectedSlots = [slot];
-        setSelectionStartSlot(slot);
       }
       
       setSelectedTimeSlots(newSelectedSlots);
@@ -257,7 +252,6 @@ export default function RoomDetailPage() {
     } else {
       // If not adjacent, start a new selection with just this slot
       setSelectedTimeSlots([slot]);
-      setSelectionStartSlot(slot);
       
       setBookingData(prev => ({
         ...prev,
@@ -412,46 +406,31 @@ export default function RoomDetailPage() {
     }
   };
 
-  // Get CSS classes for time slot
-  const getTimeSlotClasses = (slot) => {
-    const baseClasses = "text-center py-3 px-3 rounded-md text-sm transition-colors";
-
-    if (!slot.isAvailable) {
-      return `${baseClasses} bg-red-50 text-red-400 border border-red-100 cursor-not-allowed`;
-    }
-
-    // Check if this slot is in the selectedTimeSlots array
-    const isSelected = selectedTimeSlots.some(s => s.id === slot.id);
-    if (isSelected) {
-      return `${baseClasses} bg-indigo-100 text-indigo-800 border border-indigo-400 font-medium`;
-    }
-
-    return `${baseClasses} bg-green-50 text-green-800 border border-green-200 hover:bg-green-100 cursor-pointer`;
-  };
-
   // Min date for the date input (prevent selecting dates in the past)
   const today = new Date();
   const minDateString = new Date(today.getFullYear(), today.getMonth(), today.getDate()-1).toISOString().split('T')[0];
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-        </div>
+      <div className={`p-6 min-h-[50vh] flex justify-center items-center ${theme === 'dark' ? 'bg-[var(--background)] text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
+        <div className={`animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 ${theme === 'dark' ? 'border-indigo-500' : 'border-indigo-600'}`}></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-6">
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
+      <div className={`p-6 ${theme === 'dark' ? 'bg-[var(--background)] text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
+        <div className={`${theme === 'dark' ? 'bg-red-900/30 border-red-700 text-red-200' : 'bg-red-100 border-red-500 text-red-700'} border-l-4 p-4 mb-6`} role="alert">
           <p>{error}</p>
         </div>
         <Link
           href="/dashboard/rooms"
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none"
+          className={`inline-flex items-center px-4 py-2 rounded-md shadow-sm font-medium ${
+            theme === 'dark' 
+              ? 'bg-indigo-700 text-white hover:bg-indigo-800'
+              : 'bg-indigo-600 text-white hover:bg-indigo-700'
+          } focus:outline-none transition-colors duration-300`}
         >
           Back to Rooms
         </Link>
@@ -461,13 +440,17 @@ export default function RoomDetailPage() {
 
   if (!room) {
     return (
-      <div className="p-6">
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
-          <p className="text-sm text-yellow-700">Room not found.</p>
+      <div className={`p-6 ${theme === 'dark' ? 'bg-[var(--background)] text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
+        <div className={`p-4 mb-6 ${theme === 'dark' ? 'bg-yellow-900/30 border-yellow-700 text-yellow-200 border-l-4' : 'bg-yellow-50 border-yellow-400 text-yellow-800 border-l-4'}`}>
+          <p className="text-sm">Room not found.</p>
         </div>
         <Link
           href="/dashboard/rooms"
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none"
+          className={`inline-flex items-center px-4 py-2 rounded-md shadow-sm font-medium ${
+            theme === 'dark' 
+              ? 'bg-indigo-700 text-white hover:bg-indigo-800'
+              : 'bg-indigo-600 text-white hover:bg-indigo-700'
+          } focus:outline-none transition-colors duration-300`}
         >
           Back to Rooms
         </Link>
@@ -476,27 +459,21 @@ export default function RoomDetailPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className={`${theme === 'dark' ? 'bg-[var(--background)] text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
       {/* Header with back link */}
-      <div className="flex items-center justify-between border-b border-gray-200 py-4 px-6">
+      <div className={`flex items-center justify-between border-b ${theme === 'dark' ? 'border-gray-800' : 'border-gray-200'} py-4 px-6`}>
         <div className="flex items-center">
           <Link
             href="/dashboard/rooms"
-            className="text-gray-500 hover:text-gray-700 mr-4"
+            className={`${theme === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'} mr-4 transition-colors duration-200`}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
             </svg>
           </Link>
-          <div className="flex-shrink-0 text-2xl font-bold text-indigo-700">
+          <div className={`flex-shrink-0 text-2xl font-bold ${theme === 'dark' ? 'text-indigo-400' : 'text-indigo-700'}`}>
             Book a Room
           </div>
-        </div>
-        <div className="flex items-center">
-          <div className="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-medium">
-            {dbUser?.role?.charAt(0).toUpperCase() || 'F'}
-          </div>
-          <span className="ml-2 text-sm text-gray-700">{dbUser?.displayName || 'Faculty Member'}</span>
         </div>
       </div>
 
@@ -505,9 +482,9 @@ export default function RoomDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Room details and form - Left side */}
           <div className="lg:col-span-2">
-            <div className="bg-white shadow-md rounded-lg overflow-hidden">
+            <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-md rounded-lg overflow-hidden`}>
               {/* Room image header */}
-              <div className="h-48 bg-gray-200 relative">
+              <div className="h-48 bg-gray-200 dark:bg-gray-700 relative">
                 <div 
                   className="w-full h-full bg-cover bg-center" 
                   style={{ 
@@ -527,20 +504,20 @@ export default function RoomDetailPage() {
               <div className="p-6">
                 <div className="flex flex-col md:flex-row md:items-center mb-6 gap-4 justify-between">
                   <div>
-                    <h2 className="text-xl font-semibold mb-1">Room Details</h2>
-                    <p className="text-gray-600">
+                    <h2 className={`text-xl font-semibold mb-1 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>Room Details</h2>
+                    <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                       {room.description || "Versatile space for meetings, presentations, and group activities."}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <div className="flex items-center text-sm bg-gray-100 px-3 py-1 rounded-full">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className={`flex items-center text-sm ${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'} px-3 py-1 rounded-full`}>
+                      <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 mr-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                       </svg>
                       Capacity: {room.capacity} people
                     </div>
-                    <div className="flex items-center text-sm bg-gray-100 px-3 py-1 rounded-full">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className={`flex items-center text-sm ${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'} px-3 py-1 rounded-full`}>
+                      <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 mr-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                       </svg>
                       {formatRoomType(room.type)}
@@ -549,10 +526,10 @@ export default function RoomDetailPage() {
                 </div>
 
                 <div className="mb-6">
-                  <h3 className="text-sm font-medium text-gray-500 uppercase mb-3">Equipment & Features</h3>
+                  <h3 className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} uppercase mb-3`}>Equipment & Features</h3>
                   <div className="flex flex-wrap gap-2">
                     {room.amenities && room.amenities.map((amenity, index) => (
-                      <span key={index} className="inline-flex items-center rounded-full bg-blue-50 text-blue-700 px-2.5 py-1 text-xs">
+                      <span key={index} className={`inline-flex items-center rounded-full ${theme === 'dark' ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-50 text-blue-700'} px-2.5 py-1 text-xs`}>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
@@ -561,13 +538,13 @@ export default function RoomDetailPage() {
                     ))}
                     {(!room.amenities || room.amenities.length === 0) && (
                       <>
-                        <span className="inline-flex items-center rounded-full bg-blue-50 text-blue-700 px-2.5 py-1 text-xs">
+                        <span className={`inline-flex items-center rounded-full ${theme === 'dark' ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-50 text-blue-700'} px-2.5 py-1 text-xs`}>
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                           Projector
                         </span>
-                        <span className="inline-flex items-center rounded-full bg-blue-50 text-blue-700 px-2.5 py-1 text-xs">
+                        <span className={`inline-flex items-center rounded-full ${theme === 'dark' ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-50 text-blue-700'} px-2.5 py-1 text-xs`}>
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
@@ -580,22 +557,22 @@ export default function RoomDetailPage() {
 
                 {/* Error and success messages */}
                 {bookingError && (
-                  <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700" role="alert">
+                  <div className={`mb-6 p-4 border-l-4 ${theme === 'dark' ? 'bg-red-900/30 border-red-700 text-red-300' : 'bg-red-50 border-red-500 text-red-700'}`} role="alert">
                     <p className="text-sm">{bookingError}</p>
                   </div>
                 )}
 
                 {bookingSuccess ? (
-                  <div className="p-4 bg-green-50 border border-green-200 rounded-md">
+                  <div className={`p-4 border rounded-md ${theme === 'dark' ? 'bg-green-900/30 border-green-800 text-green-300' : 'bg-green-50 border-green-200 text-green-800'}`}>
                     <div className="flex">
                       <div className="flex-shrink-0">
-                        <svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <svg className={`h-5 w-5 ${theme === 'dark' ? 'text-green-300' : 'text-green-400'}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                         </svg>
                       </div>
                       <div className="ml-3">
-                        <h3 className="text-sm font-medium text-green-800">Booking successful!</h3>
-                        <div className="mt-2 text-sm text-green-700">
+                        <h3 className={`text-sm font-medium ${theme === 'dark' ? 'text-green-300' : 'text-green-800'}`}>Booking successful!</h3>
+                        <div className={`mt-2 text-sm ${theme === 'dark' ? 'text-green-300' : 'text-green-700'}`}>
                           <p>Your room booking has been confirmed. Redirecting to your bookings...</p>
                         </div>
                       </div>
@@ -606,11 +583,11 @@ export default function RoomDetailPage() {
                     <div className="space-y-6">
                       {/* Date and Time Selector */}
                       <div>
-                        <h3 className="text-lg font-medium mb-4">Select Date & Time</h3>
+                        <h3 className={`text-lg font-medium mb-4 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>Select Date & Time</h3>
                         
                         {/* Date Input Field */}
                         <div className="mb-4">
-                          <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
+                          <label htmlFor="date" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                             Date
                           </label>
                           <div className="relative">
@@ -621,38 +598,54 @@ export default function RoomDetailPage() {
                               value={bookingData.date}
                               min={minDateString}
                               onChange={handleInputChange}
-                              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                              className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none ${
+                                theme === 'dark' 
+                                  ? 'border-gray-600 bg-gray-700 text-white focus:ring-indigo-500 focus:border-indigo-500' 
+                                  : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                              }`}
                             />
                           </div>
                         </div>
                         
                         {/* Time Slots Grid */}
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                             Available Time Slots
                           </label>
                           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-3">
                             {timeSlots.map((slot) => (
                               <div
                                 key={slot.id}
-                                className={getTimeSlotClasses(slot)}
+                                className={`text-center py-3 px-3 rounded-md text-sm transition-colors ${
+                                  !slot.isAvailable 
+                                    ? theme === 'dark'
+                                      ? "bg-red-900/30 text-red-300 border border-red-800 cursor-not-allowed" 
+                                      : "bg-red-50 text-red-400 border border-red-100 cursor-not-allowed" 
+                                    : selectedTimeSlots.some(s => s.id === slot.id)
+                                      ? theme === 'dark'
+                                        ? "bg-indigo-900/50 text-indigo-300 border border-indigo-700 font-medium"
+                                        : "bg-indigo-100 text-indigo-800 border border-indigo-400 font-medium"
+                                      : theme === 'dark'
+                                        ? "bg-green-900/30 text-green-300 border border-green-800 hover:bg-green-800/30 cursor-pointer"
+                                        : "bg-green-50 text-green-800 border border-green-200 hover:bg-green-100 cursor-pointer"
+                                }`}
                                 onClick={() => handleTimeSlotSelect(slot)}
                               >
                                 {slot.display}
                               </div>
                             ))}
                           </div>
-                          <div className="flex items-center text-sm mt-2 text-gray-600">
+                          <div className={`flex items-center text-sm mt-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                             <div className="flex items-center mr-4">
-                              <div className="w-3 h-3 bg-green-50 border border-green-200 rounded-full mr-1"></div>
+                              <div className={`w-3 h-3 rounded-full mr-1 ${theme === 'dark' ? 'bg-green-900/30 border-green-800 border' : 'bg-green-50 border border-green-200'}`}></div>
                               <span>Available</span>
                             </div>
                             <div className="flex items-center mr-4">
-                              <div className="w-3 h-3 bg-indigo-100 border border-indigo-400 rounded-full mr-1"></div>
+                              <div className={`w-3 h-3 rounded-full mr-1 ${theme === 'dark' ? 'bg-indigo-900/50 border border-indigo-700' : 'bg-indigo-100 border border-indigo-400'}`}></div>
                               <span>Selected</span>
                             </div>
                             <div className="flex items-center">
-                              <div className="w-3 h-3 bg-red-50 border border-red-100 rounded-full mr-1"></div>
+                              <div className={`w-3 h-3 rounded-full mr-1 ${theme === 'dark' ? 'bg-red-900/30 border border-red-800' : 'bg-red-50 border border-red-100'}`}></div>
                               <span>Booked</span>
                             </div>
                           </div>
@@ -661,11 +654,11 @@ export default function RoomDetailPage() {
 
                       {/* Booking Details */}
                       <div>
-                        <h3 className="text-lg font-medium mb-4">Booking Details</h3>
+                        <h3 className={`text-lg font-medium mb-4 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>Booking Details</h3>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="title" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                               Booking Title
                             </label>
                             <input
@@ -674,13 +667,17 @@ export default function RoomDetailPage() {
                               name="title"
                               value={bookingData.title}
                               onChange={handleInputChange}
-                              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                              className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none ${
+                                theme === 'dark' 
+                                  ? 'border-gray-600 bg-gray-700 text-white focus:ring-indigo-500 focus:border-indigo-500' 
+                                  : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                              }`}
                               placeholder="E.g., Project Team Meeting"
                             />
                           </div>
                           
                           <div>
-                            <label htmlFor="attendees" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="attendees" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                               Number of Attendees
                             </label>
                             <input
@@ -691,14 +688,18 @@ export default function RoomDetailPage() {
                               max={room.capacity}
                               value={bookingData.attendees}
                               onChange={handleInputChange}
-                              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                              className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none ${
+                                theme === 'dark' 
+                                  ? 'border-gray-600 bg-gray-700 text-white focus:ring-indigo-500 focus:border-indigo-500' 
+                                  : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                              }`}
                               placeholder={`Maximum capacity: ${room.capacity}`}
                             />
                           </div>
                         </div>
                         
                         <div className="mt-4">
-                          <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                          <label htmlFor="description" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                             Purpose of Booking
                           </label>
                           <textarea
@@ -707,7 +708,11 @@ export default function RoomDetailPage() {
                             rows="3"
                             value={bookingData.description}
                             onChange={handleInputChange}
-                            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                            className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none ${
+                              theme === 'dark' 
+                                ? 'border-gray-600 bg-gray-700 text-white focus:ring-indigo-500 focus:border-indigo-500' 
+                                : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                            }`}
                             placeholder="Please describe the purpose of your booking"
                           ></textarea>
                         </div>
@@ -717,9 +722,13 @@ export default function RoomDetailPage() {
                             id="terms"
                             name="terms"
                             type="checkbox"
-                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                            className={`h-4 w-4 ${
+                              theme === 'dark' 
+                                ? 'border-gray-600 bg-gray-700 text-indigo-600 focus:ring-indigo-500' 
+                                : 'border-gray-300 text-indigo-600 focus:ring-indigo-500'
+                            } rounded`}
                           />
-                          <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
+                          <label htmlFor="terms" className={`ml-2 block text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                             I agree to the booking terms and conditions
                           </label>
                         </div>
@@ -733,24 +742,24 @@ export default function RoomDetailPage() {
           
           {/* Booking Summary - Right Side */}
           <div className="lg:col-span-1">
-            <div className="bg-white shadow-md rounded-lg overflow-hidden">
+            <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-md rounded-lg overflow-hidden`}>
               <div className="p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Booking Summary</h3>
+                <h3 className={`text-lg font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'} mb-4`}>Booking Summary</h3>
                 
                 <div className="space-y-4">
                   <div>
-                    <h4 className="text-sm font-medium text-gray-500">Room</h4>
-                    <p className="text-base text-gray-900">{room.name}</p>
+                    <h4 className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Room</h4>
+                    <p className={`text-base ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>{room.name}</p>
                   </div>
                   
                   <div>
-                    <h4 className="text-sm font-medium text-gray-500">Location</h4>
-                    <p className="text-base text-gray-900">{room.building}, Floor {room.floor}</p>
+                    <h4 className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Location</h4>
+                    <p className={`text-base ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>{room.building}, Floor {room.floor}</p>
                   </div>
                   
                   <div>
-                    <h4 className="text-sm font-medium text-gray-500">Date</h4>
-                    <p className="text-base text-gray-900">
+                    <h4 className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Date</h4>
+                    <p className={`text-base ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
                       {new Date(bookingData.date).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'short',
@@ -760,17 +769,17 @@ export default function RoomDetailPage() {
                   </div>
                   
                   <div>
-                    <h4 className="text-sm font-medium text-gray-500">Time</h4>
+                    <h4 className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Time</h4>
                     {selectedTimeSlots.length === 0 ? (
-                      <p className="text-base text-gray-900">Not selected</p>
+                      <p className={`text-base ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>Not selected</p>
                     ) : selectedTimeSlots.length === 1 ? (
-                      <p className="text-base text-gray-900">{selectedTimeSlots[0].display}</p>
+                      <p className={`text-base ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>{selectedTimeSlots[0].display}</p>
                     ) : (
                       <div>
-                        <p className="text-base text-gray-900">
+                        <p className={`text-base ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
                           {`${selectedTimeSlots[0].start} - ${selectedTimeSlots[selectedTimeSlots.length - 1].end}`}
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mt-1`}>
                           {selectedTimeSlots.length} hour{selectedTimeSlots.length > 1 ? 's' : ''} selected
                         </p>
                       </div>
@@ -778,19 +787,19 @@ export default function RoomDetailPage() {
                   </div>
                   
                   <div>
-                    <h4 className="text-sm font-medium text-gray-500">Attendees</h4>
-                    <p className="text-base text-gray-900">{bookingData.attendees} people</p>
+                    <h4 className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Attendees</h4>
+                    <p className={`text-base ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>{bookingData.attendees} people</p>
                   </div>
                 </div>
                 
-                <div className="mt-6 bg-yellow-50 p-4 rounded-md border border-yellow-200">
-                  <h4 className="text-sm font-medium text-yellow-800 flex items-center">
+                <div className={`mt-6 p-4 rounded-md border ${theme === 'dark' ? 'bg-yellow-900/30 border-yellow-800 text-yellow-300' : 'bg-yellow-50 border-yellow-200 text-yellow-800'}`}>
+                  <h4 className={`text-sm font-medium flex items-center ${theme === 'dark' ? 'text-yellow-300' : 'text-yellow-800'}`}>
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 000 16zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
                     Approval Required
                   </h4>
-                  <p className="mt-1 text-xs text-yellow-700">
+                  <p className={`mt-1 text-xs ${theme === 'dark' ? 'text-yellow-300' : 'text-yellow-700'}`}>
                     Your booking request will need approval before it&apos;s confirmed. You&apos;ll receive a notification when processed.
                   </p>
                 </div>
@@ -801,7 +810,11 @@ export default function RoomDetailPage() {
                     form="booking-form"
                     disabled={isSubmitting || selectedTimeSlots.length === 0}
                     onClick={handleBookingSubmit}
-                    className="mt-6 w-full inline-flex justify-center py-3 px-4 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none disabled:opacity-50"
+                    className={`mt-6 w-full inline-flex justify-center py-3 px-4 shadow-sm text-base font-medium rounded-md 
+                      ${theme === 'dark' 
+                        ? 'bg-green-700 text-white hover:bg-green-800 disabled:bg-green-900 disabled:text-green-300 disabled:opacity-50' 
+                        : 'bg-green-600 text-white hover:bg-green-700 disabled:bg-green-300 disabled:opacity-50'
+                      }`}
                   >
                     {isSubmitting ? (
                       <span className="flex items-center">
@@ -817,7 +830,11 @@ export default function RoomDetailPage() {
 
                 <Link
                   href="/dashboard/rooms"
-                  className="mt-3 w-full inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
+                  className={`mt-3 w-full inline-flex justify-center py-2 px-4 border shadow-sm text-sm font-medium rounded-md 
+                    ${theme === 'dark' 
+                      ? 'border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                      : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    } transition-colors`}
                 >
                   Back to All Rooms
                 </Link>

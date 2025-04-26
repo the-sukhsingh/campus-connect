@@ -2,12 +2,14 @@
 
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 function HodAnnouncementsPage() {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const router = useRouter();
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,7 +39,7 @@ function HodAnnouncementsPage() {
 
       const data = await response.json();
       setAnnouncements(data.announcements || []);
-    } catch (error ) {
+    } catch (error) {
       console.error('Error fetching announcements:', error);
       setMessage({
         type: 'error',
@@ -241,9 +243,9 @@ function HodAnnouncementsPage() {
   };
 
   return (
-    <div className="p-6">
+    <div className={`p-6 ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Manage Announcements</h1>
+        <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Manage Announcements</h1>
         <div>
           
           {!isFormOpen && (
@@ -258,7 +260,7 @@ function HodAnnouncementsPage() {
                   announcementId: ''
                 });
               }}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${theme === 'dark' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-blue-600 hover:bg-blue-700'}`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -307,13 +309,13 @@ function HodAnnouncementsPage() {
 
       {/* Create/Edit announcement form */}
       {isFormOpen && (
-        <div className="bg-white shadow rounded-lg p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">
+        <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow rounded-lg p-6 mb-6`}>
+          <h2 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
             {isUpdateMode ? 'Edit Announcement' : 'Create New Announcement'}
           </h2>
           <form onSubmit={isUpdateMode ? handleUpdateAnnouncement : handleCreateAnnouncement}>
             <div className="mb-4">
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="title" className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                 Title *
               </label>
               <input
@@ -322,12 +324,12 @@ function HodAnnouncementsPage() {
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
-                className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                className={`shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 text-gray-900'} rounded-md`}
                 required
               />
             </div>
             <div className="mb-4">
-              <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="content" className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                 Content *
               </label>
               <textarea
@@ -336,12 +338,12 @@ function HodAnnouncementsPage() {
                 value={formData.content}
                 onChange={handleInputChange}
                 rows={4}
-                className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                className={`shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 text-gray-900'} rounded-md`}
                 required
               ></textarea>
             </div>
             <div className="mb-4">
-              <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="expiryDate" className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                 Expiry Date <span className="text-xs text-gray-500">(Optional - when to automatically delete this announcement)</span>
               </label>
               <input
@@ -351,20 +353,20 @@ function HodAnnouncementsPage() {
                 value={formData.expiryDate}
                 onChange={handleInputChange}
                 min={new Date().toISOString().split('T')[0]}
-                className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                className={`shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 text-gray-900'} rounded-md`}
               />
             </div>
             <div className="flex justify-end space-x-3">
               <button
                 type="button"
                 onClick={handleCancelForm}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                className={`inline-flex items-center px-4 py-2 border shadow-sm text-sm font-medium rounded-md ${theme === 'dark' ? 'border-gray-600 text-gray-200 bg-gray-700 hover:bg-gray-600' : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'}`}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${theme === 'dark' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-blue-600 hover:bg-blue-700'}`}
               >
                 {isUpdateMode ? 'Update Announcement' : 'Create Announcement'}
               </button>
@@ -374,59 +376,61 @@ function HodAnnouncementsPage() {
       )}
 
       {/* Announcements list */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-          <h2 className="text-lg font-semibold">All College Announcements</h2>
+      <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow rounded-lg overflow-hidden`}>
+        <div className={`px-6 py-4 ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} border-b`}>
+          <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>All College Announcements</h2>
         </div>
         
         {loading ? (
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+            <div className={`animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 ${theme === 'dark' ? 'border-indigo-400' : 'border-indigo-500'}`}></div>
           </div>
         ) : announcements.length === 0 ? (
-          <div className="p-6 text-center">
-            <p className="text-gray-500">No announcements found.</p>
+          <div className={`p-6 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+            <p>No announcements found.</p>
           </div>
         ) : (
           <div>
-            <ul className="divide-y divide-gray-200">
+            <ul className={`divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
               {announcements.map((announcement) => {
                 const isExpired = announcement.expiryDate && new Date(announcement.expiryDate) < new Date();
                 
                 return (
-                  <li key={announcement._id} className="hover:bg-gray-50">
+                  <li key={announcement._id} className={`${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
                     <div className="px-6 py-4">
                       <div className="flex justify-between items-start mb-1">
-                        <h3 className="text-lg font-medium text-gray-900">{announcement.title}</h3>
-                        <span className="text-xs text-gray-500">
+                        <h3 className={`text-lg font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{announcement.title}</h3>
+                        <span className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                           Posted: {formatDate(announcement.createdAt)}
                         </span>
                       </div>
-                      <div className="whitespace-pre-wrap text-gray-700 mb-3">{announcement.content}</div>
+                      <div className={`whitespace-pre-wrap mb-3 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{announcement.content}</div>
                       <div className="flex justify-between items-center">
-                        <div className="text-sm text-gray-500">
+                        <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                           By: {announcement.createdBy?.displayName || announcement.createdBy?.email}
-                          <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                          <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'}`}>
                             {announcement.createdBy?.role}
                           </span>
                         </div>
                         <div className="flex space-x-2">
                           {announcement.expiryDate && (
                             <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                              isExpired ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
+                              isExpired 
+                                ? (theme === 'dark' ? 'bg-red-900 text-red-200' : 'bg-red-100 text-red-800')
+                                : (theme === 'dark' ? 'bg-yellow-900 text-yellow-200' : 'bg-yellow-100 text-yellow-800')
                             }`}>
                               {isExpired ? 'Expired' : 'Expires'}: {formatDate(announcement.expiryDate)}
                             </span>
                           )}
                           <button
                             onClick={() => handleEditClick(announcement)}
-                            className="inline-flex items-center px-2 py-1 border border-transparent rounded text-xs font-medium text-indigo-700 bg-indigo-100 hover:bg-indigo-200"
+                            className={`inline-flex items-center px-2 py-1 border border-transparent rounded text-xs font-medium ${theme === 'dark' ? 'text-indigo-300 bg-indigo-900 hover:bg-indigo-800' : 'text-indigo-700 bg-indigo-100 hover:bg-indigo-200'}`}
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => handleDeleteAnnouncement(announcement._id)}
-                            className="inline-flex items-center px-2 py-1 border border-transparent rounded text-xs font-medium text-red-700 bg-red-100 hover:bg-red-200"
+                            className={`inline-flex items-center px-2 py-1 border border-transparent rounded text-xs font-medium ${theme === 'dark' ? 'text-red-300 bg-red-900 hover:bg-red-800' : 'text-red-700 bg-red-100 hover:bg-red-200'}`}
                           >
                             Delete
                           </button>

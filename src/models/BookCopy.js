@@ -54,10 +54,5 @@ BookCopySchema.index(
   { unique: true, name: 'book_copyNumber' }
 );
 
-// Add compound index for uniqueCode
-BookCopySchema.index({ uniqueCode: 1 }, { 
-  unique: true,
-  sparse: true // Allows multiple null values
-});
 
 export default mongoose.models.BookCopy || mongoose.model('BookCopy', BookCopySchema);

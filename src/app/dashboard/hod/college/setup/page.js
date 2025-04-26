@@ -2,14 +2,14 @@
 
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-
-
 function CollegeSetupPage() {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -145,20 +145,20 @@ function CollegeSetupPage() {
   // If already loading, show loader
   if (loading) {
     return (
-      <div className="p-6">
+      <div className={`p-6 ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+          <div className={`animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 ${theme === 'dark' ? 'border-indigo-400' : 'border-indigo-500'}`}></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
+    <div className={`p-6 ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold">College Setup</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>College Setup</h1>
+          <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mt-1`}>
             Create your college profile to get started
           </p>
         </div>
@@ -169,8 +169,8 @@ function CollegeSetupPage() {
         <div 
           className={`p-4 mb-6 border-l-4 ${
             message.type === 'error' 
-              ? 'bg-red-100 border-red-500 text-red-700' 
-              : 'bg-green-100 border-green-500 text-green-700'
+              ? (theme === 'dark' ? 'bg-red-900 border-red-700 text-red-200' : 'bg-red-100 border-red-500 text-red-700') 
+              : (theme === 'dark' ? 'bg-green-900 border-green-700 text-green-200' : 'bg-green-100 border-green-500 text-green-700')
           }`} 
           role="alert"
         >
@@ -178,12 +178,12 @@ function CollegeSetupPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md p-6`}>
         <form onSubmit={handleSubmit}>
           <div className="space-y-6">
             {/* College Name */}
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="name" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'} mb-2`}>
                 College Name *
               </label>
               <input
@@ -193,7 +193,7 @@ function CollegeSetupPage() {
                 required
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className={`w-full px-3 py-2 border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 text-gray-900'} rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
                 placeholder="e.g., Guru Nanak Dev University"
               />
             </div>
@@ -201,7 +201,7 @@ function CollegeSetupPage() {
             {/* Code and Domain */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="code" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'} mb-2`}>
                   College Code *
                 </label>
                 <input
@@ -211,12 +211,12 @@ function CollegeSetupPage() {
                   required
                   value={formData.code}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className={`w-full px-3 py-2 border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 text-gray-900'} rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
                   placeholder="e.g., GNDU"
                 />
               </div>
               <div>
-                <label htmlFor="domain" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="domain" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'} mb-2`}>
                   Email Domain (Optional)
                 </label>
                 <input
@@ -225,7 +225,7 @@ function CollegeSetupPage() {
                   type="text"
                   value={formData.domain}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className={`w-full px-3 py-2 border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 text-gray-900'} rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
                   placeholder="e.g., gndu.ac.in"
                 />
               </div>
@@ -233,7 +233,7 @@ function CollegeSetupPage() {
             
             {/* Departments */}
             <div>
-              <label htmlFor="departments" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="departments" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'} mb-2`}>
                 Departments (comma-separated)
               </label>
               <textarea
@@ -241,7 +241,7 @@ function CollegeSetupPage() {
                 name="departments"
                 value={formData.departments}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className={`w-full px-3 py-2 border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 text-gray-900'} rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
                 placeholder="e.g., Computer Science, Electronics, Mechanical Engineering"
                 rows={3}
               />
@@ -254,9 +254,9 @@ function CollegeSetupPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`w-full md:w-auto flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
-                isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
+              className={`w-full md:w-auto flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white 
+                ${theme === 'dark' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-blue-600 hover:bg-blue-700'} 
+                ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {isSubmitting ? (
                 <>

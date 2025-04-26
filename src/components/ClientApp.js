@@ -5,12 +5,16 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { getMessaging } from 'firebase/messaging';
 import { initFetchWrapper } from '@/utils/fetchWrapper';
+import { initBackgroundSync } from '@/utils/offlineSync';
 
 // This component handles client-side Firebase initialization
 export default function FirebaseInitializer() {
   useEffect(() => {
     // Initialize our fetch wrapper to prevent caching issues
     initFetchWrapper();
+    
+    // Initialize offline background sync
+    initBackgroundSync();
 
     // Initialize Firebase in the client
     const initFirebase = async () => {
@@ -78,6 +82,15 @@ export default function FirebaseInitializer() {
           // Mark as initialized
           window.firebaseInitialized = true;
           console.log('Firebase initialized successfully in client');
+          
+          // Register for background sync if supported
+          if ('serviceWorker' in navigator && 'SyncManager' in window) {
+            navigator.serviceWorker.ready.then(registration => {
+              registration.sync.register('sync-operations')
+                .then(() => console.log('Background sync registered'))
+                .catch(err => console.error('Error registering background sync:', err));
+            });
+          }
         }
       } catch (error) {
         console.error('Firebase initialization error in client:', error);

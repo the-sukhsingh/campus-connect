@@ -2,6 +2,7 @@
 
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import BookSearch from '@/components/BookSearch';
@@ -10,6 +11,7 @@ import * as XLSX from 'xlsx';
 
 function BooksManagementPage() {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const [books, setBooks] = useState([]);
   const [filteredBooks, setFilteredBooks] = useState([]);
   const [totalBooks, setTotalBooks] = useState(0);
@@ -433,18 +435,18 @@ function BooksManagementPage() {
   };
 
   return (
-    <div className="p-6">
+    <div className={`p-6 min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'}`}>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Books Management</h1>
-          <p className="text-gray-600 mt-1">Add, update, or delete books in the library</p>
+          <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>Books Management</h1>
+          <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mt-1`}>Add, update, or delete books in the library</p>
         </div>
         <div>
           <button
             onClick={generateSampleCSV}
-            className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className={`inline-flex items-center px-4 py-2 ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'} rounded-md shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
           >
-            <svg className="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
             Download Sample CSV
@@ -453,7 +455,7 @@ function BooksManagementPage() {
       </div>
 
       {error && (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
+        <div className={`bg-red-100 border-l-4 ${theme === 'dark' ? 'border-red-700 text-red-200' : 'border-red-500 text-red-700'} p-4 mb-6`} role="alert">
           <p>{error}</p>
         </div>
       )}
@@ -474,7 +476,7 @@ function BooksManagementPage() {
       <div className="flex justify-end mb-4">
         <button
           onClick={openAddModal}
-          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors flex items-center"
+          className={`bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors flex items-center ${theme === 'dark' ? 'bg-green-700 hover:bg-green-600' : ''}`}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
@@ -484,89 +486,103 @@ function BooksManagementPage() {
       </div>
 
       {/* Books Table */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className={`rounded-lg shadow-md overflow-hidden ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
         {isLoading ? (
           <div className="flex justify-center items-center p-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+            <div className={`animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 ${theme === 'dark' ? 'border-indigo-500' : 'border-indigo-500'}`}></div>
           </div>
         ) : getPaginatedBooks().length === 0 ? (
           <div className="p-8 text-center">
-            <p className="text-gray-500">No books found. Add a new book to get started.</p>
+            <p className={`text-gray-500 ${theme === 'dark' ? 'text-gray-400' : ''}`}>No books found. Add a new book to get started.</p>
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className={`${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-50 text-gray-500'}`}>
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                       Title
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                       Author
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                       Genre
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                       Copies
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                       Available
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                       Added On
                     </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Unique Code
+                    </th>
+                    <th scope="col" className="px-6 py-4 text-right text-xs font-medium uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {getPaginatedBooks().map((book,index) => (
+                <tbody className={`${theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'}`}>
+                  {getPaginatedBooks().map((book, index) => (
                     <tr key={index}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{book.title}</div>
+                        <div className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>{book.title}</div>
                         {book.ISBN && (
-                          <div className="text-xs text-gray-500">ISBN: {book.ISBN}</div>
+                          <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>ISBN: {book.ISBN}</div>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{book.author}</div>
+                        <div className={`text-sm ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>{book.author}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${theme === 'dark' ? 'bg-blue-900 text-blue-200' : 'bg-blue-100 text-blue-800'}`}>
                           {book.genre}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                         {book.copies}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           book.availableCopies > 0
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
+                            ? `${theme === 'dark' ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800'}`
+                            : `${theme === 'dark' ? 'bg-red-900 text-red-200' : 'bg-red-100 text-red-800'}`
                         }`}>
                           {book.availableCopies}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                         {formatDate(book.createdAt)}
                       </td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {book.uniqueCode || 'N/A'} 
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          onClick={() => openEditModal(book)}
-                          className="text-indigo-600 hover:text-indigo-900 mr-4"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => openDeleteModal(book)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Delete
-                        </button>
+                        <div className="flex items-center justify-evenly gap-3">
+                          <Link 
+                            href={`/dashboard/librarian/lend?uniqueCode=${book.uniqueCode}&bookId=${book._id}`}
+                            className={`text-green-600 hover:text-green-900 ${theme === 'dark' ? 'text-green-400 hover:text-green-300' : ''}`}
+                          >
+                            Lend
+                          </Link>
+                          <button
+                            onClick={() => openEditModal(book)}
+                            className={`text-indigo-600 hover:text-indigo-900 ${theme === 'dark' ? 'text-indigo-400 hover:text-indigo-300' : ''}`}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => openDeleteModal(book)}
+                            className={`text-red-600 hover:text-red-900 ${theme === 'dark' ? 'text-red-400 hover:text-red-300' : ''}`}
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -576,15 +592,15 @@ function BooksManagementPage() {
             
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200">
+              <div className={`px-6 py-3 flex items-center justify-between border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
                 <div className="flex-1 flex justify-between sm:hidden">
                   <button
                     onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
-                    className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
+                    className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md ${
                       currentPage === 1
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                        ? `${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed'}`
+                        : `${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`
                     }`}
                   >
                     Previous
@@ -592,10 +608,10 @@ function BooksManagementPage() {
                   <button
                     onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages}
-                    className={`ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
+                    className={`ml-3 relative inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md ${
                       currentPage === totalPages
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                        ? `${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed'}`
+                        : `${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`
                     }`}
                   >
                     Next
@@ -603,7 +619,7 @@ function BooksManagementPage() {
                 </div>
                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-sm text-gray-700">
+                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-700'}`}>
                       Showing <span className="font-medium">{(currentPage - 1) * 10 + 1}</span> to{' '}
                       <span className="font-medium">
                         {Math.min(currentPage * 10, totalBooks)}
@@ -616,10 +632,10 @@ function BooksManagementPage() {
                       <button
                         onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                         disabled={currentPage === 1}
-                        className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 text-sm font-medium ${
+                        className={`relative inline-flex items-center px-2 py-2 rounded-l-md border ${
                           currentPage === 1
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-white text-gray-500 hover:bg-gray-50'
+                            ? `${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed'}`
+                            : `${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'}`
                         }`}
                       >
                         <span className="sr-only">Previous</span>
@@ -647,8 +663,8 @@ function BooksManagementPage() {
                             onClick={() => setCurrentPage(pageNum)}
                             className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
                               currentPage === pageNum
-                                ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
-                                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                                ? `${theme === 'dark' ? 'z-10 bg-indigo-900 border-indigo-500 text-indigo-300' : 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'}`
+                                : `${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'}`
                             }`}
                           >
                             {pageNum}
@@ -659,10 +675,10 @@ function BooksManagementPage() {
                       <button
                         onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                         disabled={currentPage === totalPages}
-                        className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 text-sm font-medium ${
+                        className={`relative inline-flex items-center px-2 py-2 rounded-r-md border ${
                           currentPage === totalPages
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-white text-gray-500 hover:bg-gray-50'
+                            ? `${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed'}`
+                            : `${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'}`
                         }`}
                       >
                         <span className="sr-only">Next</span>
@@ -682,13 +698,13 @@ function BooksManagementPage() {
       {/* Add/Edit Book Modal */}
       {showAddEditModal && (
         <div className="fixed inset-0 bg-gray-600/40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gradient-to-r from-indigo-600 to-purple-600">
-              <h3 className="text-xl font-medium text-white">
+          <div className={`rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className={`px-6 py-4 border-b flex justify-between items-center ${theme === 'dark' ? 'border-gray-700 bg-gradient-to-r from-indigo-900 to-purple-900' : 'border-gray-200 bg-gradient-to-r from-indigo-600 to-purple-600'}`}>
+              <h3 className={`text-xl font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-white'}`}>
                 {currentBook ? 'Edit Book' : 'Add New Books'}
               </h3>
               {!currentBook && (
-                <span className="text-white text-sm">
+                <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-white'}`}>
                   {multipleBooks.length} books added
                 </span>
               )}
@@ -696,7 +712,7 @@ function BooksManagementPage() {
             
             <div 
               className={`p-6 border-2 border-dashed rounded-lg m-6 transition-all ${
-                dragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300'
+                dragActive ? `${theme === 'dark' ? 'border-indigo-500 bg-indigo-900' : 'border-indigo-500 bg-indigo-50'}` : `${theme === 'dark' ? 'border-gray-700' : 'border-gray-300'}`
               }`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
@@ -704,10 +720,10 @@ function BooksManagementPage() {
               onDrop={handleDrop}
             >
               <div className="text-center p-4">
-                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className={`mx-auto h-12 w-12 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
-                <p className="mt-1 text-sm text-gray-600">
+                <p className={`mt-1 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                   Drag and drop CSV/Excel file or fill the form below
                 </p>
               </div>
@@ -716,8 +732,8 @@ function BooksManagementPage() {
             <form onSubmit={handleFormSubmit} className="space-y-6">
               <div className="px-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
-                  <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                    <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                  <div className={`p-4 rounded-lg shadow-sm border ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}>
+                    <label htmlFor="title" className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                       Title <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -727,13 +743,13 @@ function BooksManagementPage() {
                       value={formData.title}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                      className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-gray-300' : 'bg-white border-gray-300 text-gray-900'}`}
                       placeholder="Enter book title"
                     />
                   </div>
 
-                  <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                    <label htmlFor="author" className="block text-sm font-medium text-gray-700 mb-1">
+                  <div className={`p-4 rounded-lg shadow-sm border ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}>
+                    <label htmlFor="author" className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                       Author <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -743,13 +759,13 @@ function BooksManagementPage() {
                       value={formData.author}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                      className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-gray-300' : 'bg-white border-gray-300 text-gray-900'}`}
                       placeholder="Enter author name"
                     />
                   </div>
 
-                  <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                    <label htmlFor="genre" className="block text-sm font-medium text-gray-700 mb-1">
+                  <div className={`p-4 rounded-lg shadow-sm border ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}>
+                    <label htmlFor="genre" className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                       Genre <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -760,7 +776,7 @@ function BooksManagementPage() {
                       onChange={handleInputChange}
                       required
                       list="genre-suggestions"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                      className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-gray-300' : 'bg-white border-gray-300 text-gray-900'}`}
                       placeholder="Select or enter genre"
                     />
                     <datalist id="genre-suggestions">
@@ -772,8 +788,8 @@ function BooksManagementPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                    <label htmlFor="copies" className="block text-sm font-medium text-gray-700 mb-1">
+                  <div className={`p-4 rounded-lg shadow-sm border ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}>
+                    <label htmlFor="copies" className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                       Number of Copies <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -784,12 +800,12 @@ function BooksManagementPage() {
                       onChange={handleInputChange}
                       min="1"
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                      className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-gray-300' : 'bg-white border-gray-300 text-gray-900'}`}
                     />
                   </div>
 
-                  <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                    <label htmlFor="ISBN" className="block text-sm font-medium text-gray-700 mb-1">
+                  <div className={`p-4 rounded-lg shadow-sm border ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}>
+                    <label htmlFor="ISBN" className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                       ISBN
                     </label>
                     <input
@@ -798,13 +814,13 @@ function BooksManagementPage() {
                       name="ISBN"
                       value={formData.ISBN}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                      className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-gray-300' : 'bg-white border-gray-300 text-gray-900'}`}
                       placeholder="Enter ISBN (optional)"
                     />
                   </div>
 
-                  <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                    <label htmlFor="publishedYear" className="block text-sm font-medium text-gray-700 mb-1">
+                  <div className={`p-4 rounded-lg shadow-sm border ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}>
+                    <label htmlFor="publishedYear" className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                       Published Year
                     </label>
                     <input
@@ -815,15 +831,15 @@ function BooksManagementPage() {
                       onChange={handleInputChange}
                       min="1000"
                       max={new Date().getFullYear()}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                      className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-gray-300' : 'bg-white border-gray-300 text-gray-900'}`}
                       placeholder="Enter year (optional)"
                     />
                   </div>
                 </div>
 
                 <div className="col-span-full">
-                  <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                  <div className={`p-4 rounded-lg shadow-sm border ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}>
+                    <label htmlFor="description" className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                       Description
                     </label>
                     <textarea
@@ -832,23 +848,23 @@ function BooksManagementPage() {
                       value={formData.description}
                       onChange={handleInputChange}
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                      className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-gray-300' : 'bg-white border-gray-300 text-gray-900'}`}
                       placeholder="Enter book description (optional)"
                     />
                   </div>
                 </div>
 
                 <div className="col-span-full">
-                  <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center">
+                  <div className={`p-4 rounded-lg shadow-sm border flex items-center ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}>
                     <input
                       type="checkbox"
                       id="sendNotification"
                       name="sendNotification"
                       checked={formData.sendNotification}
                       onChange={handleInputChange}
-                      className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      className={`h-4 w-4 rounded focus:ring-indigo-500 ${theme === 'dark' ? 'text-indigo-400 border-gray-600' : 'text-indigo-600 border-gray-300'}`}
                     />
-                    <label htmlFor="sendNotification" className="ml-2 block text-sm text-gray-700">
+                    <label htmlFor="sendNotification" className={`ml-2 block text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                       Send notification to library members about new books
                     </label>
                   </div>
@@ -860,7 +876,7 @@ function BooksManagementPage() {
                   <button
                     type="button"
                     onClick={addNewBookToList}
-                    className="w-full bg-indigo-100 text-indigo-700 px-4 py-2 rounded-md hover:bg-indigo-200 transition-colors flex items-center justify-center"
+                    className={`w-full px-4 py-2 rounded-md hover:bg-indigo-200 transition-colors flex items-center justify-center ${theme === 'dark' ? 'bg-indigo-900 text-indigo-300 hover:bg-indigo-800' : 'bg-indigo-100 text-indigo-700'}`}
                   >
                     <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -873,18 +889,18 @@ function BooksManagementPage() {
               {/* Multiple Books List */}
               {!currentBook && multipleBooks.length > 0 && (
                 <div className="px-6">
-                  <h4 className="text-lg font-medium text-gray-900 mb-4">Books to Add ({multipleBooks.length})</h4>
+                  <h4 className={`text-lg font-medium mb-4 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>Books to Add ({multipleBooks.length})</h4>
                   <div className="space-y-3">
                     {multipleBooks.map((book, index) => (
-                      <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                      <div key={index} className={`flex items-center justify-between p-3 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
                         <div className="flex-1">
-                          <h5 className="font-medium">{book.title}</h5>
-                          <p className="text-sm text-gray-500">by {book.author} • {book.genre}</p>
+                          <h5 className={`font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>{book.title}</h5>
+                          <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>by {book.author} • {book.genre}</p>
                         </div>
                         <button
                           type="button"
                           onClick={() => removeBookFromList(index)}
-                          className="text-red-600 hover:text-red-800"
+                          className={`text-red-600 hover:text-red-800 ${theme === 'dark' ? 'text-red-400 hover:text-red-300' : ''}`}
                         >
                           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -896,27 +912,27 @@ function BooksManagementPage() {
                 </div>
               )}
               
-              <div className="px-6 py-4 bg-gray-50 flex justify-end space-x-3 rounded-b-lg">
+              <div className={`px-6 py-4 flex justify-end space-x-3 rounded-b-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
                 <button
                   type="button"
                   onClick={() => {
                     setShowAddEditModal(false);
                     setMultipleBooks([]);
                   }}
-                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
+                  className={`px-4 py-2 border rounded-md shadow-sm text-sm font-medium focus:outline-none ${theme === 'dark' ? 'text-gray-300 bg-gray-800 border-gray-600 hover:bg-gray-700' : 'text-gray-700 bg-white border-gray-300 hover:bg-gray-50'}`}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isLoading || (!currentBook && multipleBooks.length === 0 && !formData.title)}
-                  className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none ${
+                  className={`px-4 py-2 border rounded-md shadow-sm text-sm font-medium focus:outline-none ${theme === 'dark' ? 'text-gray-100 bg-gradient-to-r from-indigo-900 to-purple-900 hover:from-indigo-800 hover:to-purple-800' : 'text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700'} ${
                     (isLoading || (!currentBook && multipleBooks.length === 0 && !formData.title)) ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
                   {isLoading ? (
                     <span className="flex items-center">
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <svg className={`animate-spin -ml-1 mr-2 h-4 w-4 ${theme === 'dark' ? 'text-gray-300' : 'text-white'}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
@@ -933,22 +949,22 @@ function BooksManagementPage() {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && currentBook && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Delete Book</h3>
+          <div className={`rounded-lg shadow-xl max-w-md w-full ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className={`px-6 py-4 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+              <h3 className={`text-lg font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>Delete Book</h3>
             </div>
             
             <div className="px-6 py-4">
-              <p className="text-gray-700">
+              <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                 Are you sure you want to delete <span className="font-semibold">{currentBook.title}</span>? This action cannot be undone.
               </p>
             </div>
             
-            <div className="px-6 py-4 bg-gray-50 flex justify-end space-x-3 rounded-b-lg">
+            <div className={`px-6 py-4 flex justify-end space-x-3 rounded-b-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
               <button
                 type="button"
                 onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
+                className={`px-4 py-2 border rounded-md shadow-sm text-sm font-medium focus:outline-none ${theme === 'dark' ? 'text-gray-300 bg-gray-800 border-gray-600 hover:bg-gray-700' : 'text-gray-700 bg-white border-gray-300 hover:bg-gray-50'}`}
               >
                 Cancel
               </button>
@@ -956,13 +972,13 @@ function BooksManagementPage() {
                 type="button"
                 onClick={handleDeleteBook}
                 disabled={isLoading}
-                className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none ${
+                className={`px-4 py-2 border rounded-md shadow-sm text-sm font-medium focus:outline-none ${theme === 'dark' ? 'text-gray-100 bg-red-900 hover:bg-red-800' : 'text-white bg-red-600 hover:bg-red-700'} ${
                   isLoading ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
                 {isLoading ? (
                   <span className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg className={`animate-spin -ml-1 mr-2 h-4 w-4 ${theme === 'dark' ? 'text-gray-300' : 'text-white'}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>

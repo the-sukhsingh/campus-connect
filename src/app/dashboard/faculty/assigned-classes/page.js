@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { motion } from 'framer-motion';
+import { useTheme } from '@/context/ThemeContext';
 
 function AssignedClassesPage() {
   const { user } = useAuth();
@@ -13,6 +14,7 @@ function AssignedClassesPage() {
   const [error, setError] = useState(null);
   const [attendanceSummaries, setAttendanceSummaries] = useState({});
   const [loadingSummaries, setLoadingSummaries] = useState(false);
+  const { theme } = useTheme();
 
   // Animation variants
   const containerVariants = {
@@ -133,17 +135,14 @@ function AssignedClassesPage() {
   };
 
   return (
-    <div className="p-6 bg-gradient-to-b from-gray-50 to-white min-h-screen">
+    <div className={`p-6 bg-gradient-to-b min-h-screen ${theme === 'dark' ? 'bg-gradient-to-br from-gray-800 to-gray-900' : 'bg-gradient-to-br from-white to-gray-100'} overflow-hidden`}>
+      
       <motion.div 
         className="mb-10"
         initial="hidden"
         animate="visible"
         variants={headerVariants}
       >
-        <div className="relative">
-          <div className="absolute -top-10 -left-10 w-40 h-40 bg-blue-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
-          <div className="absolute -top-6 -right-4 w-32 h-32 bg-purple-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
-          <div className="absolute top-12 left-20 w-24 h-24 bg-pink-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
           
           <div className="relative">
             <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center">
@@ -187,7 +186,6 @@ function AssignedClassesPage() {
               ></motion.div>
             </div>
           </div>
-        </div>
       </motion.div>
 
       {error && (
@@ -233,7 +231,16 @@ function AssignedClassesPage() {
               'from-pink-400 to-rose-500',
               'from-indigo-400 to-purple-500',
             ];
-            const gradient = gradients[index % gradients.length];
+            const darkGradients = [
+              'from-gray-700 to-gray-800',
+              'from-green-700 to-green-800',
+              'from-blue-700 to-blue-800',
+              'from-purple-700 to-purple-800',
+              'from-red-700 to-red-800',
+              'from-yellow-700 to-yellow-800',
+            ]
+
+            const gradient = theme === 'dark' ? darkGradients[index % darkGradients.length] : gradients[index % gradients.length];
             
             // Calculate attendance activity level
             const activityLevel = attendanceSummary.totalDays > 10 ? 'high' : 
@@ -275,7 +282,7 @@ function AssignedClassesPage() {
                 </div>
                 
                 {/* Card body */}
-                <div className="p-5 bg-white">
+                <div className={`p-4 rounded-b-xl shadow-md ${theme === 'dark' ? 'bg-gray-800 text-white' : 'text-gray-800'}`}>
                   <div className="flex items-center mb-4">
                     <div className="bg-gray-100 p-2 rounded-full">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -283,7 +290,7 @@ function AssignedClassesPage() {
                       </svg>
                     </div>
                     <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-700">{classItem.department}</p>
+                      <p className={`text-xl`}>{classItem.department}</p>
                       <p className="text-xs text-gray-500">Batch: {classItem.batch}</p>
                     </div>
                   </div>
@@ -305,7 +312,7 @@ function AssignedClassesPage() {
                   )}
                   
                   {/* Attendance Summary with visual indicators */}
-                  <div className="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-100">
+                  <div className={`rounded-lg shadow-md p-4 ${theme === 'dark' ? 'text-gray-200 bg-gray-800' : 'text-gray-800'} mb-2 border`}>
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="text-sm font-semibold text-gray-700">Attendance Activity</h4>
                       <span className={`inline-block w-3 h-3 rounded-full ${

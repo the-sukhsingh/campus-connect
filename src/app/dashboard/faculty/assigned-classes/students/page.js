@@ -5,12 +5,14 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { withRoleProtection } from '@/utils/withRoleProtection';
+import { useTheme } from '@/context/ThemeContext';
 
 function ClassStudentsPage() {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const classId = searchParams.get('classId');
+  const { theme } = useTheme();
 
   const [classInfo, setClassInfo] = useState(null);
   const [students, setStudents] = useState([]);
@@ -55,6 +57,7 @@ function ClassStudentsPage() {
           const subjectsData = await subjectsResponse.json();
           setSubjects(subjectsData.subjects || []);
           
+          setSelectedSubject(subjectsData.subjects[0] || '');
           if (subjectsData.subjects && subjectsData.subjects.length > 0) {
             setSelectedSubject(subjectsData.subjects[0]);
           }
@@ -182,20 +185,21 @@ function ClassStudentsPage() {
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className={`shadow-md rounded-lg p-6 ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}>
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
               <div className="w-full md:w-1/2">
-                <label htmlFor="search" className="sr-only">Search students</label>
+                  <label htmlFor="search" className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-50': 'text-gray-600'}`}>Search students</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                       <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
                     </svg>
                   </div>
+
                   <input
                     id="search"
                     name="search"
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     placeholder="Search by name or roll number"
                     type="search"
                     value={searchTerm}
@@ -206,7 +210,7 @@ function ClassStudentsPage() {
               
               {subjects.length > 0 && (
                 <div className="w-full md:w-1/2">
-                  <label htmlFor="subject-select" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="subject-select" className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-50': 'text-gray-600'}`}>
                     Select Subject for Attendance Stats
                   </label>
                   <select
@@ -231,8 +235,8 @@ function ClassStudentsPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-gray-200 rounded-xl">
+                  <thead className={`bg-gray-50 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
                     <tr>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Student
@@ -250,7 +254,7 @@ function ClassStudentsPage() {
                       )}
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className={`divide-y divide-gray-200 ${theme === 'dark' ? 'bg-[var(--background)]' : 'bg-white'}`}>
                     {filteredStudents.map((student) => {
                       const attendancePercentage = getAttendancePercentage(student.student._id);
                       const attendanceStatus = getAttendanceStatus(attendancePercentage);
@@ -259,21 +263,21 @@ function ClassStudentsPage() {
                         <tr key={student._id}>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
-                              <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
+                              <div className={`flex-shrink-0 h-10 w-10  rounded-full flex items-center justify-center ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
                                 {student?.student?.displayName ? student.student.displayName.charAt(0).toUpperCase() : 'S'}
                               </div>
                               <div className="ml-4">
-                                <div className="text-sm font-medium text-gray-900">
+                                <div className="text-sm font-medium">
                                   {student?.student?.displayName || 'Unnamed Student'}
                                 </div>
                               </div>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{student?.student?.rollNo || '-'}</div>
+                            <div className="text-sm">{student?.student?.rollNo || '-'}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{student?.student?.email || '-'}</div>
+                            <div className="text-sm">{student?.student?.email || '-'}</div>
                             <div className="text-sm text-gray-500">{student?.student?.phone || '-'}</div>
                           </td>
                           {selectedSubject && (

@@ -2,9 +2,11 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { NotificationProvider } from "@/context/NotificationContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import Navbar from "@/components/Navbar";
 import ClientNotifications from "@/components/ClientNotifications";
 import FirebaseInitializer from "@/components/ClientApp";
+import { Analytics } from '@vercel/analytics/next';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,7 +42,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <meta name="application-name" content="Campus Connect" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -88,19 +90,20 @@ export default function RootLayout({ children }) {
           }}
         />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body>
         <AuthProvider>
           <NotificationProvider>
-            <FirebaseInitializer />
-            <div className="min-h-screen flex flex-col">
-              <Navbar />
-              <ClientNotifications />
-              <main className="flex-grow">
-                {children}
-              </main>
-            </div>
+            <ThemeProvider>
+              <FirebaseInitializer />
+                <div className="min-h-screen flex flex-col">
+                  <Navbar />
+                  <ClientNotifications />
+                  <main className="flex-grow">
+                    {children}
+                    <Analytics />
+                  </main>
+                </div>
+            </ThemeProvider>
           </NotificationProvider>
         </AuthProvider>
       </body>

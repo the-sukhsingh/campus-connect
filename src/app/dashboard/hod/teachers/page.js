@@ -2,12 +2,14 @@
 
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Edit, Trash2 } from 'lucide-react';
 
 function TeachersManagementPage() {
+  const { theme } = useTheme();
   const { user } = useAuth();
   const router = useRouter();
   const [teachers, setTeachers] = useState([]);
@@ -424,18 +426,13 @@ function TeachersManagementPage() {
     }
   };
 
-  // Handle pending teacher action (approve/reject)
-  const handleTeacherAction = async (teacherId, action) => {
-    // Implementation for handling pending teacher requests
-    // This function would need to be implemented for processing pending teacher requests
-  };
 
   return (
-    <div className="p-6">
+    <div className={`p-6 ${theme === 'dark' ? 'bg-[var(--background)] text-[var(--foreground)]' : 'bg-[var(--background)] text-[var(--foreground)]'}`}>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold">Teachers Management</h1>
-          <p className="text-gray-600 mt-1">
+          <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
             Manage teachers in your college
           </p>
         </div>
@@ -445,7 +442,11 @@ function TeachersManagementPage() {
             <div className="flex gap-2">
               <button
                 onClick={() => window.open(`/api/export/teachers?uid=${user?.uid}&collegeId=${collegeInfo._id}&format=csv`, '_blank')}
-                className="inline-flex items-center gap-1 bg-green-50 hover:bg-green-100 text-green-600 py-2 px-3 rounded border border-green-200 transition-colors"
+                className={`inline-flex items-center gap-1 py-2 px-3 rounded border transition-colors ${
+                  theme === 'dark' 
+                    ? 'bg-green-900 text-green-100 hover:bg-green-800 border-green-700' 
+                    : 'bg-green-50 hover:bg-green-100 text-green-600 border-green-200'
+                }`}
                 title="Download as CSV"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -455,7 +456,11 @@ function TeachersManagementPage() {
               </button>
               <button
                 onClick={() => window.open(`/api/export/teachers?uid=${user?.uid}&collegeId=${collegeInfo._id}&format=pdf`, '_blank')}
-                className="inline-flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2 px-3 rounded border border-blue-200 transition-colors"
+                className={`inline-flex items-center gap-1 py-2 px-3 rounded border transition-colors ${
+                  theme === 'dark' 
+                    ? 'bg-blue-900 text-blue-100 hover:bg-blue-800 border-blue-700' 
+                    : 'bg-blue-50 hover:bg-blue-100 text-blue-600 border-blue-200'
+                }`}
                 title="Download as PDF"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -470,7 +475,11 @@ function TeachersManagementPage() {
           {collegeInfo && (
             <button
               onClick={openAddFacultyModal}
-              className="inline-flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded transition-colors"
+              className={`inline-flex items-center gap-1 py-2 px-4 rounded transition-colors ${
+                theme === 'dark'
+                  ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                  : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+              }`}
               title="Add new faculty member"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -483,7 +492,11 @@ function TeachersManagementPage() {
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="inline-flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 py-2 px-4 rounded transition-colors"
+            className={`inline-flex items-center gap-1 py-2 px-4 rounded transition-colors ${
+              theme === 'dark'
+                ? 'bg-gray-700 hover:bg-gray-600 text-white'
+                : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700'
+            }`}
             title="Refresh data"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -496,10 +509,15 @@ function TeachersManagementPage() {
 
       {message.text && (
         <div
-          className={`p-4 mb-6 border-l-4 ${message.type === 'error'
-              ? 'bg-red-100 border-red-500 text-red-700'
-              : 'bg-green-100 border-green-500 text-green-700'
-            }`}
+          className={`p-4 mb-6 border-l-4 ${
+            message.type === 'error'
+              ? theme === 'dark'
+                ? 'bg-red-900/50 border-red-700 text-red-100'
+                : 'bg-red-100 border-red-500 text-red-700'
+              : theme === 'dark'
+                ? 'bg-green-900/50 border-green-700 text-green-100'
+                : 'bg-green-100 border-green-500 text-green-700'
+          }`}
           role="alert"
         >
           <p className="font-medium">{message.text}</p>
@@ -511,21 +529,29 @@ function TeachersManagementPage() {
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
         </div>
       ) : !collegeInfo ? (
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+        <div className={`border-l-4 p-4 mb-6 ${
+          theme === 'dark'
+            ? 'bg-yellow-900/50 border-yellow-700 text-yellow-100'
+            : 'bg-yellow-50 border-yellow-400'
+        }`}>
           <div className="flex">
             <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <svg className={`h-5 w-5 ${theme === 'dark' ? 'text-yellow-300' : 'text-yellow-400'}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
             </div>
             <div className="ml-3">
-              <p className="text-sm text-yellow-700">
+              <p className={`text-sm ${theme === 'dark' ? 'text-yellow-100' : 'text-yellow-700'}`}>
                 You need to set up your college first. Please go to the College Setup page.
               </p>
               <div className="mt-4">
                 <button
                   onClick={() => router.push('/dashboard/hod/college/setup')}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-500 focus:outline-none"
+                  className={`inline-flex items-center px-4 py-2 border border-transparent text-sm leading-5 font-medium rounded-md ${
+                    theme === 'dark'
+                      ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                      : 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                  } focus:outline-none`}
                 >
                   Set Up College
                 </button>
@@ -535,86 +561,98 @@ function TeachersManagementPage() {
         </div>
       ) : (
         <>
-          <div className="bg-white shadow rounded-lg overflow-hidden">
-            <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">All Teachers</h3>
-              <p className="mt-1 max-w-2xl text-sm text-gray-500">
+          <div className={`shadow rounded-lg overflow-hidden ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className={`px-4 py-5 sm:px-6 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+              <h3 className="text-lg leading-6 font-medium">All Teachers</h3>
+              <p className={`mt-1 max-w-2xl text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                 Showing all teachers approved for your college
               </p>
             </div>
             {teachers.length === 0 ? (
-              <div className="px-4 py-5 sm:p-6 text-center text-gray-500">
+              <div className={`px-4 py-5 sm:p-6 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                 No teachers have been approved yet.
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className={`min-w-full divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                  <thead className={`${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
                     <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                         Name
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                         Email
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                         Department
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                         Role
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                         Status
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                         Joined
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className={`${theme === 'dark' ? 'divide-y divide-gray-700' : 'divide-y divide-gray-200'}`}>
                     {teachers.map((teacher) => (
-                      <tr key={teacher._id}>
+                      <tr key={teacher._id} className={theme === 'dark' ? 'bg-gray-800' : 'bg-white'}>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
                             {teacher.displayName || 'Unnamed Teacher'}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">{teacher.email}</div>
+                          <div className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>{teacher.email}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">
+                          <div className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>
                             {teacher.department || 'Not specified'}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">
+                          <div className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>
                             {teacher.role || 'Not specified'}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            theme === 'dark' 
+                              ? 'bg-green-800 text-green-100'
+                              : 'bg-green-100 text-green-800'
+                          }`}>
                             Approved
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>
                           {formatDate(teacher.createdAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex space-x-2">
                             <button
                               onClick={() => openEditModal(teacher)}
-                              className="inline-flex items-center justify-center p-2 rounded-md text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                              className={`inline-flex items-center justify-center p-2 rounded-md ${
+                                theme === 'dark' 
+                                  ? 'text-blue-400 bg-blue-900/30 hover:bg-blue-900/50'
+                                  : 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                              } transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1`}
                               title="Edit teacher"
                             >
                               <Edit className="h-4 w-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteTeacher(teacher._id, teacher.displayName)}
-                              className="inline-flex items-center justify-center p-2 rounded-md text-red-600 bg-red-50 hover:bg-red-100 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+                              className={`inline-flex items-center justify-center p-2 rounded-md ${
+                                theme === 'dark' 
+                                  ? 'text-red-400 bg-red-900/30 hover:bg-red-900/50'
+                                  : 'text-red-600 bg-red-50 hover:bg-red-100'
+                              } transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1`}
                               title="Delete teacher"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -637,13 +675,15 @@ function TeachersManagementPage() {
         <div className="fixed inset-0 overflow-y-auto z-50 flex items-center justify-center">
           <div className="fixed inset-0 bg-black/30 bg-opacity-50 transition-opacity" onClick={() => setShowAddModal(false)}></div>
 
-          <div className="relative bg-white rounded-lg max-w-lg w-full mx-4 shadow-xl transform transition-all">
-            <div className="px-6 py-5 border-b border-gray-200">
+          <div className={`relative max-w-lg w-full mx-4 shadow-xl transform transition-all rounded-lg ${
+            theme === 'dark' ? 'bg-gray-800' : 'bg-white'
+          }`}>
+            <div className={`px-6 py-5 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-gray-900">Create Faculty Account</h3>
+                <h3 className={`text-lg font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>Create Faculty Account</h3>
                 <button
                   type="button"
-                  className="text-gray-400 hover:text-gray-500"
+                  className={`${theme === 'dark' ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-500'}`}
                   onClick={() => setShowAddModal(false)}
                 >
                   <span className="sr-only">Close</span>
@@ -657,14 +697,18 @@ function TeachersManagementPage() {
             <form onSubmit={handleCreateFaculty}>
               <div className="px-6 py-5 space-y-4">
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</label>
+                  <label htmlFor="email" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Email Address</label>
                   <input
                     type="email"
                     id="email"
                     name="email"
                     value={newFacultyData.email}
                     onChange={handleInputChange}
-                    className={`mt-1 block w-full border ${validationErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
+                    className={`mt-1 block w-full shadow-sm py-2 px-3 rounded-md ${
+                      validationErrors.email 
+                        ? 'border-red-500' 
+                        : theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
+                    } focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
                     placeholder="faculty@example.com"
                   />
                   {validationErrors.email && (
@@ -673,14 +717,18 @@ function TeachersManagementPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="displayName" className="block text-sm font-medium text-gray-700">Full Name</label>
+                  <label htmlFor="displayName" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Full Name</label>
                   <input
                     type="text"
                     id="displayName"
                     name="displayName"
                     value={newFacultyData.displayName}
                     onChange={handleInputChange}
-                    className={`mt-1 block w-full border ${validationErrors.displayName ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
+                    className={`mt-1 block w-full shadow-sm py-2 px-3 rounded-md ${
+                      validationErrors.displayName 
+                        ? 'border-red-500' 
+                        : theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
+                    } focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
                     placeholder="Dr. John Smith"
                   />
                   {validationErrors.displayName && (
@@ -689,13 +737,17 @@ function TeachersManagementPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="department" className="block text-sm font-medium text-gray-700">Department</label>
+                  <label htmlFor="department" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Department</label>
                   <select
                     id="department"
                     name="department"
                     value={newFacultyData.department}
                     onChange={handleInputChange}
-                    className={`mt-1 block w-full border ${validationErrors.department ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
+                    className={`mt-1 block w-full shadow-sm py-2 px-3 rounded-md ${
+                      validationErrors.department 
+                        ? 'border-red-500' 
+                        : theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
+                    } focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
                   >
                     {collegeInfo.departments?.map((department) => (
                       <option key={department} value={department}>
@@ -715,22 +767,28 @@ function TeachersManagementPage() {
                     name="isLibrarian"
                     checked={newFacultyData.isLibrarian}
                     onChange={handleInputChange}
-                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                    className={`h-4 w-4 focus:ring-indigo-500 rounded ${
+                      theme === 'dark' ? 'bg-gray-700 border-gray-600 text-indigo-500' : 'border-gray-300 text-indigo-600'
+                    }`}
                   />
-                  <label htmlFor="isLibrarian" className="ml-2 block text-sm text-gray-900">
+                  <label htmlFor="isLibrarian" className={`ml-2 block text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
                     Assign as librarian
                   </label>
                 </div>
 
-                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                <div className={`border-l-4 p-4 ${
+                  theme === 'dark' 
+                    ? 'bg-yellow-900/30 border-yellow-700'
+                    : 'bg-yellow-50 border-yellow-400'
+                }`}>
                   <div className="flex">
                     <div className="flex-shrink-0">
-                      <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <svg className={`h-5 w-5 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-400'}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                       </svg>
                     </div>
                     <div className="ml-3">
-                      <p className="text-sm text-yellow-700">
+                      <p className={`text-sm ${theme === 'dark' ? 'text-yellow-200' : 'text-yellow-700'}`}>
                         A temporary password will be generated and sent to the faculty member&apos;s email address.
                       </p>
                     </div>
@@ -738,19 +796,24 @@ function TeachersManagementPage() {
                 </div>
               </div>
 
-              <div className="px-6 py-4 bg-gray-50 text-right border-t border-gray-200">
+              <div className={`px-6 py-4 text-right border-t ${
+                theme === 'dark' ? 'bg-gray-900/50 border-gray-700' : 'bg-gray-50 border-gray-200'
+              }`}>
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mr-2"
+                  className={`inline-flex justify-center px-4 py-2 text-sm font-medium rounded-md mr-2 ${
+                    theme === 'dark'
+                      ? 'text-gray-300 bg-gray-700 border border-gray-600 hover:bg-gray-600'
+                      : 'text-gray-700 bg-white border border-gray-300 shadow-sm hover:bg-gray-50'
+                  } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className={`inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
+                  className={`inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {isSubmitting ? (
                     <>
@@ -775,13 +838,15 @@ function TeachersManagementPage() {
         <div className="fixed inset-0 overflow-y-auto z-50 flex items-center justify-center">
           <div className="fixed inset-0 bg-black/30 bg-opacity-50 transition-opacity" onClick={() => setShowEditModal(false)}></div>
 
-          <div className="relative bg-white rounded-lg max-w-lg w-full mx-4 shadow-xl transform transition-all">
-            <div className="px-6 py-5 border-b border-gray-200">
+          <div className={`relative max-w-lg w-full mx-4 shadow-xl transform transition-all rounded-lg ${
+            theme === 'dark' ? 'bg-gray-800' : 'bg-white'
+          }`}>
+            <div className={`px-6 py-5 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-gray-900">Edit Teacher Details</h3>
+                <h3 className={`text-lg font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>Edit Teacher Details</h3>
                 <button
                   type="button"
-                  className="text-gray-400 hover:text-gray-500"
+                  className={`${theme === 'dark' ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-500'}`}
                   onClick={() => setShowEditModal(false)}
                 >
                   <span className="sr-only">Close</span>
@@ -795,14 +860,18 @@ function TeachersManagementPage() {
             <form onSubmit={handleUpdateTeacher}>
               <div className="px-6 py-5 space-y-4">
                 <div>
-                  <label htmlFor="displayName" className="block text-sm font-medium text-gray-700">Full Name</label>
+                  <label htmlFor="displayName" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Full Name</label>
                   <input
                     type="text"
                     id="displayName"
                     name="displayName"
                     value={editFacultyData.displayName}
                     onChange={handleEditInputChange}
-                    className={`mt-1 block w-full border ${editValidationErrors.displayName ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
+                    className={`mt-1 block w-full shadow-sm py-2 px-3 rounded-md ${
+                      editValidationErrors.displayName 
+                        ? 'border-red-500' 
+                        : theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
+                    } focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
                     placeholder="Dr. John Smith"
                   />
                   {editValidationErrors.displayName && (
@@ -811,13 +880,17 @@ function TeachersManagementPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="department" className="block text-sm font-medium text-gray-700">Department</label>
+                  <label htmlFor="department" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Department</label>
                   <select
                     id="department"
                     name="department"
                     value={editFacultyData.department}
                     onChange={handleEditInputChange}
-                    className={`mt-1 block w-full border ${editValidationErrors.department ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
+                    className={`mt-1 block w-full shadow-sm py-2 px-3 rounded-md ${
+                      editValidationErrors.department 
+                        ? 'border-red-500' 
+                        : theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
+                    } focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
                   >
                     {collegeInfo.departments?.map((department) => (
                       <option key={department} value={department}>
@@ -837,27 +910,34 @@ function TeachersManagementPage() {
                     name="isLibrarian"
                     checked={editFacultyData.isLibrarian}
                     onChange={handleEditInputChange}
-                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                    className={`h-4 w-4 focus:ring-indigo-500 rounded ${
+                      theme === 'dark' ? 'bg-gray-700 border-gray-600 text-indigo-500' : 'border-gray-300 text-indigo-600'
+                    }`}
                   />
-                  <label htmlFor="isLibrarian" className="ml-2 block text-sm text-gray-900">
+                  <label htmlFor="isLibrarian" className={`ml-2 block text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
                     Assign as librarian
                   </label>
                 </div>
               </div>
 
-              <div className="px-6 py-4 bg-gray-50 text-right border-t border-gray-200">
+              <div className={`px-6 py-4 text-right border-t ${
+                theme === 'dark' ? 'bg-gray-900/50 border-gray-700' : 'bg-gray-50 border-gray-200'
+              }`}>
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mr-2"
+                  className={`inline-flex justify-center px-4 py-2 text-sm font-medium rounded-md mr-2 ${
+                    theme === 'dark'
+                      ? 'text-gray-300 bg-gray-700 border border-gray-600 hover:bg-gray-600'
+                      : 'text-gray-700 bg-white border border-gray-300 shadow-sm hover:bg-gray-50'
+                  } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className={`inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
+                  className={`inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {isSubmitting ? (
                     <>

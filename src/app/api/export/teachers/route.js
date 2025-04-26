@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getUserByFirebaseUid } from '@/services/userService';
 import College from '@/models/College';
-
+import UserModel from '@/models/User';
 // PDF generation library
 import PDFDocument from 'pdfkit';
 
@@ -39,7 +39,7 @@ export async function GET(request) {
     }
     
     // Get teachers for this college
-    const teachers = await getUserByFirebaseUid.model.find({
+    const teachers = await UserModel.find({
       collegeId: collegeId,
       role: { $in: ['faculty', 'librarian'] }
     }).sort({ department: 1, displayName: 1 });
@@ -100,6 +100,7 @@ export async function GET(request) {
       const doc = new PDFDocument({
         margin: 50,
         size: 'A4',
+        layout: 'landscape',
       });
       
       // Store PDF in memory instead of creating a file

@@ -69,6 +69,7 @@ export async function getNotes(filters = {}, page = 1, limit = 10) {
     // Get notes with pagination
     const notes = await Note.find(query)
       .populate('uploadedBy', 'displayName email')
+      .populate('class', 'name')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);

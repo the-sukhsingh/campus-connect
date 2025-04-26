@@ -3,11 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import Link from 'next/link';
 
 function EditAnnouncementPage({ params }) {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const router = useRouter();
   const unwrappedParams = React.use(params);
   const announcementId = unwrappedParams.id;

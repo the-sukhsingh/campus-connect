@@ -2,11 +2,13 @@
 
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 function StudentAttendancePage() {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const [summaryData, setSummaryData] = useState([]);
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +53,6 @@ function StudentAttendancePage() {
 
         const data = await response.json();
         setAttendanceRecords(data.attendanceRecords || []);
-        console.log('Attendance Records:', data.attendanceRecords);
       } catch (error) {
         console.error('Error fetching attendance records:', error);
         setError('Failed to load attendance records. Please try again later.');
@@ -76,9 +77,9 @@ function StudentAttendancePage() {
 
   // Get attendance percentage color
   const getPercentageColor = (percentage) => {
-    if (percentage >= 90) return 'text-green-600';
-    if (percentage >= 75) return 'text-yellow-600';
-    return 'text-red-600';
+    if (percentage >= 90) return theme === 'dark' ? 'text-green-400' : 'text-green-600';
+    if (percentage >= 75) return theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600';
+    return theme === 'dark' ? 'text-red-400' : 'text-red-600';
   };
 
   // Convert data to CSV format
@@ -105,11 +106,11 @@ function StudentAttendancePage() {
   };
 
   return (
-    <div className="p-6">
+    <div className={`p-4 md:p-6 min-h-svh transition-colors duration-200 ${theme === 'dark' ? 'bg-[var(--background)] text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold">My Attendance</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className={`text-2xl md:text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>My Attendance</h1>
+          <p className={`mt-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
             View and track your attendance records
           </p>
         </div>
@@ -117,7 +118,6 @@ function StudentAttendancePage() {
         <div className="flex gap-2">
           <button
             onClick={() => {
-              // Create CSV content directly from the attendance records
               const headers = [
                 { label: 'Date', key: 'date' },
                 { label: 'Class', key: 'class' },
@@ -125,7 +125,6 @@ function StudentAttendancePage() {
                 { label: 'Status', key: 'status' },
               ];
 
-              // Format records for CSV
               const records = attendanceRecords.map((record) => ({
                 date: formatDate(record.date),
                 class: `${record.class?.department || ''} (${record.class?.currentSemester || 1} of ${record.class?.totalSemesters || 8})`,
@@ -133,13 +132,14 @@ function StudentAttendancePage() {
                 status: record.status.charAt(0).toUpperCase() + record.status.slice(1),
               }));
 
-              // Generate CSV content
               const csvContent = convertToCSV(records, headers);
-
-              // Download the file
               downloadCSV(csvContent, 'my_attendance_records');
             }}
-            className="inline-flex items-center gap-1 bg-green-50 hover:bg-green-100 text-green-600 py-2 px-3 rounded border border-green-200 transition-colors"
+            className={`inline-flex items-center gap-1 py-2 px-3 rounded border transition-colors ${
+              theme === 'dark' 
+                ? 'bg-gray-800 hover:bg-gray-700 text-green-400 border-gray-700' 
+                : 'bg-green-50 hover:bg-green-100 text-green-600 border-green-200'
+            }`}
             title="Download as CSV"
           >
             <svg
@@ -160,13 +160,11 @@ function StudentAttendancePage() {
           </button>
           <button
             onClick={() => {
-              // Format records for PDF
               const filteredRecords = attendanceRecords.filter(
                 (record) =>
                   selectedSubject === 'All' || record.subject === selectedSubject
               );
 
-              // Get attendance summary
               const totalRecords = filteredRecords.length;
               const presentCount = filteredRecords.filter(
                 (record) => record.status === 'present'
@@ -184,7 +182,6 @@ function StudentAttendancePage() {
                     )
                   : 0;
 
-              // Create a printable page
               const printWindow = window.open('', '', 'height=600,width=800');
 
               printWindow.document.write(`
@@ -343,7 +340,6 @@ function StudentAttendancePage() {
                 </html>
               `);
 
-              // Print and close the window
               setTimeout(() => {
                 printWindow.document.close();
                 printWindow.focus();
@@ -351,7 +347,11 @@ function StudentAttendancePage() {
                 printWindow.close();
               }, 250);
             }}
-            className="inline-flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2 px-3 rounded border border-blue-200 transition-colors"
+            className={`inline-flex items-center gap-1 py-2 px-3 rounded border transition-colors ${
+              theme === 'dark' 
+                ? 'bg-gray-800 hover:bg-gray-700 text-blue-400 border-gray-700' 
+                : 'bg-blue-50 hover:bg-blue-100 text-blue-600 border-blue-200'
+            }`}
             title="Print PDF"
           >
             <svg
@@ -375,7 +375,11 @@ function StudentAttendancePage() {
 
       {error && (
         <div
-          className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6"
+          className={`border-l-4 p-4 mb-6 ${
+            theme === 'dark' 
+              ? 'bg-red-900/30 border-red-700 text-red-300' 
+              : 'bg-red-100 border-red-500 text-red-700'
+          }`}
           role="alert"
         >
           <p>{error}</p>
@@ -383,67 +387,71 @@ function StudentAttendancePage() {
       )}
 
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+        <div className="flex justify-center items-center">
+          <div className={`animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 ${
+            theme === 'dark' ? 'border-indigo-400' : 'border-indigo-500'
+          }`}></div>
         </div>
       ) : (
         <>
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {summaryData.map((item, index) => (
               <div
                 key={index}
                 onClick={() => setSelectedSubject(item.subject)}
-                className="bg-white shadow-md rounded-lg p-6 border border-gray-200 hover:shadow-lg transition-shadow duration-300"
+                className={`rounded-lg p-6 border transition-all duration-300 transform hover:scale-[1.02] cursor-pointer ${
+                  theme === 'dark' 
+                    ? 'bg-gray-800 hover:bg-gray-750 border-gray-700 shadow-lg shadow-black/20' 
+                    : 'bg-white hover:shadow-lg border-gray-200 shadow-md'
+                }`}
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="mb-4">
-                    <h3 className="text-xl font-semibold text-gray-800 mb-3">
+                    <h3 className={`text-xl font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
                       {item.subject}
                     </h3>
-                    <p className="text-sm text-gray-600 font-medium">
+                    <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                       {item.class.name} ({item.class.department})
                     </p>
                   </div>
 
                   <div className="text-center mb-6">
-                    <p className="text-sm text-gray-500 font-medium mb-2">
+                    <p className={`text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                       Attendance
                     </p>
-                    <p
-                      className={`text-3xl font-bold ${getPercentageColor(
-                        item.percentage
-                      )}`}
-                    >
+                    <p className={`text-3xl font-bold ${getPercentageColor(item.percentage)}`}>
                       {item.percentage}%
                     </p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg">
+                <div className={`grid grid-cols-3 gap-4 p-4 rounded-lg ${
+                  theme === 'dark' ? 'bg-[var(--background)]' : 'bg-gray-50'
+                }`}>
                   <div className="text-center">
-                    <p className="text-sm text-gray-500 font-medium mb-2">
+                    <p className={`text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                       Present
                     </p>
-                    <p className="text-xl font-bold text-green-600">
+                    <p className={`text-xl font-bold ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
                       {item.present}
                     </p>
                   </div>
 
                   <div className="text-center">
-                    <p className="text-sm text-gray-500 font-medium mb-2">
+                    <p className={`text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                       Absent
                     </p>
-                    <p className="text-xl font-bold text-red-600">
+                    <p className={`text-xl font-bold ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
                       {item.absent}
                     </p>
                   </div>
 
                   <div className="text-center">
-                    <p className="text-sm text-gray-500 font-medium mb-2">
+                    <p className={`text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                       Total
                     </p>
-                    <p className="text-xl font-bold text-blue-600">
+                    <p className={`text-xl font-bold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
                       {item.totalDays}
                     </p>
                   </div>
@@ -453,17 +461,21 @@ function StudentAttendancePage() {
           </div>
 
           {/* Detailed Attendance Records */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex justify-between">
-              <h2 className="text-lg font-semibold mb-4">
+          <div className={`rounded-lg p-6 ${
+            theme === 'dark' 
+              ? 'bg-gray-800 shadow-xl shadow-black/20 border border-gray-700' 
+              : 'bg-white shadow-md border border-gray-200'
+          }`}>
+            <div className="flex flex-col md:flex-row justify-between md:items-center mb-6">
+              <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-800'} mb-4 md:mb-0`}>
                 Detailed Attendance Records
               </h2>
 
               {/* Subject Filter Dropdown */}
-              <div className="mb-4 flex justify-end gap-4 items-center">
+              <div className="flex flex-col md:flex-row gap-2 md:items-center">
                 <label
                   htmlFor="subject-filter"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
                 >
                   Filter by Subject:
                 </label>
@@ -471,7 +483,11 @@ function StudentAttendancePage() {
                   id="subject-filter"
                   value={selectedSubject}
                   onChange={(e) => setSelectedSubject(e.target.value)}
-                  className="py-2 px-4 border block w-full md:w-64 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                  className={`py-2 px-4 border rounded-md w-full md:w-64 text-sm focus:ring-2 ${
+                    theme === 'dark'
+                      ? 'bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring-indigo-500/30'
+                      : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500/30'
+                  }`}
                 >
                   <option value="All">All Subjects</option>
                   {[
@@ -487,44 +503,58 @@ function StudentAttendancePage() {
               </div>
             </div>
             {attendanceRecords.length === 0 ? (
-              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-                <p className="text-sm text-yellow-700">
+              <div className={`border-l-4 p-4 ${
+                theme === 'dark' 
+                  ? 'bg-yellow-900/30 border-yellow-700/50 text-yellow-300' 
+                  : 'bg-yellow-50 border-yellow-400 text-yellow-700'
+              }`}>
+                <p className="text-sm">
                   No attendance records found. You may not have any recorded
                   attendance yet.
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto scrollbar-thin">
                 <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                  <thead className={theme === 'dark' ? 'bg-[var(--background)]' : 'bg-gray-50'}>
                     <tr>
                       <th
                         scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                          theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                        }`}
                       >
                         Date
                       </th>
                       <th
                         scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                          theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                        }`}
                       >
                         Class
                       </th>
                       <th
                         scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                          theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                        }`}
                       >
                         Subject
                       </th>
                       <th
                         scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                          theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                        }`}
                       >
                         Status
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className={`divide-y ${
+                    theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'
+                  }`}>
                     {attendanceRecords
                       .filter(
                         (record) =>
@@ -532,28 +562,40 @@ function StudentAttendancePage() {
                           record.subject === selectedSubject
                       )
                       .map((record, index) => (
-                        <tr key={index}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <tr key={index} className={theme === 'dark' ? 'hover:bg-gray-750' : 'hover:bg-gray-50'}>
+                          <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                            theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                          }`}>
                             {formatDate(record.date)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
+                            <div className={`text-sm ${
+                              theme === 'dark' ? 'text-gray-300' : 'text-gray-900'
+                            }`}>
                               {record.class?.department || ''} (
                               {record.class?.currentSemester || 1} of{' '}
                               {record.class?.totalSemesters || 8})
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                            theme === 'dark' ? 'text-gray-300' : 'text-gray-900'
+                          }`}>
                             {record.subject}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
                                 record.status === 'present'
-                                  ? 'bg-green-100 text-green-800 border-green-300'
+                                  ? theme === 'dark' 
+                                    ? 'bg-green-900/50 text-green-300 border border-green-700/50' 
+                                    : 'bg-green-100 text-green-800 border border-green-300'
                                   : record.status === 'absent'
-                                  ? 'bg-red-100 text-red-800 border-red-300'
-                                  : 'bg-yellow-100 text-yellow-800 border-yellow-300'
+                                  ? theme === 'dark'
+                                    ? 'bg-red-900/50 text-red-300 border border-red-700/50'
+                                    : 'bg-red-100 text-red-800 border border-red-300'
+                                  : theme === 'dark'
+                                    ? 'bg-yellow-900/50 text-yellow-300 border border-yellow-700/50'
+                                    : 'bg-yellow-100 text-yellow-800 border border-yellow-300'
                               }`}
                             >
                               {record.status.charAt(0).toUpperCase() +
