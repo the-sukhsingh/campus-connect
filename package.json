@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "clean-build": "rm -rf .next && next build",
+    "clean-windows": "if exist .next rmdir /s /q .next && next build",
     "start": "next start",
     "lint": "next lint",
     "update-firebase-config": "node scripts/update-firebase-config.js"

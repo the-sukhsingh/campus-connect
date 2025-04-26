@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect, useRef } from 'react';
-import { onMessageListener, initializeMessaging } from '@/config/firebase';
 import { useAuth } from '@/context/AuthContext';
 import { useNotifications } from '@/context/NotificationContext';
 import { useTheme } from '@/context/ThemeContext';
@@ -10,13 +9,33 @@ export default function NotificationDisplay() {
   const { addNotification } = useNotifications();
   const { theme } = useTheme();
   const [tempNotifications, setTempNotifications] = useState([]);
+  const [isClient, setIsClient] = useState(false);
   // Use useRef instead of state to track IDs across renders
   const processedNotificationIds = useRef(new Set());
   // Store timestamps for each processed notification to allow reprocessing after a certain time
   const notificationTimestamps = useRef(new Map());
+  
+  // Safely import Firebase only on the client side
+  const [firebase, setFirebase] = useState(null);
+
+  // Ensure we're on the client before accessing browser APIs
+  useEffect(() => {
+    setIsClient(true);
+    // Dynamically import Firebase to avoid SSR issues
+    import('@/config/firebase')
+      .then(module => {
+        setFirebase({
+          onMessageListener: module.onMessageListener,
+          initializeMessaging: module.initializeMessaging
+        });
+      })
+      .catch(err => {
+        console.error("Failed to load firebase module:", err);
+      });
+  }, []);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isClient || !firebase) return;
 
     console.log('Initializing notification display for user:', user.uid);
 
@@ -81,25 +100,27 @@ export default function NotificationDisplay() {
     // Check for stored notifications from background messages
     const checkForStoredNotifications = () => {
       try {
-        // First try to get notifications from localStorage
-        const storedNotifications = localStorage.getItem('backgroundNotifications');
-        console.log('Checking localStorage for stored notifications:', storedNotifications);
-        if (storedNotifications) {
-          const parsedNotifications = JSON.parse(storedNotifications);
-          if (Array.isArray(parsedNotifications) && parsedNotifications.length > 0) {
-            console.log(`Found ${parsedNotifications.length} stored notifications in localStorage`);
-            
-            // Process stored notifications
-            parsedNotifications.forEach(notification => {
-              processNotification(notification);
-            });
-            
-            localStorage.removeItem('backgroundNotifications');
+        if (typeof localStorage !== 'undefined') {
+          // First try to get notifications from localStorage
+          const storedNotifications = localStorage.getItem('backgroundNotifications');
+          console.log('Checking localStorage for stored notifications:', storedNotifications);
+          if (storedNotifications) {
+            const parsedNotifications = JSON.parse(storedNotifications);
+            if (Array.isArray(parsedNotifications) && parsedNotifications.length > 0) {
+              console.log(`Found ${parsedNotifications.length} stored notifications in localStorage`);
+              
+              // Process stored notifications
+              parsedNotifications.forEach(notification => {
+                processNotification(notification);
+              });
+              
+              localStorage.removeItem('backgroundNotifications');
+            }
           }
         }
         
-        // Then check for any notifications in IndexedDB via service worker
-        if (navigator.serviceWorker.controller) {
+        // Check for service worker support
+        if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
           console.log('Requesting notification sync from service worker');
           navigator.serviceWorker.controller.postMessage({
             type: 'REQUEST_NOTIFICATION_SYNC'
@@ -112,7 +133,7 @@ export default function NotificationDisplay() {
 
     // Setup message listener for foreground messages
     const setupMessageListener = () => {
-      onMessageListener()
+      firebase.onMessageListener()
         .then((payload) => {
           console.log('Received foreground message via Firebase:', payload);
           if (payload?.notification) {
@@ -143,7 +164,7 @@ export default function NotificationDisplay() {
     // Initialize messaging and set up event listeners
     const initNotifications = async () => {
       try {
-        await initializeMessaging();
+        await firebase.initializeMessaging();
         
         // Check for notifications that were received while the app was in the background
         checkForStoredNotifications();
@@ -152,7 +173,7 @@ export default function NotificationDisplay() {
         setupMessageListener();
         
         // Listen for the "notificationreceived" event from the service worker
-        if ('serviceWorker' in navigator && 'BroadcastChannel' in window) {
+        if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'BroadcastChannel' in window) {
           try {
             console.log('Setting up BroadcastChannel for notifications');
             const channel = new BroadcastChannel('notifications-channel');
@@ -204,7 +225,7 @@ export default function NotificationDisplay() {
       notificationTimestamps.current.clear();
     };
 
-  }, [user, addNotification]);
+  }, [user, addNotification, isClient, firebase]);
 
   // Handle notification click
   const handleNotificationClick = (id, url) => {

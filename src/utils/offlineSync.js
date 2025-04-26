@@ -9,33 +9,57 @@ const DB_NAME = 'offlineSync';
 const DB_VERSION = 1;
 const SYNC_QUEUE_STORE = 'syncQueue';
 
+// Check if running in browser environment
+const isBrowser = typeof window !== 'undefined';
+
 /**
  * Open the sync database
  * @returns {Promise<IDBDatabase>} The database instance
  */
 const openSyncDB = () => {
+  if (!isBrowser) {
+    return Promise.reject(new Error('IndexedDB not available - not in browser context'));
+  }
+
+  // Safety check for IndexedDB
+  if (typeof indexedDB === 'undefined') {
+    return Promise.reject(new Error('IndexedDB not supported in this browser'));
+  }
+
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-    
-    request.onupgradeneeded = (event) => {
-      const db = event.target.result;
-      if (!db.objectStoreNames.contains(SYNC_QUEUE_STORE)) {
-        db.createObjectStore(SYNC_QUEUE_STORE, { 
-          keyPath: 'id',
-          autoIncrement: true 
-        });
-      }
-    };
-    
-    request.onsuccess = (event) => {
-      resolve(event.target.result);
-    };
-    
-    request.onerror = (event) => {
-      console.error('Error opening sync database:', event.target.error);
-      reject(event.target.error);
-    };
+    try {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains(SYNC_QUEUE_STORE)) {
+          db.createObjectStore(SYNC_QUEUE_STORE, { 
+            keyPath: 'id',
+            autoIncrement: true 
+          });
+        }
+      };
+      
+      request.onsuccess = (event) => {
+        resolve(event.target.result);
+      };
+      
+      request.onerror = (event) => {
+        console.error('Error opening sync database:', event.target.error);
+        reject(event.target.error);
+      };
+    } catch (error) {
+      reject(error);
+    }
   });
+};
+
+/**
+ * Safe wrapper to check if we're in a browser with IndexedDB support
+ * @returns {boolean}
+ */
+const canUseIndexedDB = () => {
+  return isBrowser && typeof indexedDB !== 'undefined';
 };
 
 /**
@@ -48,6 +72,11 @@ const openSyncDB = () => {
  * @returns {Promise<number>} The ID of the queued operation
  */
 export const queueSyncOperation = async (url, method, data, entityType) => {
+  if (!canUseIndexedDB()) {
+    console.warn('[OfflineSync] Cannot queue sync operation - IndexedDB not available');
+    return -1;
+  }
+  
   try {
     const db = await openSyncDB();
     const tx = db.transaction(SYNC_QUEUE_STORE, 'readwrite');
@@ -71,7 +100,7 @@ export const queueSyncOperation = async (url, method, data, entityType) => {
         console.log(`[OfflineSync] Operation queued: ${method} ${url}`);
         
         // Register for sync if supported
-        if ('serviceWorker' in navigator && 'SyncManager' in window) {
+        if (isBrowser && 'serviceWorker' in navigator && 'SyncManager' in window) {
           navigator.serviceWorker.ready.then(registration => {
             registration.sync.register('sync-operations');
           }).catch(err => {
@@ -86,8 +115,8 @@ export const queueSyncOperation = async (url, method, data, entityType) => {
       };
     });
   } catch (error) {
-    console.error('Failed to queue sync operation:', error);
-    throw error;
+    console.error('[OfflineSync] Failed to queue sync operation:', error);
+    return -1;
   }
 };
 
@@ -96,6 +125,11 @@ export const queueSyncOperation = async (url, method, data, entityType) => {
  * @returns {Promise<Array>} Results of the sync operations
  */
 export const processSyncQueue = async () => {
+  if (!canUseIndexedDB()) {
+    console.warn('[OfflineSync] Cannot process sync queue - IndexedDB not available');
+    return [];
+  }
+  
   try {
     const db = await openSyncDB();
     const tx = db.transaction(SYNC_QUEUE_STORE, 'readwrite');
@@ -162,8 +196,8 @@ export const processSyncQueue = async () => {
       };
     });
   } catch (error) {
-    console.error('Failed to process sync queue:', error);
-    throw error;
+    console.error('[OfflineSync] Failed to process sync queue:', error);
+    return [];
   }
 };
 
@@ -173,22 +207,31 @@ export const processSyncQueue = async () => {
  * @returns {Promise<void>}
  */
 const updateSyncOperation = async (operation) => {
-  const db = await openSyncDB();
-  const tx = db.transaction(SYNC_QUEUE_STORE, 'readwrite');
-  const store = tx.objectStore(SYNC_QUEUE_STORE);
+  if (!canUseIndexedDB()) {
+    return Promise.reject(new Error('IndexedDB not available'));
+  }
   
-  return new Promise((resolve, reject) => {
-    const request = store.put(operation);
+  try {
+    const db = await openSyncDB();
+    const tx = db.transaction(SYNC_QUEUE_STORE, 'readwrite');
+    const store = tx.objectStore(SYNC_QUEUE_STORE);
     
-    request.onsuccess = () => {
-      resolve();
-    };
-    
-    request.onerror = (event) => {
-      console.error('Error updating sync operation:', event.target.error);
-      reject(event.target.error);
-    };
-  });
+    return new Promise((resolve, reject) => {
+      const request = store.put(operation);
+      
+      request.onsuccess = () => {
+        resolve();
+      };
+      
+      request.onerror = (event) => {
+        console.error('Error updating sync operation:', event.target.error);
+        reject(event.target.error);
+      };
+    });
+  } catch (error) {
+    console.error('[OfflineSync] Error updating sync operation:', error);
+    return Promise.reject(error);
+  }
 };
 
 /**
@@ -196,6 +239,11 @@ const updateSyncOperation = async (operation) => {
  * @returns {Promise<number>} Number of operations cleaned
  */
 export const cleanupSyncQueue = async () => {
+  if (!canUseIndexedDB()) {
+    console.warn('[OfflineSync] Cannot clean up sync queue - IndexedDB not available');
+    return 0;
+  }
+  
   try {
     const db = await openSyncDB();
     const tx = db.transaction(SYNC_QUEUE_STORE, 'readwrite');
@@ -226,8 +274,8 @@ export const cleanupSyncQueue = async () => {
       };
     });
   } catch (error) {
-    console.error('Failed to clean up sync queue:', error);
-    throw error;
+    console.error('[OfflineSync] Failed to clean up sync queue:', error);
+    return 0;
   }
 };
 
@@ -236,6 +284,10 @@ export const cleanupSyncQueue = async () => {
  * @returns {Promise<number>} Count of pending operations
  */
 export const getPendingOperationsCount = async () => {
+  if (!canUseIndexedDB()) {
+    return 0;
+  }
+  
   try {
     const db = await openSyncDB();
     const tx = db.transaction(SYNC_QUEUE_STORE, 'readonly');
@@ -254,7 +306,7 @@ export const getPendingOperationsCount = async () => {
       };
     });
   } catch (error) {
-    console.error('Failed to count pending operations:', error);
+    console.error('[OfflineSync] Failed to count pending operations:', error);
     return 0;
   }
 };
@@ -263,12 +315,14 @@ export const getPendingOperationsCount = async () => {
  * Initialize background sync when online
  */
 export const initBackgroundSync = () => {
-  if (typeof window === 'undefined') return;
+  if (!isBrowser) {
+    return () => {}; // Return no-op cleanup function for SSR
+  }
 
   let syncInProgress = false;
 
   const handleOnline = async () => {
-    if (syncInProgress) return;
+    if (syncInProgress || !canUseIndexedDB()) return;
     
     console.log('[OfflineSync] Online detected, processing sync queue');
     syncInProgress = true;
@@ -313,6 +367,15 @@ export const initBackgroundSync = () => {
  * @returns {Promise<any>} The response data
  */
 export const fetchWithOfflineSupport = async (url, options = {}) => {
+  if (!isBrowser) {
+    // In server context, just do a regular fetch
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      throw new Error(`Server responded with ${response.status}`);
+    }
+    return response.json();
+  }
+
   const isOnline = navigator.onLine;
   
   if (isOnline) {
@@ -325,8 +388,8 @@ export const fetchWithOfflineSupport = async (url, options = {}) => {
       
       const data = await response.json();
       
-      // Store in offline cache if it's a GET request
-      if (options.method === 'GET' || !options.method) {
+      // Store in offline cache if it's a GET request and IndexedDB is available
+      if ((options.method === 'GET' || !options.method) && canUseIndexedDB()) {
         try {
           await storeOfflineData(url, data);
         } catch (cacheError) {
@@ -336,46 +399,50 @@ export const fetchWithOfflineSupport = async (url, options = {}) => {
       
       return data;
     } catch (error) {
-      // Try to get from offline cache
-      try {
-        const offlineData = await getOfflineData(url);
-        if (offlineData) {
-          console.log(`[OfflineSync] Using cached data for ${url}`);
-          return { ...offlineData, fromCache: true };
+      // Try to get from offline cache if IndexedDB is available
+      if (canUseIndexedDB()) {
+        try {
+          const offlineData = await getOfflineData(url);
+          if (offlineData) {
+            console.log(`[OfflineSync] Using cached data for ${url}`);
+            return { ...offlineData, fromCache: true };
+          }
+        } catch (cacheError) {
+          console.error('[OfflineSync] Error getting offline data:', cacheError);
         }
-      } catch (cacheError) {
-        console.error('[OfflineSync] Error getting offline data:', cacheError);
       }
       
       throw error;
     }
   } else {
-    // Offline: Try to get from cache
-    const offlineData = await getOfflineData(url);
-    
-    if (offlineData) {
-      console.log(`[OfflineSync] Using cached data for ${url} (offline)`);
-      return { ...offlineData, fromCache: true };
-    }
-    
-    // If it's not a GET request, queue it for later
-    if (options.method && options.method !== 'GET') {
-      const urlParts = url.split('/');
-      const entityType = urlParts[urlParts.length - 2] || 'unknown';
+    // Offline: Try to get from cache if IndexedDB is available
+    if (canUseIndexedDB()) {
+      const offlineData = await getOfflineData(url);
       
-      const operationId = await queueSyncOperation(
-        url,
-        options.method,
-        options.body ? JSON.parse(options.body) : undefined,
-        entityType
-      );
+      if (offlineData) {
+        console.log(`[OfflineSync] Using cached data for ${url} (offline)`);
+        return { ...offlineData, fromCache: true };
+      }
       
-      return { 
-        success: true, 
-        queued: true, 
-        operationId,
-        message: 'Your changes have been saved and will be synchronized when you are back online.' 
-      };
+      // If it's not a GET request, queue it for later
+      if (options.method && options.method !== 'GET') {
+        const urlParts = url.split('/');
+        const entityType = urlParts[urlParts.length - 2] || 'unknown';
+        
+        const operationId = await queueSyncOperation(
+          url,
+          options.method,
+          options.body ? JSON.parse(options.body) : undefined,
+          entityType
+        );
+        
+        return { 
+          success: true, 
+          queued: true, 
+          operationId,
+          message: 'Your changes have been saved and will be synchronized when you are back online.' 
+        };
+      }
     }
     
     throw new Error('No cached data available and you are offline');
@@ -389,60 +456,81 @@ export const fetchWithOfflineSupport = async (url, options = {}) => {
  * @returns {Promise<void>}
  */
 export const storeOfflineData = async (key, data) => {
+  if (!canUseIndexedDB()) {
+    return Promise.reject(new Error('IndexedDB not available'));
+  }
+  
   try {
     const db = await openSyncDB();
-    const tx = db.transaction('offlineData', 'readwrite');
-    const store = tx.objectStore('offlineData');
     
-    return new Promise((resolve, reject) => {
-      const request = store.put({
-        key,
-        data,
-        timestamp: new Date().toISOString()
+    // Check if offlineData store exists
+    if (!db.objectStoreNames.contains('offlineData')) {
+      // Close current connection to allow upgrade
+      db.close();
+      
+      // Reopen with version upgrade to create the store
+      const upgradedDb = await new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION + 1);
+        
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains('offlineData')) {
+            db.createObjectStore('offlineData', { keyPath: 'key' });
+          }
+        };
+        
+        request.onsuccess = (event) => {
+          resolve(event.target.result);
+        };
+        
+        request.onerror = (event) => {
+          reject(event.target.error);
+        };
       });
       
-      request.onsuccess = () => {
-        resolve();
-      };
+      // Now use the upgraded DB
+      const tx = upgradedDb.transaction('offlineData', 'readwrite');
+      const store = tx.objectStore('offlineData');
       
-      request.onerror = (event) => {
-        reject(event.target.error);
-      };
-    });
-  } catch (error) {
-    console.error('Error storing offline data:', error);
-    
-    // If the store doesn't exist, create it and try again
-    if (error.name === 'NotFoundError') {
-      const db = await openSyncDB();
-      
-      if (!db.objectStoreNames.contains('offlineData')) {
-        db.close();
-        
-        const dbUpgrade = await new Promise((resolve, reject) => {
-          const request = indexedDB.open(DB_NAME, DB_VERSION + 1);
-          
-          request.onupgradeneeded = (event) => {
-            const db = event.target.result;
-            if (!db.objectStoreNames.contains('offlineData')) {
-              db.createObjectStore('offlineData', { keyPath: 'key' });
-            }
-          };
-          
-          request.onsuccess = (event) => {
-            resolve(event.target.result);
-          };
-          
-          request.onerror = (event) => {
-            reject(event.target.error);
-          };
+      return new Promise((resolve, reject) => {
+        const request = store.put({
+          key,
+          data,
+          timestamp: new Date().toISOString()
         });
         
-        return storeOfflineData(key, data);
-      }
+        request.onsuccess = () => {
+          resolve();
+        };
+        
+        request.onerror = (event) => {
+          reject(event.target.error);
+        };
+      });
+    } else {
+      // Store exists, proceed normally
+      const tx = db.transaction('offlineData', 'readwrite');
+      const store = tx.objectStore('offlineData');
+      
+      return new Promise((resolve, reject) => {
+        const request = store.put({
+          key,
+          data,
+          timestamp: new Date().toISOString()
+        });
+        
+        request.onsuccess = () => {
+          resolve();
+        };
+        
+        request.onerror = (event) => {
+          reject(event.target.error);
+        };
+      });
     }
-    
-    throw error;
+  } catch (error) {
+    console.error('[OfflineSync] Error storing offline data:', error);
+    return Promise.reject(error);
   }
 };
 
@@ -452,6 +540,10 @@ export const storeOfflineData = async (key, data) => {
  * @returns {Promise<any>} The cached data
  */
 export const getOfflineData = async (key) => {
+  if (!canUseIndexedDB()) {
+    return null;
+  }
+  
   try {
     const db = await openSyncDB();
     
@@ -474,7 +566,7 @@ export const getOfflineData = async (key) => {
       };
     });
   } catch (error) {
-    console.error('Error getting offline data:', error);
+    console.error('[OfflineSync] Error getting offline data:', error);
     return null;
   }
 };

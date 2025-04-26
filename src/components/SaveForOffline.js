@@ -5,6 +5,10 @@ import { Button, Tooltip, notification } from 'antd';
 import { DownloadOutlined, CheckOutlined, LoadingOutlined, CloudDownloadOutlined } from '@ant-design/icons';
 import useNetwork from '@/utils/useNetwork';
 
+// Check if we're running in a browser context
+const isBrowser = typeof window !== 'undefined';
+const isIndexedDBSupported = isBrowser && typeof indexedDB !== 'undefined';
+
 /**
  * SaveForOffline component allows users to save content for offline access
  * @param {Object} props
@@ -18,15 +22,19 @@ import useNetwork from '@/utils/useNetwork';
 const SaveForOffline = ({ id, type, data, url, onSuccess, onError }) => {
   const [isSaved, setIsSaved] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [initialized, setInitialized] = useState(false);
   const { isOnline } = useNetwork();
-
+  
+  // First, ensure we're in browser context
   useEffect(() => {
-    // Check if this content is already saved for offline use
-    checkIfSaved();
+    if (isIndexedDBSupported) {
+      setInitialized(true);
+      checkIfSaved();
+    }
   }, [id, type]);
 
   const checkIfSaved = async () => {
-    if (typeof window === 'undefined') return;
+    if (!isIndexedDBSupported) return;
 
     try {
       // Open IndexedDB to check if this content exists
@@ -60,41 +68,60 @@ const SaveForOffline = ({ id, type, data, url, onSuccess, onError }) => {
   };
 
   const openOfflineDB = () => {
+    if (!isIndexedDBSupported) {
+      return Promise.reject(new Error('IndexedDB not available'));
+    }
+    
     return new Promise((resolve, reject) => {
-      const request = window.indexedDB.open('offlineContent', 1);
-      
-      request.onupgradeneeded = (event) => {
-        const db = event.target.result;
+      try {
+        const request = indexedDB.open('offlineContent', 1);
         
-        // Create object stores for different content types if they don't exist
-        if (!db.objectStoreNames.contains('offlineNotes')) {
-          db.createObjectStore('offlineNotes', { keyPath: 'id' });
-        }
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result;
+          
+          // Create object stores for different content types if they don't exist
+          if (!db.objectStoreNames.contains('offlineNotes')) {
+            db.createObjectStore('offlineNotes', { keyPath: 'id' });
+          }
+          
+          if (!db.objectStoreNames.contains('offlineBooks')) {
+            db.createObjectStore('offlineBooks', { keyPath: 'id' });
+          }
+          
+          if (!db.objectStoreNames.contains('offlineDocuments')) {
+            db.createObjectStore('offlineDocuments', { keyPath: 'id' });
+          }
+          
+          if (!db.objectStoreNames.contains('offlineContent')) {
+            db.createObjectStore('offlineContent', { keyPath: 'id' });
+          }
+        };
         
-        if (!db.objectStoreNames.contains('offlineBooks')) {
-          db.createObjectStore('offlineBooks', { keyPath: 'id' });
-        }
+        request.onsuccess = (event) => {
+          resolve(event.target.result);
+        };
         
-        if (!db.objectStoreNames.contains('offlineDocuments')) {
-          db.createObjectStore('offlineDocuments', { keyPath: 'id' });
-        }
-        
-        if (!db.objectStoreNames.contains('offlineContent')) {
-          db.createObjectStore('offlineContent', { keyPath: 'id' });
-        }
-      };
-      
-      request.onsuccess = (event) => {
-        resolve(event.target.result);
-      };
-      
-      request.onerror = (event) => {
-        reject(event.target.error);
-      };
+        request.onerror = (event) => {
+          console.error('Error opening IndexedDB:', event.target.error);
+          reject(event.target.error);
+        };
+      } catch (error) {
+        console.error('Exception when opening IndexedDB:', error);
+        reject(error);
+      }
     });
   };
 
   const saveForOffline = async () => {
+    if (!isIndexedDBSupported) {
+      notification.error({
+        message: 'Not Available',
+        description: 'Offline storage is not supported in your browser',
+      });
+      if (onError) onError('IndexedDB not supported');
+      return;
+    }
+    
     if (!id || !data) {
       notification.error({
         message: 'Error',
@@ -167,6 +194,10 @@ const SaveForOffline = ({ id, type, data, url, onSuccess, onError }) => {
   };
 
   const removeFromOffline = async () => {
+    if (!isIndexedDBSupported) {
+      return;
+    }
+    
     setIsProcessing(true);
     
     try {
@@ -198,6 +229,11 @@ const SaveForOffline = ({ id, type, data, url, onSuccess, onError }) => {
       setIsProcessing(false);
     }
   };
+  
+  // If IndexedDB isn't supported, don't render the component
+  if (!initialized) {
+    return null;
+  }
 
   return (
     <Tooltip title={isSaved ? "Remove from offline access" : "Save for offline access"}>

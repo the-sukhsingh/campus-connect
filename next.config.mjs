@@ -15,6 +15,12 @@ const nextConfig = {
       // },
     ];
   },
+  // Optimize chunk loading and prevent 404s
+  poweredByHeader: false,
+  reactStrictMode: true,
+
+  // Add output configuration to stabilize chunk filenames
+  output: 'standalone',
 };
 
 export default nextConfig;

@@ -87,6 +87,8 @@ export default function ClientNotifications() {
           });
         });
       }
+    } else {
+      console.error('Service workers are not supported in this browser.');
     }
   }, [addNotification]);
 

@@ -102,13 +102,14 @@ export default function NoteList({ filters = {}, showActions = false, notes: pro
 
   // Get file type icon
   const getFileIcon = (fileType) => {
+    console.log("File type:", fileType);
     if (fileType.includes('pdf')) {
       return (
         <svg className={`w-6 h-6 ${theme === 'dark' ? 'text-red-400' : 'text-red-500'} transition-colors duration-300`} fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
         </svg>
       );
-    } else if (fileType.includes('word') || fileType.includes('doc')) {
+    } else if (fileType.includes('word') || fileType.includes('docx') ) {
       return (
         <svg className={`w-6 h-6 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-500'} transition-colors duration-300`} fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 3a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm0 3a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm0 3a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1z" clipRule="evenodd" />
@@ -120,7 +121,14 @@ export default function NoteList({ filters = {}, showActions = false, notes: pro
           <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
         </svg>
       );
-    } else {
+    } else if (fileType.includes('image') || fileType.includes('png') || fileType.includes('jpg') || fileType.includes('jpeg')) {
+      return (
+        <svg className={`w-6 h-6 ${theme === 'dark' ? 'text-green-400' : 'text-green-500'} transition-colors duration-300`} fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+        </svg>
+      );
+      }
+     else {
       return (
         <svg className={`w-6 h-6 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} transition-colors duration-300`} fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
