@@ -1,6 +1,7 @@
 import dbConnect from '@/lib/dbConnect';
 import mongoose from 'mongoose';
 import Event from '@/models/Event';
+import { cancelBooking } from './roomBookingService';
 
 // Get all events for a specific college
 export async function getAllEvents(collegeId) {
@@ -70,6 +71,32 @@ export async function getEventById(eventId, collegeId) {
   }
 }
 
+// Get Upcoming events for a specific college
+
+export async function getUpcomingEvents(collegeId) {
+  try {
+    await dbConnect();
+    // Ensure Event model is available
+    const EventModel = mongoose.models.Event || Event;
+
+    const events = await EventModel.find({ 
+      collegeId: collegeId,
+      date: { $gte: new Date() }
+    })
+    .populate({
+      path: 'organizer',
+      select: 'displayName email role'
+    })
+    .sort({ date: 1 });
+
+    return events;
+  } catch (error) {
+    console.error('Error fetching upcoming events:', error);
+    throw error;
+  }
+}
+
+
 // Create a new event
 export async function createEvent(eventData) {
   try {
@@ -112,7 +139,13 @@ export async function deleteEvent(eventId) {
   try {
     await dbConnect();
     const EventModel = mongoose.models.Event || Event;
+    const event = await EventModel.findById(eventId);
     const result = await EventModel.findByIdAndDelete(eventId);
+
+    // Check if any room is associated with the event
+    await cancelBooking(event.roomId)
+
+
     return !!result;
   } catch (error) {
     console.error('Error deleting event:', error);

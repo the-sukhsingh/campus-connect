@@ -1,47 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+// import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
+// import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
+// import Image from 'next/image';
+import { BookOpen } from 'lucide-react';
 
 export default function AuthPage() {
   const [activeCard, setActiveCard] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
-  const [particles, setParticles] = useState([]);
-  const router = useRouter();
-  
-  // Create floating particles in the background
-  useEffect(() => {
-    const particleCount = 40;
-    const newParticles = Array.from({ length: particleCount }, () => ({
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      size: Math.random() * 4 + 1,
-      speedX: (Math.random() - 0.5) * 0.3,
-      speedY: (Math.random() - 0.5) * 0.3,
-      opacity: Math.random() * 0.5 + 0.1,
-      color: [
-        'bg-slate-400', 'bg-slate-300', 'bg-blue-300',
-        'bg-indigo-300', 'bg-emerald-300', 'bg-gray-300'
-      ][Math.floor(Math.random() * 6)]
-    }));
-    
-    setParticles(newParticles);
-    
-    const interval = setInterval(() => {
-      setParticles(prevParticles => 
-        prevParticles.map(particle => ({
-          ...particle,
-          x: ((particle.x + particle.speedX + 100) % 100),
-          y: ((particle.y + particle.speedY + 100) % 100),
-        }))
-      );
-    }, 50);
-    
-    return () => clearInterval(interval);
-  }, []);
+  const { theme } = useTheme();
+  // const router = useRouter();
   
   // Rotate through cards for automatic showcase animation
   useEffect(() => {
@@ -51,7 +22,7 @@ export default function AuthPage() {
     const interval = setInterval(() => {
       setActiveCard(roles[currentIndex]);
       currentIndex = (currentIndex + 1) % roles.length;
-    }, 2000);
+    }, 3000);
     
     // Initial setting
     setActiveCard('student');
@@ -73,7 +44,6 @@ export default function AuthPage() {
           <svg className="w-10 h-10 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 14l9-5-9-5-9 5 9 5z"></path>
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path>
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5"></path>
           </svg>
         );
       case 'faculty':
@@ -94,96 +64,114 @@ export default function AuthPage() {
   };
   
   const getRoleStyles = (role) => {
-    switch(role) {
-      case 'student':
-        return {
-          bg: 'from-indigo-500 to-indigo-700',
-          text: 'text-indigo-100',
-          highlight: 'text-indigo-200',
-          button: 'from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700'
-        };
-      case 'faculty':
-        return {
-          bg: 'from-emerald-500 to-emerald-700',
-          text: 'text-emerald-50',
-          highlight: 'text-emerald-200',
-          button: 'from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700'
-        };
-      case 'hod':
-        return {
-          bg: 'from-blue-500 to-blue-700',
-          text: 'text-blue-50',
-          highlight: 'text-blue-200',
-          button: 'from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'
-        };
-      default:
-        return {
-          bg: 'from-gray-500 to-gray-700',
-          text: 'text-gray-100',
-          highlight: 'text-gray-200',
-          button: 'from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700'
-        };
+    // Color schemes adjusted for both dark and light theme
+    if (theme === 'dark') {
+      switch(role) {
+        case 'student':
+          return {
+            bg: 'bg-gradient-to-r from-indigo-900 to-indigo-700',
+            text: 'text-indigo-100',
+            highlight: 'text-indigo-300',
+            button: 'bg-indigo-700 hover:bg-indigo-800',
+            border: 'border-indigo-600'
+          };
+        case 'faculty':
+          return {
+            bg: 'bg-gradient-to-r from-emerald-900 to-emerald-700',
+            text: 'text-emerald-100',
+            highlight: 'text-emerald-300',
+            button: 'bg-emerald-700 hover:bg-emerald-800',
+            border: 'border-emerald-600'
+          };
+        case 'hod':
+          return {
+            bg: 'bg-gradient-to-r from-blue-900 to-blue-700',
+            text: 'text-blue-100',
+            highlight: 'text-blue-300',
+            button: 'bg-blue-700 hover:bg-blue-800',
+            border: 'border-blue-600'
+          };
+      }
+    } else {
+      switch(role) {
+        case 'student':
+          return {
+            bg: 'bg-gradient-to-r from-indigo-100 to-indigo-200',
+            text: 'text-indigo-900',
+            highlight: 'text-indigo-700',
+            button: 'bg-indigo-600 hover:bg-indigo-700',
+            border: 'border-indigo-300'
+          };
+        case 'faculty':
+          return {
+            bg: 'bg-gradient-to-r from-emerald-100 to-emerald-200',
+            text: 'text-emerald-900',
+            highlight: 'text-emerald-700',
+            button: 'bg-emerald-600 hover:bg-emerald-700',
+            border: 'border-emerald-300'
+          };
+        case 'hod':
+          return {
+            bg: 'bg-gradient-to-r from-blue-100 to-blue-200',
+            text: 'text-blue-900',
+            highlight: 'text-blue-700',
+            button: 'bg-blue-600 hover:bg-blue-700',
+            border: 'border-blue-300'
+          };
+      }
     }
+    
+    // Default fallback
+    return {
+      bg: theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100',
+      text: theme === 'dark' ? 'text-gray-100' : 'text-gray-900',
+      highlight: theme === 'dark' ? 'text-gray-300' : 'text-gray-700',
+      button: theme === 'dark' ? 'bg-gray-700 hover:bg-gray-800' : 'bg-gray-600 hover:bg-gray-700',
+      border: theme === 'dark' ? 'border-gray-700' : 'border-gray-300'
+    };
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-100 to-slate-200 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Floating particles background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {particles.map((particle, i) => (
-          <div
-            key={i}
-            className={`absolute rounded-full ${particle.color}`}
-            style={{
-              left: `${particle.x}%`,
-              top: `${particle.y}%`,
-              width: `${particle.size}px`,
-              height: `${particle.size}px`,
-              opacity: particle.opacity,
-              transition: 'left 0.5s linear, top 0.5s linear'
-            }}
-          />
-        ))}
-        
-        {/* Subtle pattern overlay */}
-        <div className="absolute inset-0 bg-pattern opacity-5"></div>
-      </div>
+    <div className={`min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      {/* Classic paper texture background */}
+      <div className="absolute inset-0 opacity-5 paper-texture"></div>
 
       {/* Content */}
       <div className="z-10 w-full max-w-5xl">
         <div className="text-center mb-10">
-          <div className="inline-block rounded-full bg-white p-3 shadow-lg mb-5">
-            <svg className="w-12 h-12 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
+          <div className={`inline-flex items-center justify-center p-2 rounded-full ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-lg mb-6`}>
+            <div className="w-16 h-16 relative">
+              <BookOpen className={`w-16 h-16 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`} />
+            </div>
           </div>
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-slate-700 via-slate-800 to-slate-900 inline-block text-transparent bg-clip-text">
+          <h1 className={`font-serif text-4xl font-bold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
             GNDU Smart Campus
           </h1>
-          <p className="text-gray-600 text-lg max-w-xl mx-auto">
-            Welcome to the next generation campus management platform. Select your role to continue.
+          <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} text-lg max-w-xl mx-auto`}>
+            Welcome to the next generation campus management platform.
+            <span className="block mt-1 font-light italic">Select your role to continue.</span>
           </p>
         </div>
 
-        <div className="flex flex-col md:flex-row justify-center gap-5 md:gap-8 max-w-4xl mx-auto">
+        <div className="flex flex-col md:flex-row justify-center gap-6 md:gap-10 max-w-4xl mx-auto">
           {['student', 'faculty', 'hod'].map((role) => {
             const styles = getRoleStyles(role);
             
             return (
               <div 
                 key={role}
-                className={`w-full md:w-1/3 flex-1 bg-white rounded-2xl overflow-hidden backdrop-blur-sm bg-opacity-70 shadow-lg border border-gray-100 transition-all duration-500 transform ${getCardStyles(role)}`}
+                className={`w-full md:w-1/3 flex-1 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg overflow-hidden shadow-lg border ${styles.border} transition-all duration-500 transform ${getCardStyles(role)}`}
                 onMouseEnter={() => setHoveredCard(role)}
                 onMouseLeave={() => setHoveredCard(null)}
               >
-                <div className={`bg-gradient-to-br ${styles.bg} p-6 transition-all duration-300`}>
+                <div className={`${styles.bg} p-6 transition-all duration-300`}>
                   <div className={`text-center ${styles.text}`}>
                     {getRoleIcon(role)}
-                    <h2 className="text-xl font-semibold">{role.charAt(0).toUpperCase() + role.slice(1)} Portal</h2>
-                    <p className={`text-sm opacity-90 mt-1 ${styles.highlight}`}>
-                      {role === 'student' && "Access courses, assignments, and campus resources"}
-                      {role === 'faculty' && "Manage classes, grades, and student communications"}
-                      {role === 'hod' && "Oversee department operations and performance"}
+                    <h2 className="text-xl font-serif font-semibold capitalize">{role} Portal</h2>
+                    <p className={`text-sm mt-1 ${styles.highlight}`}>
+                      {role === 'student' && "Access courses & campus resources"}
+                      {role === 'faculty' && "Manage classes & communications"}
+                      {role === 'hod' && "Oversee department operations"}
                     </p>
                   </div>
                 </div>
@@ -191,7 +179,7 @@ export default function AuthPage() {
                 <div className="p-5">
                   <Link 
                     href={`/auth/${role}`}
-                    className={`block w-full py-3 px-4 rounded-lg text-center text-white bg-gradient-to-r ${styles.button} transition-all duration-300 transform hover:scale-[1.02] shadow-md font-medium`}
+                    className={`block w-full py-3 px-4 rounded-md text-center text-white ${styles.button} transition-all duration-300 transform hover:scale-[1.02] shadow-md font-medium`}
                   >
                     {role.charAt(0).toUpperCase() + role.slice(1)} Login
                   </Link>
@@ -201,19 +189,21 @@ export default function AuthPage() {
           })}
         </div>
         
-        <div className="mt-12 text-center text-gray-600">
-          <p className="text-sm">
+        <div className="mt-12 text-center">
+          <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
             Choose your role to access personalized campus features
           </p>
-          <p className="mt-4 text-xs text-gray-500">
+          <p className={`mt-4 text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
             © {new Date().getFullYear()} GNDU Smart Campus | All rights reserved
           </p>
         </div>
       </div>
       
       <style jsx>{`
-        .bg-pattern {
-          background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        .paper-texture {
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%239C92AC' fill-opacity='0.4' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E");
+          background-repeat: repeat;
+          ${theme === 'dark' ? 'filter: invert(0.8);' : ''}
         }
         
         @keyframes fadeIn {
@@ -223,7 +213,7 @@ export default function AuthPage() {
         
         @media (prefers-reduced-motion: no-preference) {
           .animate-fade-in {
-            animation: fadeIn 0.5s ease-out forwards;
+            animation: fadeIn 0.6s ease-out forwards;
           }
         }
       `}</style>

@@ -36,7 +36,7 @@ const RoomBookingSchema = new Schema({
   attendees: {
     type: Number,
     required: true,
-    min: 1,
+    min: 0,
   },
   status: {
     type: String,

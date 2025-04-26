@@ -235,7 +235,7 @@ function TeachersManagementPage() {
       // Show success message
       setMessage({
         type: 'success',
-        text: `Faculty account created successfully! An email with login instructions has been sent to ${newFacultyData.email}.`
+        text: `Faculty account created successfully!`
       });
 
       // Clear the message after 5 seconds
@@ -789,7 +789,9 @@ function TeachersManagementPage() {
                     </div>
                     <div className="ml-3">
                       <p className={`text-sm ${theme === 'dark' ? 'text-yellow-200' : 'text-yellow-700'}`}>
-                        A temporary password will be generated and sent to the faculty member&apos;s email address.
+                        A temporary password will be generated. <br />
+                        For Faculty accounts the password is faculty@123. <br />
+                        For Librarian accounts the password is librarian@123.
                       </p>
                     </div>
                   </div>

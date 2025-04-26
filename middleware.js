@@ -20,11 +20,15 @@ export function middleware(request) {
 
   // Get auth session from session cookie or server session
   const userSession = request.cookies.get('user-session')?.value;
-  
   // If no session but trying to access a protected route
   const isProtectedRoute = Object.keys(routePermissions).some(route => 
     request.nextUrl.pathname.startsWith(route)
   );
+
+  if(userSession && request.nextUrl.pathname === '/auth') {
+    // Redirect to dashboard if already authenticated and trying to access auth page
+    return NextResponse.redirect(new URL('/', request.url));
+  }
 
   if (!userSession && isProtectedRoute) {
     // Redirect to login page if not authenticated

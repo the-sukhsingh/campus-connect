@@ -42,6 +42,16 @@ export async function POST(req) {
       });
     }
     
+    // If user doesn't exist in database, only automatically create for HOD role
+    // For other roles (student, faculty), return a 404 error
+    if (role !== 'hod' && !data.forceCreate) {
+      return NextResponse.json({ 
+        success: false,
+        message: 'User not found',
+        code: 'user_not_found'
+      }, { status: 404 });
+    }
+    
     // Check if the user's email domain matches a college
     const college = email ? await isEmailFromCollege(email) : null;
 

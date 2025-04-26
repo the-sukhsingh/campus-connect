@@ -67,27 +67,48 @@ export async function GET(request) {
     
     // Return data based on requested format
     if (format === 'csv') {
+      const csvRows = [];
+      // const headers = [
+      //   { label: 'Name', key: 'name' },
+      //   { label: 'Roll No', key: 'rollNo' },
+      //   { label: 'Email', key: 'email' },
+      //   { label: 'Student ID', key: 'studentId' },
+      //   { label: 'Semester', key: 'currentSemester' },
+      //   { label: 'Department', key: 'department' },
+      //   { label: 'Joined On', key: 'joinedOn' }
+      // ];
+
       const headers = [
-        { label: 'Name', key: 'name' },
-        { label: 'Roll No', key: 'rollNo' },
-        { label: 'Email', key: 'email' },
-        { label: 'Student ID', key: 'studentId' },
-        { label: 'Semester', key: 'currentSemester' },
-        { label: 'Department', key: 'department' },
-        { label: 'Joined On', key: 'joinedOn' }
-      ];
+        "Name",
+        "Roll No",
+        "Email",
+        "Student ID",
+        "Semester",
+        "Department",
+        "Joined On"
+      ];  
+
+      csvRows.push(headers.join(',')); // Add headers to CSV rows
       
       // Create CSV content
-      let csvContent = headers.map(header => `"${header.label}"`).join(',') + '\\n';
+      // let csvContent = headers.map(header => `"${header.label}"`).join(',') + '\\n';
       
       exportData.students.forEach(student => {
-        const row = headers.map(header => {
-          const value = student[header.key] != null ? String(student[header.key]) : '';
-          return `"${value.replace(/"/g, '""')}"`;
-        }).join(',');
-        csvContent += row + '\\n';
+        const row = [
+          `"${student.name}"`, // Enclose in quotes to handle commas in names
+          `"${student.rollNo}"`, // Enclose in quotes to handle commas in roll numbers
+          `"${student.email}"`, // Enclose in quotes to handle commas in emails
+          `"${student.studentId}"`, // Enclose in quotes to handle commas in student IDs
+          student.currentSemester,
+          student.department,
+          student.joinedOn
+        ];
+        
+        csvRows.push(row.join(','));
       });
-      
+
+      const csvContent = csvRows.join('\n'); // Join with actual newlines, not escaped newlines
+      console.log('CSV Content:', csvContent); // Debugging line to check CSV content
       // Return CSV data
       return new Response(csvContent, {
         status: 200,
@@ -99,8 +120,10 @@ export async function GET(request) {
     } else if (format === 'pdf') {
       // For PDF generation, we'll use a stream
       const doc = new PDFDocument({
-        margin: 50,
+        margin: 25,
         size: 'A4',
+        layout: 'portrait',
+        font: "public/fonts/Helvetica.ttf"
       });
       
       // Store PDF in memory instead of creating a file
@@ -120,24 +143,24 @@ export async function GET(request) {
       const tableHeaders = ['Name', 'Roll No', 'Email', 'Student ID', 'Department'];
       
       // Calculate column widths (based on page width)
-      const pageWidth = doc.page.width - 100; // margins of 50 on each side
+      const pageWidth = doc.page.width - 50; // margins of 25 on each side
       const colWidths = [
-        pageWidth * 0.25, // Name
+        pageWidth * 0.20, // Name
         pageWidth * 0.15, // Roll No
-        pageWidth * 0.25, // Email
+        pageWidth * 0.35, // Email
         pageWidth * 0.15, // Student ID
-        pageWidth * 0.20  // Department
+        pageWidth * 0.15  // Department
       ];
       
-      let currentX = 50;
+      let currentX = 30;
       tableHeaders.forEach((header, i) => {
-        doc.font('Helvetica-Bold').text(header, currentX, tableTop);
+        doc.text(header, currentX, tableTop);
         currentX += colWidths[i];
       });
       
       // Draw header line
-      doc.moveTo(50, tableTop + 20)
-         .lineTo(doc.page.width - 50, tableTop + 20)
+      doc.moveTo(30, tableTop + 20)
+         .lineTo(doc.page.width - 20, tableTop + 20)
          .stroke();
       
       // Table rows
@@ -150,21 +173,21 @@ export async function GET(request) {
           yOffset = 50; // Reset y position
           
           // Repeat header on new page
-          currentX = 50;
+          currentX = 30;
           tableHeaders.forEach((header, j) => {
             doc.font('Helvetica-Bold').text(header, currentX, yOffset);
             currentX += colWidths[j];
           });
           
-          doc.moveTo(50, yOffset + 20)
-             .lineTo(doc.page.width - 50, yOffset + 20)
+          doc.moveTo(30, yOffset + 20)
+             .lineTo(doc.page.width - 20, yOffset + 20)
              .stroke();
           
           yOffset += 30;
         }
         
         // Add row data
-        currentX = 50;
+        currentX = 30;
         
         // Name
         doc.font('Helvetica').text(student.name, currentX, yOffset, {
@@ -178,14 +201,16 @@ export async function GET(request) {
         currentX += colWidths[1];
         
         // Email
-        doc.text(student.email, currentX, yOffset, {
+        doc.fillColor('blue').text(student.email, currentX, yOffset, {
           width: colWidths[2],
-          ellipsis: true
+          ellipsis: false, // Set to false to avoid ellipsis for email
+          link: `mailto:${student.email}`, // Add mailto link
+          underline: true // Underline the email link
         });
         currentX += colWidths[2];
         
         // Student ID
-        doc.text(student.studentId, currentX, yOffset);
+        doc.fillColor('black').text(student.studentId, currentX, yOffset);
         currentX += colWidths[3];
         
         // Department
@@ -194,22 +219,26 @@ export async function GET(request) {
           ellipsis: true
         });
         
-        yOffset += 20;
+        yOffset += 30; // Move down for the next row
         
         // Add row divider
         if (i < exportData.students.length - 1) {
-          doc.moveTo(50, yOffset)
-             .lineTo(doc.page.width - 50, yOffset)
+          doc.moveTo(30, yOffset)
+             .lineTo(doc.page.width - 20, yOffset)
              .stroke({ opacity: 0.2 });
         }
         
-        yOffset += 5;
+        yOffset += 10;
       });
       
       // Footer
       doc.moveDown(2);
+      currentX = 30;
       const today = new Date().toLocaleDateString();
-      doc.fontSize(10).text(`Report generated on ${today}`, { align: 'center' });
+      doc.text(`Report generated on ${today}`,currentX,yOffset,{
+        align: 'right',
+        // width: doc.page.width - 60 // Adjust width to fit within margins
+      });
       
       // End and return the PDF
       doc.end();

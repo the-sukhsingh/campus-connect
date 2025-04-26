@@ -147,13 +147,31 @@ export default function HodAuthPage() {
       
       // Check if user already exists
       const userResponse = await fetch(`/api/user/firebase/${result.user.uid}`);
-      const existingUser = await userResponse.json();
       
-      if (existingUser && existingUser._id && existingUser.role !== 'hod') {
-        throw new Error('auth/wrong-role');
+      if (!userResponse.ok) {
+        // If we got a non-success response, it's either a 404 (user doesn't exist) or another error
+        if (userResponse.status === 404) {
+          // For HODs, we'll continue to create a new account since this is the only role allowed to auto-create
+          console.log("Creating new HOD account from Google sign-in");
+        } else {
+          // Any other error should be thrown
+          throw new Error('Error fetching user data');
+        }
+      } else {
+        // User exists, check their role
+        const existingUser = await userResponse.json();
+        if (existingUser && existingUser._id && existingUser.role !== 'hod') {
+          // If user exists but with wrong role, sign out and show error
+          await auth.signOut();
+          throw new Error('auth/wrong-role');
+        } else if (existingUser && existingUser._id && existingUser.role === 'hod') {
+          // User already exists as HOD, just redirect to dashboard
+          router.push('/dashboard/hod');
+          return;
+        }
       }
       
-      // Set user role to HOD in the database
+      // Set user role to HOD in the database (either new user or existing user that needs role update)
       await fetch('/api/user', {
         method: 'POST',
         headers: {
@@ -178,111 +196,6 @@ export default function HodAuthPage() {
       setIsLoading(false);
     }
   };
-  
-  // const getReadableErrorMessage = (errorMsg) => {
-  //   if (errorMsg.includes('auth/wrong-password') || errorMsg.includes('auth/user-not-found')) {
-  //     return 'Invalid email or password. Please try again.';
-  //   } else if (errorMsg.includes('auth/email-already-in-use')) {
-  //     return 'An account with this email already exists. Please sign in instead.';
-  //   } else if (errorMsg.includes('auth/weak-password')) {
-  //     return 'Password is too weak. Please choose a stronger password.';
-  //   } else if (errorMsg.includes('auth/invalid-email')) {
-  //     return 'Please enter a valid email address.';
-  //   } else if (errorMsg.includes('auth/network-request-failed')) {
-  //     return 'Network error. Please check your internet connection and try again.';
-  //   } else if (errorMsg.includes('auth/too-many-requests')) {
-  //     return 'Too many unsuccessful login attempts. Please try again later or reset your password.';
-  //   }
-  //   return errorMsg || 'An error occurred. Please try again.';
-  // };
-
-  // const handleEmailAuth = async (e) => {
-  //   e.preventDefault();
-  //   setError('');
-    
-  //   if (!validateForm()) return;
-
-  //   setIsLoading(true);
-    
-  //   try {
-  //     if (isSignUp) {
-  //       // Sign up and then save role to MongoDB
-  //       const userCredential = await signUpWithEmail(email, password);
-        
-  //       // Set user role to HOD in the database
-  //       await fetch('/api/user', {
-  //         method: 'POST',
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //         },
-  //         body: JSON.stringify({
-  //           firebaseUid: userCredential.user?.uid,
-  //           role: 'hod', // Explicitly set role as HOD
-  //           email: email.toLowerCase(),
-  //           displayName: userCredential.user.displayName || email.split('@')[0],
-  //         }),
-  //       });
-        
-  //       router.push('/dashboard/hod');
-  //     } else {
-  //       const userCredential = await signInWithEmail(email, password);
-        
-  //       // Verify if the user is a HOD
-  //       const response = await fetch(`/api/user/firebase/${userCredential.user.uid}`);
-  //       const userData = await response.json();
-        
-  //       if (userData.role !== 'hod') {
-  //         throw new Error('auth/wrong-role');
-  //       }
-        
-  //       router.push('/dashboard/hod');
-  //     }
-  //   } catch (error) {
-  //     if (error.message === 'auth/wrong-role') {
-  //       setError('This account does not have HOD privileges. Please use the correct login page for your role.');
-  //     } else {
-  //       setError(getReadableErrorMessage(error.message));
-  //     }
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  // const handleGoogleSignIn = async () => {
-  //   setError('');
-  //   setIsLoading(true);
-    
-  //   try {
-  //     const result = await signInWithGoogle();
-      
-  //     // Check if user already exists in our database
-  //     const userResponse = await fetch(`/api/user/firebase/${result.user.uid}`);
-  //     const existingUser = await userResponse.json();
-      
-  //     // If user doesn't exist or is not a HOD, show error and sign them out
-  //     if (!existingUser || !existingUser._id) {
-  //       // Sign out the user from Firebase as they're not in our database
-  //       await auth.signOut();
-  //       throw new Error('auth/no-account');
-  //     } else if (existingUser.role !== 'hod') {
-  //       // If user exists but is not a HOD, sign them out
-  //       await auth.signOut();
-  //       throw new Error('auth/wrong-role');
-  //     }
-      
-  //     router.push('/dashboard/hod');
-  //   } catch (error) {
-  //     if (error.message === 'auth/wrong-role') {
-  //       setError('This Google account is already registered with a different role. Please use the correct login page for your role.');
-  //     } else if (error.message === 'auth/no-account') {
-  //       setError('Your account doesn\'t exist. HOD accounts can only be created by system administrators. Please contact IT support.');
-  //     } else {
-  //       setError(getReadableErrorMessage(error.message));
-  //     }
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
 
   const handleInputFocus = (field) => {
     setFloatingLabels(prev => ({...prev, [field]: true}));

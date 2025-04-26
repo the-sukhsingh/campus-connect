@@ -175,7 +175,7 @@ export async function deleteNote(noteId) {
     }
     
     // Soft delete by setting isActive to false
-    await Note.findByIdAndUpdate(noteId, { isActive: false });
+    await Note.findByIdAndDelete(noteId);
     
     // Delete file from Azure Blob Storage
     await deleteFile(note.fileUrl);

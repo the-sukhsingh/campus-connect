@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useNotifications } from '@/context/NotificationContext';
 import { useTheme } from '@/context/ThemeContext';
-import { LogOut, Menu, X, ChevronRight, ChevronLeft, User, Settings, Bell, BookOpen, Trash2, Check, ExternalLink, ChevronDown, Sun, Moon } from 'lucide-react';
+import { LogOut, Menu, X, User, Settings, Bell, BookOpen, Trash2, Check, ExternalLink, ChevronDown, Sun, Moon } from 'lucide-react';
 
 export default function Navbar() {
   const { user, dbUser, loading, logout } = useAuth();
@@ -104,7 +104,7 @@ export default function Navbar() {
         { name: 'Classes', href: '/dashboard/hod/classes', icon: '🧑‍🎓' },
         { name: 'Notes', href: '/dashboard/faculty/notes', icon: '📝' },
         {
-          name: 'Space',
+          name: 'Spaces',
           href: '/dashboard/hod/rooms',
           icon: '🚪',
           submenu: [
@@ -228,7 +228,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className={`${theme === 'dark' ? 'bg-[#1e1e2d]' : 'bg-gray-200 border-b'} text-${theme === 'dark' ? 'white' : 'gray-800'} shadow-lg sticky top-0 z-50`} role="navigation" aria-label="Main Navigation">
+    <nav className={`${theme === 'dark' ? 'bg-[#11141f]' : 'bg-gray-200 border-b'} text-${theme === 'dark' ? 'white' : 'gray-800'} shadow-lg sticky top-0 z-50`} role="navigation" aria-label="Main Navigation">
       <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link

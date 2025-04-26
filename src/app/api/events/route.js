@@ -10,7 +10,8 @@ import {
   registerForEvent,
   cancelEventRegistration,
   getRegisteredEvents,
-  isUserRegistered
+  isUserRegistered,
+  getUpcomingEvents
 } from '@/services/eventService';
 import { getUserByFirebaseUid } from '@/services/userService';
 import { createBooking } from '@/services/roomBookingService';
@@ -97,6 +98,12 @@ export async function GET(request) {
       const count = upcomingEvents.length;
 
       return NextResponse.json({ count });
+    }
+    else if (action === 'get-upcoming' && firebaseUid) {
+      const events = await getUpcomingEvents(collegeId);
+      const upcomingEvents = events.filter(event => new Date(event.date) >= new Date());
+      
+      return NextResponse.json({ events: upcomingEvents });
     }
     
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });

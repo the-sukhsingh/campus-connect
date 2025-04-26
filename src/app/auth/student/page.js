@@ -135,6 +135,17 @@ export default function StudentAuthPage() {
 
       // Verify if the user is a student
       const response = await fetch(`/api/user/firebase/${userCredential.user.uid}`);
+      
+      if (!response.ok) {
+        // If the user doesn't exist in our database
+        if (response.status === 404) {
+          // Sign out the user from Firebase as they're not in our database
+          await auth.signOut();
+          throw new Error('auth/no-account');
+        }
+        throw new Error('Error fetching user data');
+      }
+      
       const userData = await response.json();
 
       if (userData.role !== 'student') {
@@ -145,6 +156,8 @@ export default function StudentAuthPage() {
     } catch (error) {
       if (error.message === 'auth/wrong-role') {
         setError('This account does not have student privileges. Please use the correct login page for your role.');
+      } else if (error.message === 'auth/no-account') {
+        setError('Your account doesn\'t exist. Student accounts can only be created by faculty. Please contact your professor.');
       } else {
         setError(getReadableErrorMessage(error.message));
       }
@@ -162,15 +175,22 @@ export default function StudentAuthPage() {
 
       // Check if user already exists in our database
       const userResponse = await fetch(`/api/user/firebase/${result.user.uid}`);
+      
+      if (!userResponse.ok) {
+        // If the user doesn't exist in our database
+        if (userResponse.status === 404) {
+          // Sign out the user from Firebase as they're not in our database
+          await auth.signOut();
+          throw new Error('auth/no-account');
+        }
+        throw new Error('Error fetching user data');
+      }
+      
       const existingUser = await userResponse.json();
 
-      // If user doesn't exist or is not a student, show error and sign them out
-      if (!existingUser || !existingUser._id) {
-        // Sign out the user from Firebase as they're not in our database
-        await auth.signOut();
-        throw new Error('auth/no-account');
-      } else if (existingUser.role !== 'student') {
-        // If user exists but is not a student, sign them out
+      // If user exists but is not a student, show error and sign them out
+      if (existingUser.role !== 'student') {
+        // Sign out the user from Firebase as they have the wrong role
         await auth.signOut();
         throw new Error('auth/wrong-role');
       }

@@ -48,6 +48,7 @@ function CreateEventPage() {
     'Academic',
     'Cultural',
     'Sports',
+    'Hackathon',
     'Workshop',
     'Seminar',
     'Conference',
@@ -385,6 +386,21 @@ function CreateEventPage() {
     return date.toISOString().split('T')[0];
   };
 
+  const getTimeSlotClassesDark = (slot) => {
+    const baseClasses = "text-center py-3 px-3 rounded-md text-sm transition-colors";
+  
+    if (!slot.isAvailable) {
+      return `${baseClasses} bg-red-900 text-red-300 border border-red-800 cursor-not-allowed`;
+    }
+  
+    const isSelected = selectedTimeSlots.some(s => s.id === slot.id);
+    if (isSelected) {
+      return `${baseClasses} bg-indigo-900 text-indigo-200 border border-indigo-700 font-medium`;
+    }
+  
+    return `${baseClasses} bg-green-900 text-green-200 border border-green-800 hover:bg-green-800 cursor-pointer`;
+  };
+
   return (
     <div className={`p-6 ${theme === 'dark' ? 'bg-[var(--background)] text-gray-100' : 'bg-white text-gray-800'}`}>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
@@ -635,7 +651,8 @@ function CreateEventPage() {
                   id="maxAttendees"
                   name="maxAttendees"
                   type="number"
-                  min="0"
+                  min='0'
+                  max = {formData.roomId && formData.roomId !== 'other' ? rooms.find(room => room._id === formData.roomId)?.capacity : 1000}
                   value={formData.maxAttendees}
                   onChange={handleChange}
                   className={`w-full px-3 py-2 border ${
@@ -701,19 +718,6 @@ function CreateEventPage() {
   );
 }
 
-const getTimeSlotClassesDark = (slot) => {
-  const baseClasses = "text-center py-3 px-3 rounded-md text-sm transition-colors";
 
-  if (!slot.isAvailable) {
-    return `${baseClasses} bg-red-900 text-red-300 border border-red-800 cursor-not-allowed`;
-  }
-
-  const isSelected = slot.isSelected;
-  if (isSelected) {
-    return `${baseClasses} bg-indigo-900 text-indigo-200 border border-indigo-700 font-medium`;
-  }
-
-  return `${baseClasses} bg-green-900 text-green-200 border border-green-800 hover:bg-green-800 cursor-pointer`;
-};
 
 export default withRoleProtection(CreateEventPage, ['hod', 'faculty']);

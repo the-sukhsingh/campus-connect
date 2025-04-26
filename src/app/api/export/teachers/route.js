@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getUserByFirebaseUid } from '@/services/userService';
 import College from '@/models/College';
 import UserModel from '@/models/User';
+
 // PDF generation library
 import PDFDocument from 'pdfkit';
 
@@ -40,9 +41,9 @@ export async function GET(request) {
     
     // Get teachers for this college
     const teachers = await UserModel.find({
-      collegeId: collegeId,
+      college: collegeId,
       role: { $in: ['faculty', 'librarian'] }
-    }).sort({ department: 1, displayName: 1 });
+    });
     
     // Prepare faculty data for export
     const exportData = {
@@ -59,7 +60,6 @@ export async function GET(request) {
           email: teacher.email || 'N/A',
           department: teacher.department || 'N/A',
           role: teacher.role || 'faculty',
-          isLibrarian: teacher.role === 'librarian' ? 'Yes' : 'No',
           joinedOn: teacher.createdAt ? new Date(teacher.createdAt).toLocaleDateString() : 'N/A',
         };
       });
@@ -67,50 +67,57 @@ export async function GET(request) {
     
     // Return data based on requested format
     if (format === 'csv') {
+      const csvRows = [];
       const headers = [
-        { label: 'Name', key: 'name' },
-        { label: 'Email', key: 'email' },
-        { label: 'Department', key: 'department' },
-        { label: 'Role', key: 'role' },
-        { label: 'Is Librarian', key: 'isLibrarian' },
-        { label: 'Joined On', key: 'joinedOn' }
+      'Name',
+      'Email',
+      'Department',
+      'Role',
+      'Joined On'
       ];
       
       // Create CSV content
-      let csvContent = headers.map(header => `"${header.label}"`).join(',') + '\\n';
-      
+      csvRows.push(headers.join(',')); 
+
       exportData.teachers.forEach(teacher => {
-        const row = headers.map(header => {
-          const value = teacher[header.key] != null ? String(teacher[header.key]) : '';
-          return `"${value.replace(/"/g, '""')}"`;
-        }).join(',');
-        csvContent += row + '\\n';
+      const row = [
+        `"${teacher.name}"`, // Enclose in quotes to handle commas in names
+        `"${teacher.email}"`, // Enclose in quotes to handle commas in emails
+        `"${teacher.department}"`, // Enclose in quotes to handle commas in departments
+        `"${teacher.role}"`, // Role (faculty or librarian)
+        teacher.joinedOn
+      ];
+      
+      csvRows.push(row.join(','));
       });
+      
+      // Join with actual newlines, not escaped newlines
+      const csvContent = csvRows.join('\n');
       
       // Return CSV data
       return new Response(csvContent, {
-        status: 200,
-        headers: {
-          'Content-Type': 'text/csv',
-          'Content-Disposition': `attachment; filename="${exportData.collegeName}_faculty.csv"`
-        }
+      status: 200,
+      headers: {
+        'Content-Type': 'text/csv',
+        'Content-Disposition': `attachment; filename="${exportData.collegeName}_faculty.csv"`
+      }
       });
     } else if (format === 'pdf') {
       // For PDF generation, we'll use a stream
       const doc = new PDFDocument({
         margin: 50,
         size: 'A4',
-        layout: 'landscape',
+        layout: 'portrait',
+        autoFirstPage: true,
+        font: 'public/fonts/Helvetica.ttf'
       });
       
       // Store PDF in memory instead of creating a file
       const chunks = [];
       doc.on('data', chunk => chunks.push(chunk));
       
-      // Header
+      // Header - use the default font by not specifying any font
       doc.fontSize(18).text(`Faculty List: ${exportData.collegeName}`, { align: 'center' });
-      doc.moveDown(0.5);
-      doc.fontSize(12).text(`Location: ${exportData.location}`, { align: 'center' });
       doc.moveDown(0.5);
       doc.fontSize(12).text(`Total Faculty Members: ${exportData.teachers.length}`, { align: 'center' });
       doc.moveDown(1);
@@ -129,9 +136,10 @@ export async function GET(request) {
         pageWidth * 0.15  // Joined On
       ];
       
+      // Draw table headers
       let currentX = 50;
       tableHeaders.forEach((header, i) => {
-        doc.font('Helvetica-Bold').text(header, currentX, tableTop);
+        doc.fontSize(12).text(header, currentX, tableTop, { bold: true });
         currentX += colWidths[i];
       });
       
@@ -149,10 +157,10 @@ export async function GET(request) {
           doc.addPage();
           yOffset = 50; // Reset y position
           
-          // Repeat header on new page
+          // Redraw headers on new page
           currentX = 50;
           tableHeaders.forEach((header, j) => {
-            doc.font('Helvetica-Bold').text(header, currentX, yOffset);
+            doc.fontSize(12).text(header, currentX, yOffset, { bold: true });
             currentX += colWidths[j];
           });
           
@@ -163,11 +171,11 @@ export async function GET(request) {
           yOffset += 30;
         }
         
-        // Add row data
+        // Reset X position for each row
         currentX = 50;
         
         // Name
-        doc.font('Helvetica').text(teacher.name, currentX, yOffset, {
+        doc.fontSize(10).text(teacher.name, currentX, yOffset, {
           width: colWidths[0],
           ellipsis: true
         });
@@ -188,12 +196,17 @@ export async function GET(request) {
         currentX += colWidths[2];
         
         // Role
-        const roleText = teacher.isLibrarian === 'Yes' ? 'Librarian' : 'Faculty';
-        doc.text(roleText, currentX, yOffset);
+        doc.text(teacher.role, currentX, yOffset, {
+          width: colWidths[3],
+          ellipsis: true
+        });
         currentX += colWidths[3];
         
         // Joined On
-        doc.text(teacher.joinedOn, currentX, yOffset);
+        doc.text(teacher.joinedOn, currentX, yOffset, {
+          width: colWidths[4],
+          ellipsis: true
+        });
         
         yOffset += 20;
         
@@ -209,8 +222,12 @@ export async function GET(request) {
       
       // Footer
       doc.moveDown(2);
+      currentX = 30;
       const today = new Date().toLocaleDateString();
-      doc.fontSize(10).text(`Report generated on ${today}`, { align: 'center' });
+      doc.text(`Report generated on ${today}`,currentX,yOffset,{
+        align: 'right',
+        // width: doc.page.width - 60 // Adjust width to fit within margins
+      });
       
       // End and return the PDF
       doc.end();

@@ -3,14 +3,13 @@
 import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
-import { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import debounce from 'lodash/debounce';
 
 function BookCatalogPage() {
   const { user, dbUser } = useAuth();
   const { theme } = useTheme();
   const [books, setBooks] = useState([]);
-  const [filteredBooks, setFilteredBooks] = useState([]);
   const [totalBooks, setTotalBooks] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -21,67 +20,81 @@ function BookCatalogPage() {
   const [selectedGenre, setSelectedGenre] = useState('');
   const [genres, setGenres] = useState([]);
   const [view, setView] = useState('grid');
+  const [limit, setLimit] = useState(10);
+  
+  // Track UI state separately from search parameters
+  const [displaySearchTerm, setDisplaySearchTerm] = useState('');
+  
+  // Create a ref for the debounced search function
+  const debouncedSearchRef = useRef(null);
 
-  // Client-side search and filter
-  const filterBooks = useCallback((query, field, genre) => {
-    if (!books) return;
-
-    let filtered = [...books];
-
-    if (query) {
-      const searchLower = query.toLowerCase();
-      filtered = filtered.filter(book => {
-        if (field === 'title') return book.title.toLowerCase().includes(searchLower);
-        if (field === 'author') return book.author.toLowerCase().includes(searchLower);
-        // All fields
-        return (
-          book.title.toLowerCase().includes(searchLower) ||
-          book.author.toLowerCase().includes(searchLower) ||
-          (book.ISBN && book.ISBN.toLowerCase().includes(searchLower)) ||
-          (book.uniqueCode && book.uniqueCode.toLowerCase().includes(searchLower))
-        );
-      });
-    }
-
-    if (genre) {
-      filtered = filtered.filter(book => book.genre === genre);
-    }
-
-    setFilteredBooks(filtered);
-    setTotalBooks(filtered.length);
-    setTotalPages(Math.ceil(filtered.length / 10));
-  }, [books]);
-
-  // Handle search parameters change
-  const handleSearch = (query, field, genre) => {
-    setSearchTerm(query);
-    setSearchField(field);
-    setSelectedGenre(genre);
-    setCurrentPage(1);
-    filterBooks(query, field, genre);
-  };
-
-  // Fetch all books initially
-  const fetchBooks = async () => {
+  // Fetch books from the server with filters
+  const fetchBooks = useCallback(async () => {
     if (!user) return;
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/library/books?action=get-books&uid=${user?.uid}`);
+      const url = new URL('/api/library/books', window.location.origin);
+      url.searchParams.append('action', 'get-books');
+      url.searchParams.append('uid', user.uid);
+      url.searchParams.append('page', currentPage.toString());
+      url.searchParams.append('limit', limit.toString());
+      if (searchTerm) url.searchParams.append('query', searchTerm);
+      if (selectedGenre) url.searchParams.append('genre', selectedGenre);
+      if (searchField !== 'all') url.searchParams.append('searchField', searchField);
+      const response = await fetch(url.toString());
 
       if (!response.ok) {
         throw new Error('Failed to fetch books');
       }
 
       const data = await response.json();
+    
       setBooks(data.books || []);
-      setFilteredBooks(data.books || []);
-      setTotalBooks(data.books?.length || 0);
-      setTotalPages(Math.ceil((data.books?.length || 0) / 10));
+      setTotalBooks(data.total || 0);
+      setTotalPages(Math.ceil((data.total || 0) / limit));
     } catch (err) {
       console.error('Error fetching books:', err);
       setError('Failed to load books. Please try again later.');
     } finally {
       setIsLoading(false);
+    }
+  }, [user, currentPage, limit, searchTerm, selectedGenre, searchField]);
+
+  // Handle search parameters change - this actually updates the state that triggers the fetch
+  const handleSearch = useCallback((query, field, genre) => {
+    setSearchTerm(query);
+    setSearchField(field);
+    setSelectedGenre(genre);
+    setCurrentPage(1);
+  }, []);
+  
+  // Create a stable debounced search function
+  useEffect(() => {
+    // Create the debounced function inside useEffect to ensure it has the latest dependencies
+    const debouncedFn = debounce((query, field, genre) => {
+      handleSearch(query, field, genre);
+    }, 500);
+    
+    // Store in ref for access from event handlers
+    debouncedSearchRef.current = debouncedFn;
+    
+    // Cleanup function to cancel any pending debounced calls
+    return () => {
+      if (debouncedSearchRef.current) {
+        debouncedSearchRef.current.cancel();
+      }
+    };
+  }, [handleSearch]);
+
+  // Function to handle input change with debouncing
+  const handleSearchInputChange = (e) => {
+    const query = e.target.value;
+    // Update the display value immediately for UI responsiveness
+    setDisplaySearchTerm(query);
+    
+    // Use the debounced function to trigger actual search after delay
+    if (debouncedSearchRef.current) {
+      debouncedSearchRef.current(query, searchField, selectedGenre);
     }
   };
 
@@ -103,18 +116,18 @@ function BookCatalogPage() {
     }
   };
 
-  // Get paginated books for current view
-  const getPaginatedBooks = useCallback(() => {
-    const start = (currentPage - 1) * 10;
-    const end = start + 10;
-    return filteredBooks.slice(start, end);
-  }, [filteredBooks, currentPage]);
-
-  // Fetch books and genres when component mounts
+  // Fetch books when component mounts or dependencies change
   useEffect(() => {
-    if (!user) return;
-    fetchBooks();
-    fetchGenres();
+    if (user) {
+      fetchBooks();
+    }
+  }, [user, fetchBooks]);
+  
+  // Fetch genres only once when component mounts
+  useEffect(() => {
+    if (user) {
+      fetchGenres();
+    }
   }, [user]);
 
   return (
@@ -139,14 +152,18 @@ function BookCatalogPage() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                handleSearch(searchTerm, searchField, selectedGenre);
+                // Set the search parameters without triggering multiple fetches
+                setSearchTerm(displaySearchTerm);
+                setSearchField(searchField);
+                setSelectedGenre(selectedGenre);
+                setCurrentPage(1);
               }}
               className="flex gap-2"
             >
               <input
                 type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={displaySearchTerm}
+                onChange={(e) => handleSearchInputChange(e)}
                 placeholder="Search by title, author, or ISBN"
                 className={`flex-1 px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 ${
                   theme === 'dark' 
@@ -154,6 +171,7 @@ function BookCatalogPage() {
                   : 'bg-white border-gray-300 text-gray-700 focus:ring-indigo-500 focus:border-indigo-500'
                 } transition-colors duration-300`}
               />
+              
               <select
                 value={searchField}
                 onChange={(e) => setSearchField(e.target.value)}
@@ -184,7 +202,10 @@ function BookCatalogPage() {
             <div>
               <select
                 value={selectedGenre}
-                onChange={(e) => setSelectedGenre(e.target.value)}
+                onChange={(e) => {
+                  setSelectedGenre(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className={`px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 ${
                   theme === 'dark' 
                   ? 'bg-gray-700 border-gray-600 text-gray-100 focus:ring-indigo-400 focus:border-indigo-400' 
@@ -207,7 +228,6 @@ function BookCatalogPage() {
                   setSearchField('all');
                   setSelectedGenre('');
                   setCurrentPage(1);
-                  filterBooks('', 'all', '');
                 }}
                 className={`px-3 py-2 text-sm transition-colors ${
                   theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-800'
@@ -277,7 +297,7 @@ function BookCatalogPage() {
           <div className="flex justify-center items-center p-8">
             <div className={`animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 ${theme === 'dark' ? 'border-indigo-400' : 'border-indigo-500'}`}></div>
           </div>
-        ) : getPaginatedBooks().length === 0 ? (
+        ) : books.length === 0 ? (
           <div className="p-8 text-center">
             <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>No books found matching your criteria.</p>
           </div>
@@ -285,7 +305,7 @@ function BookCatalogPage() {
           <>
             {view === 'grid' ? (
               <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {getPaginatedBooks().map((book) => (
+                {books.map((book) => (
                   <div
                     key={book._id}
                     className={`border rounded-lg overflow-hidden ${theme === 'dark' ? 'border-gray-700 bg-gray-800 shadow-lg hover:shadow-xl' : 'border-gray-200 bg-white shadow-sm hover:shadow-md'} transition-all duration-300`}
@@ -367,7 +387,7 @@ function BookCatalogPage() {
                     </tr>
                   </thead>
                   <tbody className={`divide-y ${theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'}`}>
-                    {getPaginatedBooks().map((book) => (
+                    {books.map((book) => (
                       <tr key={book._id} className={theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
                         <td className="px-6 py-4">
                           <div className={`text-sm font-medium font-serif ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{book.title}</div>
@@ -411,9 +431,9 @@ function BookCatalogPage() {
                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                   <div>
                     <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-700'}`}>
-                      Showing <span className="font-medium">{(currentPage - 1) * 10 + 1}</span> to{' '}
+                      Showing <span className="font-medium">{(currentPage - 1) * limit + 1}</span> to{' '}
                       <span className="font-medium">
-                        {Math.min(currentPage * 10, totalBooks)}
+                        {Math.min(currentPage * limit, totalBooks)}
                       </span>{' '}
                       of <span className="font-medium">{totalBooks}</span> results
                     </p>
@@ -441,7 +461,7 @@ function BookCatalogPage() {
                         >
                           <path
                             fillRule="evenodd"
-                            d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                            d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 01-1.414 0z"
                             clipRule="evenodd"
                           />
                         </svg>
@@ -493,7 +513,7 @@ function BookCatalogPage() {
                         >
                           <path
                             fillRule="evenodd"
-                            d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                            d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4-4a1 1 0 01-1.414 0z"
                             clipRule="evenodd"
                           />
                         </svg>

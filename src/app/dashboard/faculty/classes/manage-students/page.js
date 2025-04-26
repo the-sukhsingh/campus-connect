@@ -417,7 +417,7 @@ function ManageStudentsPage() {
       }
 
       const data = await response.json();
-      console.log('Bulk student creation response:', data);
+      // console.log('Bulk student creation response:', data);
 
       // Refresh the student list with newly created students
       if (data.users) {
@@ -443,7 +443,7 @@ function ManageStudentsPage() {
       // Show success message
       setMessage({
         type: 'success',
-        text: `Bulk student accounts created successfully! Emails with login instructions have been sent.`,
+        text: `Bulk student accounts created successfully!`,
       });
 
       // Clear the message after 5 seconds

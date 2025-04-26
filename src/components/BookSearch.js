@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import debounce from 'lodash/debounce';
 import { useTheme } from '../context/ThemeContext';
 
@@ -15,32 +15,79 @@ const BookSearch = ({
   const [searchQuery, setSearchQuery] = useState(defaultQuery);
   const [searchField, setSearchField] = useState(defaultField);
   const [selectedGenre, setSelectedGenre] = useState(defaultGenre);
+  const [displaySearchQuery, setDisplaySearchQuery] = useState(defaultQuery);
   
-  // Create a debounced version of onSearch
-  const debouncedSearch = useCallback(
-    debounce((query, field, genre) => {
-      onSearch(query, field, genre);
-    }, 300),
-    [onSearch]
-  );
-
-  // Trigger search on input changes
+  // Use a ref to hold the debounced function
+  const debouncedSearchRef = useRef(null);
+  
+  // Create a stable search handler
+  const handleSearch = useCallback((query, field, genre) => {
+    onSearch(query, field, genre);
+  }, [onSearch]);
+  
+  // Create the debounced function only once
   useEffect(() => {
-    debouncedSearch(searchQuery, searchField, selectedGenre);
-    return () => debouncedSearch.cancel();
-  }, [searchQuery, searchField, selectedGenre, debouncedSearch]);
+    debouncedSearchRef.current = debounce((query, field, genre) => {
+      handleSearch(query, field, genre);
+    }, 500);
+    
+    // Cleanup on unmount
+    return () => {
+      if (debouncedSearchRef.current) {
+        debouncedSearchRef.current.cancel();
+      }
+    };
+  }, [handleSearch]);
+
+  // Handler for input changes with debouncing
+  const handleInputChange = (e) => {
+    const query = e.target.value;
+    // Update display value immediately for UI responsiveness
+    setDisplaySearchQuery(query);
+    setSearchQuery(query);
+    
+    // Use the debounced function to trigger actual search after delay
+    if (debouncedSearchRef.current) {
+      debouncedSearchRef.current(query, searchField, selectedGenre);
+    }
+  };
+  
+  // Handle field changes
+  const handleFieldChange = (e) => {
+    const field = e.target.value;
+    setSearchField(field);
+    if (debouncedSearchRef.current) {
+      debouncedSearchRef.current(searchQuery, field, selectedGenre);
+    }
+  };
+  
+  // Handle genre changes
+  const handleGenreChange = (e) => {
+    const genre = e.target.value;
+    setSelectedGenre(genre);
+    if (debouncedSearchRef.current) {
+      debouncedSearchRef.current(searchQuery, searchField, genre);
+    }
+  };
 
   // Update state when props change
   useEffect(() => {
     setSearchQuery(defaultQuery);
+    setDisplaySearchQuery(defaultQuery);
     setSearchField(defaultField);
     setSelectedGenre(defaultGenre);
   }, [defaultQuery, defaultField, defaultGenre]);
 
   const handleReset = () => {
     setSearchQuery('');
+    setDisplaySearchQuery('');
     setSearchField('all');
     setSelectedGenre('');
+    
+    // Trigger search with reset values
+    if (debouncedSearchRef.current) {
+      debouncedSearchRef.current('', 'all', '');
+    }
   };
 
   const themeStyles = {
@@ -61,8 +108,8 @@ const BookSearch = ({
           <input
             type="text"
             id="searchQuery"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={displaySearchQuery}
+            onChange={handleInputChange}
             placeholder="Type to search books..."
             className={themeStyles.input}
           />
@@ -75,7 +122,7 @@ const BookSearch = ({
           <select
             id="searchField"
             value={searchField}
-            onChange={(e) => setSearchField(e.target.value)}
+            onChange={handleFieldChange}
             className={themeStyles.select}
           >
             <option value="all">All Fields</option>
@@ -92,7 +139,7 @@ const BookSearch = ({
             <select
               id="genre"
               value={selectedGenre}
-              onChange={(e) => setSelectedGenre(e.target.value)}
+              onChange={handleGenreChange}
               className={themeStyles.select}
             >
               <option value="">All Genres</option>
