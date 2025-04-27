@@ -88,9 +88,20 @@ export async function GET(request) {
     if (action === 'get-rooms'){
       // If action is get-rooms, return all rooms with pagination
       await dbConnect();
-      const collegeFilter = dbUser?.college ? { collegeId: dbUser.college } : {};
-      const rooms = await getRooms(collegeFilter, page, limit);
-      return NextResponse.json({ rooms });
+      // const collegeFilter = dbUser?.college ? { collegeId: dbUser.college._id } : {};
+      const rooms = await getRooms(dbUser.college._id);
+      const roomsWithViewUrl = await Promise.all(rooms.map(async (room) => {
+        if (room.imageUrl) {
+          try {
+            room.viewUrl = await generateSasUrl(room.imageUrl);
+          } catch (error) {
+            console.error('Error generating SAS URL for room image:', error);
+            // Continue without viewUrl if there's an error
+          }
+        }
+        return room;
+      }));
+      return NextResponse.json({ rooms: roomsWithViewUrl });
     }
 
     // For regular GET requests without specific room ID
