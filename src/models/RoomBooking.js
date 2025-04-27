@@ -67,6 +67,11 @@ const RoomBookingSchema = new Schema({
     enum: ['daily', 'weekly', 'monthly', null],
     default: null,
   },
+  collegeId: {
+    type: Schema.Types.ObjectId,
+    ref: 'College',
+    required: true,
+  },
   recurringEndDate: {
     type: Date,
   },

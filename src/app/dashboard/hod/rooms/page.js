@@ -33,10 +33,8 @@ export default function HodRoomsPage() {
   const [imageFile, setImageFile] = useState(null);
   
   useEffect(() => {
-    if (!user || !dbUser || !dbUser.college) {
-      router.push('/dashboard/hod');
-      return;
-    }
+    if (!user) return;
+
     
     fetchRooms();
   }, [dbUser, router]);

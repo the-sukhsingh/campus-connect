@@ -206,10 +206,13 @@ export async function GET(request) {
     else {
 
       if(user.role === 'hod' && status){
-        const bookings = await RoomBooking.find({ status })
+        const bookings = await RoomBooking.find({ 
+          collegeId: user.college,
+          status: status,
+         })
           .sort({ date: 1, startTime: 1 })
           .populate('room', 'name building floor type')
-          .populate('requestedBy', 'displayName email');
+          .populate('requestedBy', 'displayName email role');
         
         return NextResponse.json({ bookings });
       }
