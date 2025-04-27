@@ -3,8 +3,9 @@ import dbConnect from '@/lib/dbConnect';
 import UserModel from '@/models/User';
 import { isEmailFromCollege } from './collegeService';
 import { Types } from 'mongoose';
-import { auth } from 'firebase-admin';
+import { firebaseAdmin, auth } from '@/config/firebaseAdmin';
 import { unregisterUserFromAllEvents } from './eventService'
+
 
 export async function saveUserToDb(user) {
 
@@ -290,9 +291,7 @@ export async function deleteUser(userId){
   try {
     await dbConnect();
 
-
     // Check if the user exists
-
     const user = await UserModel.findById(userId);
 
     if (!user) {
@@ -302,26 +301,29 @@ export async function deleteUser(userId){
       };
     }
 
-    // Delete the Firebase auth account
-
-    // Delete the user from our database
-    // Note: This does not remove the Firebase auth account
-    
-    await auth.deleteUser(user.firebaseUid).catch(error => {
-      console.error('Error deleting user from Firebase:', error);
-    });
+    // Delete the Firebase auth account if user has a Firebase UID
+    if (user.firebaseUid) {
+      try {
+        // Use the auth instance properly from firebaseAdmin.js
+        await auth.deleteUser(user.firebaseUid);
+        console.log(`Firebase user with UID ${user.firebaseUid} deleted successfully`);
+      } catch (firebaseError) {
+        console.error('Error deleting user from Firebase:', firebaseError);
+        // Continue with database deletion even if Firebase deletion fails
+      }
+    }
     
     // Cancel any event registrations associated with the user
     await unregisterUserFromAllEvents(userId);
     
+    // Delete the user from MongoDB
     await UserModel.findByIdAndDelete(userId);
-
 
     return {
       success: true,
       message: 'User has been deleted successfully'
     };
-  } catch (error ) {
+  } catch (error) {
     console.error('Error deleting user:', error);
     throw error;
   }
