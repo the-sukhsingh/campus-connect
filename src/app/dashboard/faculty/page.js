@@ -93,11 +93,11 @@ function FacultyDashboard() {
           <div className={`pl-10 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             <p className="flex items-center mb-1">
               <span className={`w-24 text-xs uppercase tracking-wider ${theme === 'dark' ? 'text-indigo-300' : 'text-indigo-400'} font-medium`}>College</span>
-              <span className={`font-medium ${theme === 'dark' ? 'text-indigo-300' : 'text-indigo-800'}`}>{collegeInfo.name}</span>
+              <span className={`font-medium ${theme === 'dark' ? 'text-indigo-300' : 'text-indigo-800'}`}>{collegeInfo?.name}</span>
             </p>
             <p className="flex items-center">
               <span className={`w-24 text-xs uppercase tracking-wider ${theme === 'dark' ? 'text-indigo-300' : 'text-indigo-400'} font-medium`}>Department</span>
-              <span className={`font-medium ${theme === 'dark' ? 'text-indigo-300' : 'text-indigo-800'}`}>{collegeInfo.department || 'Not specified'}</span>
+              <span className={`font-medium ${theme === 'dark' ? 'text-indigo-300' : 'text-indigo-800'}`}>{collegeInfo?.department || 'Not specified'}</span>
             </p>
           </div>
         </div>

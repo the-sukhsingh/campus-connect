@@ -170,7 +170,7 @@ function LendBookPage() {
   };
   
   // Quick search - Find book by unique code
-  const handleBookSearch = async (uniqueCodeSearch = uniqueCodeSearch) => {
+  const handleBookSearch = async (uniqueCodeSearch) => {
     if (!user) return;
     console.log("Unique Code Search:", uniqueCodeSearch);
     if (!uniqueCodeSearch.trim()) {
@@ -605,14 +605,18 @@ function LendBookPage() {
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             e.preventDefault();
-                            handleBookSearch();
+                            handleBookSearch(
+                              uniqueCodeSearch.trim()
+                            );
                           }
                         }}
                       />
                     </div>
                   </div>
                   <button
-                    onClick={() => handleBookSearch()}
+                    onClick={() => handleBookSearch(
+                      uniqueCodeSearch.trim()
+                    )}
                     disabled={isSearchingBook || !uniqueCodeSearch.trim()}
                     className={`px-4 py-2.5 border border-transparent rounded-md shadow-sm text-sm font-medium transition-colors duration-200 ${buttonPrimary} ${
                       isSearchingBook || !uniqueCodeSearch.trim() ? 'opacity-50 cursor-not-allowed' : ''
