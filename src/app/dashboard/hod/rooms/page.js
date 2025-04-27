@@ -3,13 +3,13 @@
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+// import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
 export default function HodRoomsPage() {
   const { theme } = useTheme();
   const { user, dbUser } = useAuth();
-  const router = useRouter();
+  // const router = useRouter();
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,11 +33,10 @@ export default function HodRoomsPage() {
   const [imageFile, setImageFile] = useState(null);
   
   useEffect(() => {
-    if (!user) return;
+    if (!dbUser) return;
 
-    
     fetchRooms();
-  }, [dbUser, router]);
+  }, [dbUser]);
   
   const fetchRooms = async () => {
     try {
