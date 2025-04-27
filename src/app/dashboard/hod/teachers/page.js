@@ -75,7 +75,7 @@ function TeachersManagementPage() {
       }
 
       const teachersData = await teachersResponse.json();
-      console.log("Teacher's data:", teachersData.teachers);
+      
       setTeachers(teachersData.teachers || []);
 
 

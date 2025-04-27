@@ -127,10 +127,12 @@ const FeedbackList = ({ feedbacks, isHOD, onUpdateStatus }) => {
               Submitted on {formatDate(feedback.createdAt)}
             </div>
             {
-              feedback.response && (<>
+              isHOD || feedback.response && (<>
                 <button onClick={() => setExpandedId(expandedId === feedback._id ? null : feedback._id)}
                   className={`px-4 py-2 ${theme === 'dark' ? 'bg-blue-700 hover:bg-blue-800' : 'bg-blue-600 hover:bg-blue-700'} text-white text-sm rounded-md`}>
-                  View Response 
+                  {
+                    expandedId === feedback._id ? 'Hide Details' : 'View Details'
+                  }
                 </button>
               </>)
             }
