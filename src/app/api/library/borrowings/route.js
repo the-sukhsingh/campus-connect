@@ -52,7 +52,7 @@ export async function GET(request) {
       }
       
       // Get borrowings for the student
-      const result = await getStudentBorrowings(dbUser._id.toString(), status, page, limit);
+      const result = await getStudentBorrowings(dbUser._id, status, page, limit);
       return NextResponse.json(result);
     }
     else if (action === 'get-faculty-borrowings') {
@@ -61,7 +61,7 @@ export async function GET(request) {
       }
       
       // Get borrowings for the faculty
-      const result = await getFacultyBorrowings(dbUser._id.toString(), status, page, limit);
+      const result = await getFacultyBorrowings(dbUser._id, status, page, limit);
       return NextResponse.json(result);
     } 
     else if (action === 'get-pending-returns' && (dbUser.role === 'librarian' || dbUser.role === 'hod')) {
@@ -98,7 +98,8 @@ export async function GET(request) {
 
       const result = await getBorrowings({ user: dbUser._id, status: 'borrowed' });
       return NextResponse.json(result);
-    } else if (status === 'all'){
+    } 
+    else if (status === 'all'){
         // Get all borrowings for librarians but only from their college
         const query = status ? { status } : {};
       
