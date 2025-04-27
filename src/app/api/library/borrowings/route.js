@@ -98,6 +98,22 @@ export async function GET(request) {
 
       const result = await getBorrowings({ user: dbUser._id, status: 'borrowed' });
       return NextResponse.json(result);
+    } else if (status === 'all'){
+        // Get all borrowings for librarians but only from their college
+        const query = status ? { status } : {};
+      
+        // Add college filter if the librarian is associated with a college
+        if (dbUser.college) {
+          // We need to find books that belong to librarian's college
+          // First, query all books from the librarian's college
+          const bookIds = await Book.find({ college: dbUser.college }).distinct('_id');
+          
+          // Then filter the borrowings to only include those books
+          query.book = { $in: bookIds };
+        }
+        
+        const result = await getBorrowings(query, page, limit);
+        return NextResponse.json(result);
     }
     
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
