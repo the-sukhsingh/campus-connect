@@ -319,7 +319,7 @@ export async function PUT(request) {
 export async function DELETE(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+    const id = searchParams.get('roomId') || searchParams.get('id');
     const firebaseUid = searchParams.get('uid');
     
     if (!id || !firebaseUid) {
