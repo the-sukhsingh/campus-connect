@@ -84,6 +84,14 @@ export async function GET(request) {
       
       return NextResponse.json({ roomTypes });
     }
+    
+    if (action === 'get-rooms'){
+      // If action is get-rooms, return all rooms with pagination
+      await dbConnect();
+      const collegeFilter = dbUser?.college ? { collegeId: dbUser.college } : {};
+      const rooms = await getRooms(collegeFilter, page, limit);
+      return NextResponse.json({ rooms });
+    }
 
     // For regular GET requests without specific room ID
     if (!collegeId) {
