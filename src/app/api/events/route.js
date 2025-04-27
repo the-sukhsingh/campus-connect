@@ -168,6 +168,7 @@ export async function POST(request) {
           date: eventDate,
           startTime: startTime,
           endTime: endTime,
+          collegeId: collegeId,
           attendees: eventData.maxAttendees || 10, // Default to 10 if not specified
           additionalNotes: `Automatic booking for event: ${eventData.title}`,
           status: dbUser.role === 'hod' ? 'approved' : 'pending' // Auto-approve if HOD

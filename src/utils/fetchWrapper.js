@@ -8,6 +8,9 @@
 // Store the original fetch function
 const originalFetch = global.fetch;
 
+// Cache to track in-flight requests to prevent duplicates
+const pendingRequests = new Map();
+
 /**
  * Determines if a URL is an API or data URL that should use cache busting
  * @param {string} url - The URL to check
@@ -40,7 +43,7 @@ function shouldApplyCacheBusting(url) {
     if (excludedRoutes.some(route => urlStr.includes(route))) {
       return false;
     }
-    console.log(`[Fetch Wrapper] Cache busting applied to: ${urlStr}`);
+    // console.log(`[Fetch Wrapper] Cache busting applied to: ${urlStr}`);
     return true;
   }
   
@@ -67,6 +70,18 @@ export function initFetchWrapper() {
     global.fetch = (url, options = {}) => {
       // Only modify GET requests
       if (!options.method || options.method === 'GET') {
+        // Create a request key that uniquely identifies this request
+        // Strip cache busting params to ensure we don't create multiple entries for the same resource
+        const urlObj = new URL(String(url), window.location.origin);
+        urlObj.searchParams.delete('_');
+        const requestKey = `${urlObj.toString()}-${JSON.stringify(options)}`;
+
+        // Check if we already have a request in flight for this URL
+        if (pendingRequests.has(requestKey)) {
+          // Return the existing promise to avoid duplicate requests
+          return pendingRequests.get(requestKey);
+        }
+
         // Don't cache bust if explicitly told not to or if it's not an API/data URL
         if (options.noCacheBust !== true && shouldApplyCacheBusting(url)) {
           // Add cache busting parameter to URL
@@ -82,13 +97,25 @@ export function initFetchWrapper() {
             }
           };
         }
+        
+        // Execute the fetch and store the promise
+        const fetchPromise = originalFetch(url, options)
+          .finally(() => {
+            // Remove from pending requests map when done
+            pendingRequests.delete(requestKey);
+          });
+        
+        // Store the promise to prevent duplicate requests
+        pendingRequests.set(requestKey, fetchPromise);
+        
+        return fetchPromise;
       }
       
-      // Call the original fetch with the modified URL and options
+      // For non-GET requests, just use original fetch
       return originalFetch(url, options);
     };
     
-    console.log('[Fetch Wrapper] Initialized - Selective cache busting enabled');
+    console.log('[Fetch Wrapper] Initialized - Selective cache busting enabled with deduplication');
   }
 }
 
@@ -98,5 +125,6 @@ export function initFetchWrapper() {
 export function resetFetchWrapper() {
   if (typeof window !== 'undefined') {
     global.fetch = originalFetch;
+    pendingRequests.clear();
   }
 }
