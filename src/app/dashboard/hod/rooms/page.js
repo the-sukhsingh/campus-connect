@@ -2,8 +2,9 @@
 
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export default function HodRoomsPage() {
   const { theme } = useTheme();
@@ -14,6 +15,7 @@ export default function HodRoomsPage() {
   const [error, setError] = useState(null);
   const [formVisible, setFormVisible] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
+  const fileInputRef = useRef(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -26,6 +28,9 @@ export default function HodRoomsPage() {
     isActive: true,
     collegeId: dbUser?.college?._id || ''
   });
+
+  const [imagePreview, setImagePreview] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
   
   useEffect(() => {
     if (!user || !dbUser || !dbUser.college) {
@@ -76,6 +81,35 @@ export default function HodRoomsPage() {
       }));
     }
   };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+      return;
+    }
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image file is too large. Maximum size is 5MB.');
+      return;
+    }
+
+    // Check file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      setError('Invalid file type. Please upload a JPEG, PNG, GIF, or WebP image.');
+      return;
+    }
+
+    setImageFile(file);
+    
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
+
+    // Clean up the preview URL when component unmounts
+    return () => URL.revokeObjectURL(previewUrl);
+  };
   
   const resetForm = () => {
     setFormData({
@@ -90,6 +124,11 @@ export default function HodRoomsPage() {
       collegeId: dbUser?.college?._id || ''
     });
     setSelectedRoom(null);
+    setImagePreview(null);
+    setImageFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
     setFormVisible(false);
   };
   
@@ -97,12 +136,30 @@ export default function HodRoomsPage() {
     e.preventDefault();
     
     try {
-      const payload = { ...formData };
-      if (payload.type !== 'other') {
-        delete payload.otherType;
-      } else {
-        payload.type = payload.otherType;
-        delete payload.otherType;
+      // Create FormData for multipart form
+      const formDataToSubmit = new FormData();
+      
+      // Add all form fields
+      Object.entries(formData).forEach(([key, value]) => {
+        // Handle arrays like facilities
+        if (Array.isArray(value)) {
+          formDataToSubmit.append(key, JSON.stringify(value));
+        } else {
+          formDataToSubmit.append(key, value);
+        }
+      });
+      
+      // Add Firebase UID
+      formDataToSubmit.append('firebaseUid', user.uid);
+      
+      // If editing, add room ID
+      if (selectedRoom) {
+        formDataToSubmit.append('id', selectedRoom._id);
+      }
+      
+      // Add image if selected
+      if (imageFile) {
+        formDataToSubmit.append('image', imageFile);
       }
       
       const method = selectedRoom ? 'PUT' : 'POST';
@@ -112,10 +169,8 @@ export default function HodRoomsPage() {
         
       const response = await fetch(endpoint, {
         method,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
+        body: formDataToSubmit
+        // No Content-Type header - browser will set it automatically with boundary for FormData
       });
       
       if (!response.ok) {
@@ -149,11 +204,32 @@ export default function HodRoomsPage() {
     setSelectedRoom(room);
     setFormVisible(true);
     
+    // Set image preview if room has an image
+    if (room.imageUrl) {
+      setImagePreview(room.imageUrl);
+    } else {
+      setImagePreview(null);
+    }
+    setImageFile(null);
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    
     // Scroll to the form
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
     });
+  };
+
+  const handleRemoveImage = () => {
+    setImagePreview(null);
+    setImageFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
   
   const handleDelete = async (roomId) => {
@@ -378,6 +454,85 @@ export default function HodRoomsPage() {
                 )}
               </div>
               
+              {/* Room Image */}
+              <div className="mt-6">
+                <label htmlFor="roomImage" className="block text-sm font-medium mb-1">Room Image</label>
+                <div className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md ${
+                  theme === 'dark'
+                    ? 'border-gray-600 hover:border-indigo-500'
+                    : 'border-gray-300 hover:border-indigo-500'
+                }`}>
+                  <div className="space-y-1 text-center">
+                    {imagePreview ? (
+                      <div className="flex flex-col items-center">
+                        <div className="relative h-40 w-full">
+                          <Image 
+                            src={imagePreview}
+                            alt="Room image preview"
+                            fill
+                            style={{ objectFit: 'contain' }}
+                            className="rounded-md"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleRemoveImage}
+                          className={`mt-2 inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded ${
+                            theme === 'dark'
+                              ? 'bg-red-800 hover:bg-red-700 text-white'
+                              : 'bg-red-100 hover:bg-red-200 text-red-700'
+                          }`}
+                        >
+                          Remove Image
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <svg
+                          className={`mx-auto h-12 w-12 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}
+                          stroke="currentColor"
+                          fill="none"
+                          viewBox="0 0 48 48"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                            strokeWidth={2}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                        <div className="flex text-sm justify-center">
+                          <label
+                            htmlFor="roomImage"
+                            className={`relative cursor-pointer rounded-md font-medium ${
+                              theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'
+                            } hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500`}
+                          >
+                            <span>Upload an image</span>
+                            <input
+                              id="roomImage"
+                              name="roomImage"
+                              ref={fileInputRef}
+                              type="file"
+                              accept="image/*"
+                              onChange={handleImageChange}
+                              className="sr-only"
+                            />
+                          </label>
+                          <p className={`pl-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                            or drag and drop
+                          </p>
+                        </div>
+                        <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
+                          PNG, JPG, GIF up to 5MB
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
               {/* Facilities */}
               <div className="mt-6">
                 <span className="block text-sm font-medium mb-2">Facilities Available</span>
@@ -456,6 +611,7 @@ export default function HodRoomsPage() {
                 <thead className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}`}>
                   <tr>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Room</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Image</th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Location</th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Type</th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Capacity</th>
@@ -468,6 +624,22 @@ export default function HodRoomsPage() {
                     <tr key={room._id} className={`${room.isActive ? '' : 'opacity-60'}`}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="font-medium">{room.name}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {room.imageUrl ? (
+                          <div className="h-10 w-10 rounded-md overflow-hidden bg-gray-100 relative">
+                            <Image 
+                              src={room.viewUrl} 
+                              alt={room.name}
+                              fill
+                              style={{ objectFit: 'cover' }}
+                            />
+                          </div>
+                        ) : (
+                          <span className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
+                            No image
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>{room.building}</div>

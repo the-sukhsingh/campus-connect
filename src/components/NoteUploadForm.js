@@ -23,6 +23,7 @@ export default function NoteUploadForm({ onSuccess, collegeId }) {
   const [selectedClass, setSelectedClass] = useState('');
   const [loadingDepartments, setLoadingDepartments] = useState(false);
   const [loadingClasses, setLoadingClasses] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Load departments when component mounts
   useEffect(() => {
@@ -73,6 +74,41 @@ export default function NoteUploadForm({ onSuccess, collegeId }) {
   const handleClassChange = (e) => {
     const classId = e.target.value;
     setSelectedClass(classId);
+  };
+
+  // Handle drag events
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragging) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const droppedFiles = e.dataTransfer.files;
+    if (droppedFiles.length > 0) {
+      setFile(droppedFiles[0]);
+      // Reset file input element to keep UI consistent
+      const fileInput = document.getElementById('file-input');
+      if (fileInput) fileInput.value = '';
+    }
   };
 
   // Handle file change
@@ -358,7 +394,6 @@ export default function NoteUploadForm({ onSuccess, collegeId }) {
           )}
         </div>
 
-
         <div>
           <label
             htmlFor="tags"
@@ -440,15 +475,29 @@ export default function NoteUploadForm({ onSuccess, collegeId }) {
           </label>
           <div
             className={`border-2 border-dashed rounded-md p-4 ${
-              theme === 'dark'
+              isDragging
+                ? theme === 'dark'
+                  ? 'border-purple-500 bg-purple-900/20'
+                  : 'border-indigo-500 bg-indigo-100/50'
+                : theme === 'dark'
                 ? 'bg-gray-700/50 border-gray-600 hover:border-purple-500'
                 : 'bg-gray-50 border-gray-300 hover:border-indigo-500'
-            } transition-colors duration-300`}
+            } transition-all duration-300`}
+            onDragEnter={handleDragEnter}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
           >
             <div className="text-center">
               <svg
                 className={`mx-auto h-12 w-12 ${
-                  theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
+                  isDragging
+                    ? theme === 'dark'
+                      ? 'text-purple-400'
+                      : 'text-indigo-500'
+                    : theme === 'dark'
+                    ? 'text-gray-500'
+                    : 'text-gray-400'
                 } transition-colors duration-300`}
                 stroke="currentColor"
                 fill="none"

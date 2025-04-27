@@ -7,13 +7,8 @@ const OFFLINE_URL = '/offline';
 // Assets to cache
 const urlsToCache = [
   '/offline',
-  '/auth',
   '/manifest.json',
   '/favicon.ico',
-  '/dashboard/student',
-  '/dashboard/faculty',
-  '/dashboard/hod',
-  '/dashboard/notes/[id]',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png'
 ];

@@ -23,7 +23,7 @@ const RoomSchema = new mongoose.Schema({
   type: {
     type: String,
     required: [true, 'Please provide room type'],
-    enum: ['classroom', 'laboratory', 'conference', 'auditorium', 'other'],
+    enum: ['classroom', 'laboratory','seminar', 'conference', 'auditorium', 'other'],
     default: 'classroom',
   },
   otherType: {
@@ -33,6 +33,10 @@ const RoomSchema = new mongoose.Schema({
   facilities: {
     type: [String],
     default: [],
+  },
+  imageUrl: {
+    type: String,
+    trim: true,
   },
   isActive: {
     type: Boolean,

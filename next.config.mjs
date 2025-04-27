@@ -21,6 +21,17 @@ const nextConfig = {
 
   // Add output configuration to stabilize chunk filenames
   output: 'standalone',
+  
+  // Configure external image domains
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'smartcampusconnect.blob.core.windows.net',
+        pathname: '/**',
+      },
+    ],
+  },
 };
 
 export default nextConfig;

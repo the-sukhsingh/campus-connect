@@ -1,6 +1,6 @@
 {
-  "name": "SCSRK Campus Portal",
-  "short_name": "SCSRK",
+  "name": "Campus Connect",
+  "short_name": "CC",
   "description": "Campus management portal for announcements, attendance tracking, and more",
   "start_url": "/",
   "display": "standalone",

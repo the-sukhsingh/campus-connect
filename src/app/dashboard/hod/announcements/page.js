@@ -324,7 +324,7 @@ function HodAnnouncementsPage() {
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
-                className={`shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 text-gray-900'} rounded-md`}
+                className={`shadow-sm px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 text-gray-900'} rounded-md`}
                 required
               />
             </div>
@@ -338,10 +338,12 @@ function HodAnnouncementsPage() {
                 value={formData.content}
                 onChange={handleInputChange}
                 rows={4}
-                className={`shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 text-gray-900'} rounded-md`}
+                className={`shadow-sm px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 text-gray-900'} rounded-md`}
                 required
               ></textarea>
             </div>
+            <div className='flex justify-between items-center'>
+
             <div className="mb-4">
               <label htmlFor="expiryDate" className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                 Expiry Date <span className="text-xs text-gray-500">(Optional - when to automatically delete this announcement)</span>
@@ -353,7 +355,7 @@ function HodAnnouncementsPage() {
                 value={formData.expiryDate}
                 onChange={handleInputChange}
                 min={new Date().toISOString().split('T')[0]}
-                className={`shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 text-gray-900'} rounded-md`}
+                className={`shadow-sm px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300 text-gray-900'} rounded-md`}
               />
             </div>
             <div className="flex justify-end space-x-3">
@@ -370,6 +372,7 @@ function HodAnnouncementsPage() {
               >
                 {isUpdateMode ? 'Update Announcement' : 'Create Announcement'}
               </button>
+            </div>
             </div>
           </form>
         </div>

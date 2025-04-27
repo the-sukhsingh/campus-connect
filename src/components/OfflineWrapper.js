@@ -30,7 +30,6 @@ const OfflineWrapper = ({ children }) => {
 
   // Paths that have offline functionality
   const offlineEnabledPaths = [
-    '/dashboard',
     '/dashboard/notes',
     '/dashboard/books',
     '/offline',

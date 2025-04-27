@@ -178,11 +178,11 @@ export default function RoomDetailPage() {
   // Handle time slot selection
   const handleTimeSlotSelect = (slot) => {
     if (!slot.isAvailable) return;
-    
+
     // If we're starting a new selection
     if (selectedTimeSlots.length === 0) {
       setSelectedTimeSlots([slot]);
-      
+
       // Update booking form with this time slot
       setBookingData(prev => ({
         ...prev,
@@ -191,33 +191,33 @@ export default function RoomDetailPage() {
       }));
       return;
     }
-    
+
     // Get the current slots in ascending order by ID
     const currentSelectedIds = selectedTimeSlots.map(s => s.id).sort((a, b) => a - b);
     const firstSelectedId = currentSelectedIds[0];
     const lastSelectedId = currentSelectedIds[currentSelectedIds.length - 1];
-    
+
     // If selecting a slot that's already selected, deselect it and adjust selection
     if (selectedTimeSlots.some(s => s.id === slot.id)) {
       let newSelectedSlots = [];
-      
+
       // If deselecting the first or last slot
       if (slot.id === firstSelectedId || slot.id === lastSelectedId) {
         newSelectedSlots = selectedTimeSlots.filter(s => s.id !== slot.id);
-      } 
+      }
       // If deselecting a middle slot, reset selection to just this slot
       else {
         newSelectedSlots = [slot];
       }
-      
+
       setSelectedTimeSlots(newSelectedSlots);
-      
+
       // Update booking form
       if (newSelectedSlots.length > 0) {
         const newSelectedIds = newSelectedSlots.map(s => s.id).sort((a, b) => a - b);
         const firstSlot = timeSlots.find(s => s.id === newSelectedIds[0]);
         const lastSlot = timeSlots.find(s => s.id === newSelectedIds[newSelectedIds.length - 1]);
-        
+
         setBookingData(prev => ({
           ...prev,
           startTime: firstSlot.start,
@@ -232,18 +232,18 @@ export default function RoomDetailPage() {
       }
       return;
     }
-    
+
     // Check if slot is adjacent to existing selection
     if (slot.id === firstSelectedId - 1 || slot.id === lastSelectedId + 1) {
       // Add adjacent slot to selection
       const newSelectedSlots = [...selectedTimeSlots, slot];
       setSelectedTimeSlots(newSelectedSlots);
-      
+
       // Update booking form
       const newSelectedIds = newSelectedSlots.map(s => s.id).sort((a, b) => a - b);
       const firstSlot = timeSlots.find(s => s.id === newSelectedIds[0]);
       const lastSlot = timeSlots.find(s => s.id === newSelectedIds[newSelectedIds.length - 1]);
-      
+
       setBookingData(prev => ({
         ...prev,
         startTime: firstSlot.start,
@@ -252,7 +252,7 @@ export default function RoomDetailPage() {
     } else {
       // If not adjacent, start a new selection with just this slot
       setSelectedTimeSlots([slot]);
-      
+
       setBookingData(prev => ({
         ...prev,
         startTime: slot.start,
@@ -279,11 +279,11 @@ export default function RoomDetailPage() {
   // Format room type for display
   const formatRoomType = (type) => {
     if (!type) return '';
-    
+
     if (type === 'other' && room.otherType) {
       return room.otherType.charAt(0).toUpperCase() + room.otherType.slice(1);
     }
-    
+
     return type.charAt(0).toUpperCase() + type.slice(1);
   };
 
@@ -366,7 +366,7 @@ export default function RoomDetailPage() {
         },
         body: JSON.stringify({
           firebaseUid: user?.uid,
-          room:roomId,
+          room: roomId,
           title: bookingData.title || 'Room Booking',
           purpose: bookingData.purpose || 'meeting',
           date: formattedDate,
@@ -408,7 +408,7 @@ export default function RoomDetailPage() {
 
   // Min date for the date input (prevent selecting dates in the past)
   const today = new Date();
-  const minDateString = new Date(today.getFullYear(), today.getMonth(), today.getDate()-1).toISOString().split('T')[0];
+  const minDateString = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1).toISOString().split('T')[0];
 
   if (loading) {
     return (
@@ -426,11 +426,10 @@ export default function RoomDetailPage() {
         </div>
         <Link
           href="/dashboard/rooms"
-          className={`inline-flex items-center px-4 py-2 rounded-md shadow-sm font-medium ${
-            theme === 'dark' 
+          className={`inline-flex items-center px-4 py-2 rounded-md shadow-sm font-medium ${theme === 'dark'
               ? 'bg-indigo-700 text-white hover:bg-indigo-800'
               : 'bg-indigo-600 text-white hover:bg-indigo-700'
-          } focus:outline-none transition-colors duration-300`}
+            } focus:outline-none transition-colors duration-300`}
         >
           Back to Rooms
         </Link>
@@ -446,11 +445,10 @@ export default function RoomDetailPage() {
         </div>
         <Link
           href="/dashboard/rooms"
-          className={`inline-flex items-center px-4 py-2 rounded-md shadow-sm font-medium ${
-            theme === 'dark' 
+          className={`inline-flex items-center px-4 py-2 rounded-md shadow-sm font-medium ${theme === 'dark'
               ? 'bg-indigo-700 text-white hover:bg-indigo-800'
               : 'bg-indigo-600 text-white hover:bg-indigo-700'
-          } focus:outline-none transition-colors duration-300`}
+            } focus:outline-none transition-colors duration-300`}
         >
           Back to Rooms
         </Link>
@@ -485,13 +483,12 @@ export default function RoomDetailPage() {
             <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-md rounded-lg overflow-hidden`}>
               {/* Room image header */}
               <div className="h-48 bg-gray-200 dark:bg-gray-700 relative">
-                <div 
-                  className="w-full h-full bg-cover bg-center" 
-                  style={{ 
-                    backgroundImage: `url(${ 
-                      room.image || 
+                <div
+                  className="w-full h-full bg-cover bg-center"
+                  style={{
+                    backgroundImage: `url(${room.viewUrl ||
                       'https://images.unsplash.com/photo-1517164850305-99a3e65bb47e?auto=format&fit=crop&q=80&w=1000'
-                    })` 
+                      })`
                   }}
                 ></div>
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
@@ -528,7 +525,7 @@ export default function RoomDetailPage() {
                 <div className="mb-6">
                   <h3 className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} uppercase mb-3`}>Equipment & Features</h3>
                   <div className="flex flex-wrap gap-2">
-                    {room.amenities && room.amenities.map((amenity, index) => (
+                    {room.facilities && room.facilities.map((amenity, index) => (
                       <span key={index} className={`inline-flex items-center rounded-full ${theme === 'dark' ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-50 text-blue-700'} px-2.5 py-1 text-xs`}>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -536,7 +533,7 @@ export default function RoomDetailPage() {
                         {amenity}
                       </span>
                     ))}
-                    {(!room.amenities || room.amenities.length === 0) && (
+                    {(!room.facilities || room.facilities.length === 0) && (
                       <>
                         <span className={`inline-flex items-center rounded-full ${theme === 'dark' ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-50 text-blue-700'} px-2.5 py-1 text-xs`}>
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -581,10 +578,73 @@ export default function RoomDetailPage() {
                 ) : (
                   <form onSubmit={handleBookingSubmit}>
                     <div className="space-y-6">
+                      {/* Booking Details */}
+                      <div>
+                        <h3 className={`text-lg font-medium mb-4 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>Booking Details</h3>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label htmlFor="title" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                              Booking Title
+                            </label>
+                            <input
+                              type="text"
+                              id="title"
+                              name="title"
+                              value={bookingData.title}
+                              onChange={handleInputChange}
+                              className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none ${theme === 'dark'
+                                  ? 'border-gray-600 bg-gray-700 text-white focus:ring-indigo-500 focus:border-indigo-500'
+                                  : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                                }`}
+                              placeholder="E.g., Project Team Meeting"
+                            />
+                          </div>
+
+                          <div>
+                            <label htmlFor="attendees" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                              Number of Attendees
+                            </label>
+                            <input
+                              type="number"
+                              id="attendees"
+                              name="attendees"
+                              min="1"
+                              max={room.capacity}
+                              value={bookingData.attendees}
+                              onChange={handleInputChange}
+                              className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none ${theme === 'dark'
+                                  ? 'border-gray-600 bg-gray-700 text-white focus:ring-indigo-500 focus:border-indigo-500'
+                                  : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                                }`}
+                              placeholder={`Maximum capacity: ${room.capacity}`}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="mt-4">
+                          <label htmlFor="description" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                            Purpose of Booking
+                          </label>
+                          <textarea
+                            id="description"
+                            name="description"
+                            rows="3"
+                            value={bookingData.description}
+                            onChange={handleInputChange}
+                            className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none ${theme === 'dark'
+                                ? 'border-gray-600 bg-gray-700 text-white focus:ring-indigo-500 focus:border-indigo-500'
+                                : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                              }`}
+                            placeholder="Please describe the purpose of your booking"
+                          ></textarea>
+                        </div>
+
+                      </div>
                       {/* Date and Time Selector */}
                       <div>
                         <h3 className={`text-lg font-medium mb-4 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>Select Date & Time</h3>
-                        
+
                         {/* Date Input Field */}
                         <div className="mb-4">
                           <label htmlFor="date" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
@@ -598,15 +658,14 @@ export default function RoomDetailPage() {
                               value={bookingData.date}
                               min={minDateString}
                               onChange={handleInputChange}
-                              className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none ${
-                                theme === 'dark' 
-                                  ? 'border-gray-600 bg-gray-700 text-white focus:ring-indigo-500 focus:border-indigo-500' 
+                              className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none ${theme === 'dark'
+                                  ? 'border-gray-600 bg-gray-700 text-white focus:ring-indigo-500 focus:border-indigo-500'
                                   : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
-                              }`}
+                                }`}
                             />
                           </div>
                         </div>
-                        
+
                         {/* Time Slots Grid */}
                         <div>
                           <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
@@ -616,11 +675,10 @@ export default function RoomDetailPage() {
                             {timeSlots.map((slot) => (
                               <div
                                 key={slot.id}
-                                className={`text-center py-3 px-3 rounded-md text-sm transition-colors ${
-                                  !slot.isAvailable 
+                                className={`text-center py-3 px-3 rounded-md text-sm transition-colors ${!slot.isAvailable
                                     ? theme === 'dark'
-                                      ? "bg-red-900/30 text-red-300 border border-red-800 cursor-not-allowed" 
-                                      : "bg-red-50 text-red-400 border border-red-100 cursor-not-allowed" 
+                                      ? "bg-red-900/30 text-red-300 border border-red-800 cursor-not-allowed"
+                                      : "bg-red-50 text-red-400 border border-red-100 cursor-not-allowed"
                                     : selectedTimeSlots.some(s => s.id === slot.id)
                                       ? theme === 'dark'
                                         ? "bg-indigo-900/50 text-indigo-300 border border-indigo-700 font-medium"
@@ -628,7 +686,7 @@ export default function RoomDetailPage() {
                                       : theme === 'dark'
                                         ? "bg-green-900/30 text-green-300 border border-green-800 hover:bg-green-800/30 cursor-pointer"
                                         : "bg-green-50 text-green-800 border border-green-200 hover:bg-green-100 cursor-pointer"
-                                }`}
+                                  }`}
                                 onClick={() => handleTimeSlotSelect(slot)}
                               >
                                 {slot.display}
@@ -652,111 +710,31 @@ export default function RoomDetailPage() {
                         </div>
                       </div>
 
-                      {/* Booking Details */}
-                      <div>
-                        <h3 className={`text-lg font-medium mb-4 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>Booking Details</h3>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label htmlFor="title" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                              Booking Title
-                            </label>
-                            <input
-                              type="text"
-                              id="title"
-                              name="title"
-                              value={bookingData.title}
-                              onChange={handleInputChange}
-                              className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none ${
-                                theme === 'dark' 
-                                  ? 'border-gray-600 bg-gray-700 text-white focus:ring-indigo-500 focus:border-indigo-500' 
-                                  : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
-                              }`}
-                              placeholder="E.g., Project Team Meeting"
-                            />
-                          </div>
-                          
-                          <div>
-                            <label htmlFor="attendees" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                              Number of Attendees
-                            </label>
-                            <input
-                              type="number"
-                              id="attendees"
-                              name="attendees"
-                              min="1"
-                              max={room.capacity}
-                              value={bookingData.attendees}
-                              onChange={handleInputChange}
-                              className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none ${
-                                theme === 'dark' 
-                                  ? 'border-gray-600 bg-gray-700 text-white focus:ring-indigo-500 focus:border-indigo-500' 
-                                  : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
-                              }`}
-                              placeholder={`Maximum capacity: ${room.capacity}`}
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="mt-4">
-                          <label htmlFor="description" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                            Purpose of Booking
-                          </label>
-                          <textarea
-                            id="description"
-                            name="description"
-                            rows="3"
-                            value={bookingData.description}
-                            onChange={handleInputChange}
-                            className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none ${
-                              theme === 'dark' 
-                                ? 'border-gray-600 bg-gray-700 text-white focus:ring-indigo-500 focus:border-indigo-500' 
-                                : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
-                            }`}
-                            placeholder="Please describe the purpose of your booking"
-                          ></textarea>
-                        </div>
 
-                        <div className="mt-4 flex items-center">
-                          <input
-                            id="terms"
-                            name="terms"
-                            type="checkbox"
-                            className={`h-4 w-4 ${
-                              theme === 'dark' 
-                                ? 'border-gray-600 bg-gray-700 text-indigo-600 focus:ring-indigo-500' 
-                                : 'border-gray-300 text-indigo-600 focus:ring-indigo-500'
-                            } rounded`}
-                          />
-                          <label htmlFor="terms" className={`ml-2 block text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                            I agree to the booking terms and conditions
-                          </label>
-                        </div>
-                      </div>
                     </div>
                   </form>
                 )}
               </div>
             </div>
           </div>
-          
+
           {/* Booking Summary - Right Side */}
           <div className="lg:col-span-1">
             <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-md rounded-lg overflow-hidden`}>
               <div className="p-6">
                 <h3 className={`text-lg font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'} mb-4`}>Booking Summary</h3>
-                
+
                 <div className="space-y-4">
                   <div>
                     <h4 className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Room</h4>
                     <p className={`text-base ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>{room.name}</p>
                   </div>
-                  
+
                   <div>
                     <h4 className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Location</h4>
                     <p className={`text-base ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>{room.building}, Floor {room.floor}</p>
                   </div>
-                  
+
                   <div>
                     <h4 className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Date</h4>
                     <p className={`text-base ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
@@ -767,7 +745,7 @@ export default function RoomDetailPage() {
                       })}
                     </p>
                   </div>
-                  
+
                   <div>
                     <h4 className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Time</h4>
                     {selectedTimeSlots.length === 0 ? (
@@ -785,17 +763,17 @@ export default function RoomDetailPage() {
                       </div>
                     )}
                   </div>
-                  
+
                   <div>
                     <h4 className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Attendees</h4>
                     <p className={`text-base ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>{bookingData.attendees} people</p>
                   </div>
                 </div>
-                
+
                 <div className={`mt-6 p-4 rounded-md border ${theme === 'dark' ? 'bg-yellow-900/30 border-yellow-800 text-yellow-300' : 'bg-yellow-50 border-yellow-200 text-yellow-800'}`}>
                   <h4 className={`text-sm font-medium flex items-center ${theme === 'dark' ? 'text-yellow-300' : 'text-yellow-800'}`}>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 000 16zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
                     Approval Required
                   </h4>
@@ -804,15 +782,29 @@ export default function RoomDetailPage() {
                   </p>
                 </div>
 
+                <div className="mt-4 flex items-center">
+                  <input
+                    id="terms"
+                    name="terms"
+                    type="checkbox"
+                    className={`h-4 w-4 ${theme === 'dark'
+                        ? 'border-gray-600 bg-gray-700 text-indigo-600 focus:ring-indigo-500'
+                        : 'border-gray-300 text-indigo-600 focus:ring-indigo-500'
+                      } rounded`}
+                  />
+                  <label htmlFor="terms" className={`ml-2 block text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                    I agree to the booking terms and conditions
+                  </label>
+                </div>
                 {!bookingSuccess && (
                   <button
                     type="submit"
                     form="booking-form"
-                    disabled={isSubmitting || selectedTimeSlots.length === 0}
+                    disabled={isSubmitting || selectedTimeSlots.length === 0 || bookingData.attendees < 1 || !bookingData.title?.trim() || !document.getElementById('terms')?.checked}
                     onClick={handleBookingSubmit}
                     className={`mt-6 w-full inline-flex justify-center py-3 px-4 shadow-sm text-base font-medium rounded-md 
-                      ${theme === 'dark' 
-                        ? 'bg-green-700 text-white hover:bg-green-800 disabled:bg-green-900 disabled:text-green-300 disabled:opacity-50' 
+                      ${theme === 'dark'
+                        ? 'bg-green-700 text-white hover:bg-green-800 disabled:bg-green-900 disabled:text-green-300 disabled:opacity-50'
                         : 'bg-green-600 text-white hover:bg-green-700 disabled:bg-green-300 disabled:opacity-50'
                       }`}
                   >
@@ -831,8 +823,8 @@ export default function RoomDetailPage() {
                 <Link
                   href="/dashboard/rooms"
                   className={`mt-3 w-full inline-flex justify-center py-2 px-4 border shadow-sm text-sm font-medium rounded-md 
-                    ${theme === 'dark' 
-                      ? 'border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                    ${theme === 'dark'
+                      ? 'border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600'
                       : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                     } transition-colors`}
                 >
@@ -841,6 +833,48 @@ export default function RoomDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* Booking Terms & Conditions */}
+          {/* Booking Terms & Conditions */}
+          <div className="lg:col-span-3 mt-6">
+            <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-md rounded-lg overflow-hidden`}>
+              <div className="p-6">
+                <h3 className={`text-lg font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'} mb-4 flex items-center`}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Booking Terms & Conditions
+                </h3>
+                
+                <div className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} space-y-4`}>
+                  <p>By booking this room, you acknowledge and agree to the following terms:</p>
+                  
+                  <ol className="list-decimal pl-5 space-y-2">
+                    <li>Bookings are subject to approval by the facility management team.</li>
+                    <li>Please arrive on time and leave the room in the same condition you found it.</li>
+                    <li>Cancellations must be made at least 24 hours in advance.</li>
+                    <li>Do not exceed the maximum capacity of the room ({room.capacity} people).</li>
+                    <li>Food and drinks are permitted, but you must clean up afterward.</li>
+                    <li>Report any technical issues or damage to the facility management immediately.</li>
+                    <li>The organization is not responsible for any personal items left in the meeting rooms.</li>
+                    <li>Repeated no-shows may result in booking privileges being suspended.</li>
+                  </ol>
+                  
+                  <div className={`mt-4 p-3 rounded-md ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                    <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Need Help?</p>
+                    <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mt-1`}>
+                      For assistance with your booking, please contact the facility management team at{' '}
+                      <a href="mailto:facilities@example.com" className={`${theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'} hover:underline`}>
+                        facilities@example.com
+                      </a>
+                      {' '}or call extension 2145.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>

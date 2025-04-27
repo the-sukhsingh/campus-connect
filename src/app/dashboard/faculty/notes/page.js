@@ -35,9 +35,9 @@ function FacultyNotesPage() {
         <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-blue-600'}`}>Study Materials</h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Left column - Upload Form */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-2">
           <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-md p-6 border transition-colors duration-200`}>
             <h2 className={`text-xl font-semibold mb-4 ${theme === 'dark' ? 'text-gray-100' : 'text-gray-800'}`}>Upload Study Material</h2>
             <p className={`mb-6 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>

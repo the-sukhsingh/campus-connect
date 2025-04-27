@@ -434,10 +434,10 @@ export default function RoomsListingPage() {
                           className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group`}
                         >
                           <div className="h-48 relative overflow-hidden">
-                            {room.image ? (
+                            {room.imageUrl ? (
                               <div 
                                 className="w-full h-full bg-cover bg-center transform group-hover:scale-105 transition-transform duration-500" 
-                                style={{ backgroundImage: `url(${room.image})` }}
+                                style={{ backgroundImage: `url(${room.viewUrl})` }}
                               ></div>
                             ) : (
                               <div className="w-full h-full bg-cover bg-center transform group-hover:scale-105 transition-transform duration-500" 

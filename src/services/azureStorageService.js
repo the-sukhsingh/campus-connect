@@ -28,7 +28,7 @@ export async function uploadFile(fileBuffer, fileName, contentType) {
   try {
     // Create container if it doesn't exist
     await createContainerIfNotExists();
-    
+    console.log("FiletName,fileBuffer,contentType",fileName,fileBuffer,contentType);
     // Generate a unique blob name to prevent overwrites
     const extension = fileName.split('.').pop();
     const blobName = `${uuidv4()}.${extension}`;

@@ -2,6 +2,7 @@ import dbConnect from '@/lib/dbConnect';
 import Room from '@/models/Room';
 import RoomBooking from '@/models/RoomBooking';
 import mongoose from 'mongoose';
+import { uploadFile, deleteFile } from './azureStorageService';
 
 // Get all rooms, optionally filtered by collegeId
 export async function getRooms(collegeId = null) {
@@ -36,9 +37,8 @@ export async function getRoomById(id) {
 }
 
 // Create a new room
-export async function createRoom(roomData) {
+export async function createRoom(roomData, imageFile = null) {
   await dbConnect();
-  
   // Validate otherType field if room type is 'other'
   if (roomData.type === 'other' && !roomData.otherType) {
     throw new Error('When selecting "other" as room type, you must specify the otherType field');
@@ -49,20 +49,62 @@ export async function createRoom(roomData) {
     roomData.otherType = '';
   }
   
-  const room = new Room(roomData);
-  await room.save();
+  // Upload image if provided
+  if (imageFile) {
+    try {
+      console.log("imageFile", imageFile);
+      console.log("imageFile", imageFile);
+      // Convert the File object to a buffer for Azure storage
+      const arrayBuffer = await imageFile.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      
+      const uploadResult = await uploadFile(
+        buffer,
+        imageFile.name,
+        imageFile.type
+      );
+      roomData.imageUrl = uploadResult.url;
+    } catch (error) {
+      console.error('Error uploading room image:', error);
+      throw new Error('Failed to upload room image: ' + error.message);
+    }
+  }
+  let room;
+  try{
+    room = new Room(roomData);
+    await room.save();
+  }catch(error){
+    console.error('Error creating room:', error);
+    // Delete the uploaded image if room creation fails
+    if (roomData.imageUrl) {
+      try {
+        await deleteFile(roomData.imageUrl);
+      } catch (deleteError) {
+        console.warn('Failed to delete uploaded room image:', deleteError);
+        // Continue with the error handling even if deletion fails
+      }
+    }
+
+    throw new Error('Failed to create room: ' + error.message);
+  }
   
   return room.toObject();
 }
 
 // Update a room
-export async function updateRoom(id, roomData) {
+export async function updateRoom(id, roomData, imageFile = null) {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new Error('Invalid room ID');
   }
   
   await dbConnect();
   
+  // Get current room data for potential image deletion
+  const existingRoom = await Room.findById(id);
+  if (!existingRoom) {
+    throw new Error('Room not found');
+  }
+  
   // Validate otherType field if room type is 'other'
   if (roomData.type === 'other' && !roomData.otherType) {
     throw new Error('When selecting "other" as room type, you must specify the otherType field');
@@ -71,6 +113,32 @@ export async function updateRoom(id, roomData) {
   // Clear otherType if type is not 'other' to keep data clean
   if (roomData.type !== 'other') {
     roomData.otherType = '';
+  }
+  
+  // Handle image upload if a new image is provided
+  if (imageFile) {
+    try {
+      // Delete old image if exists
+      if (existingRoom.imageUrl) {
+        try {
+          await deleteFile(existingRoom.imageUrl);
+        } catch (deleteError) {
+          console.warn('Failed to delete old room image:', deleteError);
+          // Continue with the update even if deletion fails
+        }
+      }
+      
+      // Upload new image
+      const uploadResult = await uploadFile(
+        imageFile.buffer,
+        imageFile.originalname,
+        imageFile.mimetype
+      );
+      roomData.imageUrl = uploadResult.url;
+    } catch (error) {
+      console.error('Error uploading room image:', error);
+      throw new Error('Failed to upload room image: ' + error.message);
+    }
   }
   
   const room = await Room.findByIdAndUpdate(
@@ -94,11 +162,25 @@ export async function deleteRoom(id) {
   
   await dbConnect();
   
-  const result = await Room.findByIdAndDelete(id);
+  // Get room data to delete associated image if exists
+  const room = await Room.findById(id);
   
-  if (!result) {
+  if (!room) {
     throw new Error('Room not found');
   }
+  
+  // Delete the associated image if exists
+  if (room.imageUrl) {
+    try {
+      await deleteFile(room.imageUrl);
+    } catch (error) {
+      console.warn('Failed to delete room image:', error);
+      // Continue with the room deletion even if image deletion fails
+    }
+  }
+  
+  // Delete the room
+  await Room.findByIdAndDelete(id);
   
   return true;
 }

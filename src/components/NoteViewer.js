@@ -38,6 +38,7 @@ export default function NoteViewer({ noteId }) {
       setLoading(true);
       const token = await getIdToken();
       const result = await getNoteById(noteId, token);
+      console.log('Note data:', result);
       setNote(result.note);
       setViewUrl(result.viewUrl);
       setIsFavorite(result.isFavorited);

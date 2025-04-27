@@ -3,6 +3,7 @@ import { getRooms, createRoom, updateRoom, deleteRoom, getRoomById } from '@/ser
 import { getUserByFirebaseUid } from '@/services/userService';
 import dbConnect from '@/lib/dbConnect';
 import Room from '@/models/Room';
+import { generateSasUrl } from '@/services/azureStorageService';
 
 export async function GET(request) {
   try {
@@ -31,6 +32,17 @@ export async function GET(request) {
       if (!room) {
         return NextResponse.json({ error: 'Room not found' }, { status: 404 });
       }
+      
+      // Add viewUrl if the room has an image
+      if (room.imageUrl) {
+        try {
+          room.viewUrl = await generateSasUrl(room.imageUrl);
+        } catch (error) {
+          console.error('Error generating SAS URL for room image:', error);
+          // Continue without viewUrl if there's an error
+        }
+      }
+      
       return NextResponse.json({ room });
     }
     
@@ -139,8 +151,21 @@ export async function GET(request) {
       .limit(limit)
       .lean();
     
+    // Add viewUrl to rooms with images
+    const roomsWithViewUrl = await Promise.all(rooms.map(async (room) => {
+      if (room.imageUrl) {
+        try {
+          room.viewUrl = await generateSasUrl(room.imageUrl);
+        } catch (error) {
+          console.error('Error generating SAS URL for room image:', error);
+          // Continue without viewUrl if there's an error
+        }
+      }
+      return room;
+    }));
+    
     return NextResponse.json({ 
-      rooms,
+      rooms: roomsWithViewUrl,
       total,
       totalPages: Math.ceil(total / limit),
       currentPage: page
@@ -151,15 +176,63 @@ export async function GET(request) {
   }
 }
 
+// Helper function to parse multipart form data
+async function parseFormData(request) {
+  const formData = await request.formData();
+  const data = Object.fromEntries(formData);
+  
+  // Extract file if present
+  const imageFile = formData.get('image');
+  
+  // Parse JSON fields that might be stringified
+  if (data.facilities && typeof data.facilities === 'string') {
+    try {
+      data.facilities = JSON.parse(data.facilities);
+    } catch (e) {
+      data.facilities = data.facilities.split(',').map(item => item.trim());
+    }
+  }
+  
+  // Convert numeric fields
+  if (data.floor) data.floor = parseInt(data.floor);
+  if (data.capacity) data.capacity = parseInt(data.capacity);
+  
+  // Convert boolean fields
+  if (data.isActive !== undefined) {
+    data.isActive = data.isActive === 'true';
+  }
+  
+  return { data, imageFile: imageFile instanceof File ? imageFile : null };
+}
+
 export async function POST(request) {
   try {
-    const body = await request.json();
-    const { firebaseUid, ...roomData } = body;
+    // Check if the request is multipart form data
+    const contentType = request.headers.get('content-type') || '';
     
-    if (!firebaseUid) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    let roomData;
+    let imageFile = null;
+    let firebaseUid;
+    
+    if (contentType.includes('multipart/form-data')) {
+      const { data, imageFile: parsedImageFile } = await parseFormData(request);
+      roomData = data;
+      imageFile = parsedImageFile;
+      firebaseUid = roomData.firebaseUid;
+      delete roomData.firebaseUid;  // Remove this from roomData as it's not part of the room model
+    } else {
+      const body = await request.json();
+      ({ firebaseUid, ...roomData } = body);
     }
     
+    if (!firebaseUid) {
+      const searchParams = request.nextUrl.searchParams;
+      firebaseUid = searchParams.get('uid');
+      
+      if (!firebaseUid) {
+        return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+      }
+    }
     // Get the MongoDB user document for the Firebase user
     const dbUser = await getUserByFirebaseUid(firebaseUid);
     if (!dbUser) {
@@ -177,9 +250,9 @@ export async function POST(request) {
     }
     
     // Create the room
-    const room = await createRoom(roomData);
+    const room = await createRoom(roomData, imageFile);
     
-    return NextResponse.json(room);
+    return NextResponse.json({ room, message: 'Room created successfully' });
   } catch (error) {
     console.error('API error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -188,11 +261,38 @@ export async function POST(request) {
 
 export async function PUT(request) {
   try {
-    const body = await request.json();
-    const { firebaseUid, id, ...roomData } = body;
+    const contentType = request.headers.get('content-type') || '';
     
-    if (!firebaseUid || !id) {
-      return NextResponse.json({ error: 'User ID and Room ID are required' }, { status: 400 });
+    let roomData;
+    let imageFile = null;
+    let firebaseUid;
+    let roomId;
+    
+    if (contentType.includes('multipart/form-data')) {
+      const { data, imageFile: parsedImageFile } = await parseFormData(request);
+      roomData = data;
+      imageFile = parsedImageFile;
+      firebaseUid = roomData.firebaseUid;
+      roomId = roomData.id || roomData._id;
+      
+      // Remove these from roomData as they're not part of the room model
+      delete roomData.firebaseUid;
+      delete roomData.id;
+      delete roomData._id;
+    } else {
+      const body = await request.json();
+      ({ firebaseUid, id, ...roomData } = body);
+      roomId = id;
+    }
+    
+    if (!firebaseUid || !roomId) {
+      const searchParams = request.nextUrl.searchParams;
+      firebaseUid = firebaseUid || searchParams.get('uid');
+      roomId = roomId || searchParams.get('roomId');
+      
+      if (!firebaseUid || !roomId) {
+        return NextResponse.json({ error: 'User ID and Room ID are required' }, { status: 400 });
+      }
     }
     
     // Get the MongoDB user document for the Firebase user
@@ -207,9 +307,9 @@ export async function PUT(request) {
     }
     
     // Update the room
-    const updatedRoom = await updateRoom(id, roomData);
+    const updatedRoom = await updateRoom(roomId, roomData, imageFile);
     
-    return NextResponse.json(updatedRoom);
+    return NextResponse.json({ room: updatedRoom, message: 'Room updated successfully' });
   } catch (error) {
     console.error('API error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

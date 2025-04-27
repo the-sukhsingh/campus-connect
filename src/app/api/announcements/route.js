@@ -104,7 +104,7 @@ export async function POST(request) {
   try {
     const body = await request.json();
     const { firebaseUid, action, announcement, announcementId } = body;
-      console.log("Firebase, action, announcement, announcementId, classId", firebaseUid, action, announcement, announcementId, classId);
+      // console.log("Firebase, action, announcement, announcementId, classId", firebaseUid, action, announcement, announcementId);
     if (!firebaseUid) {
       return NextResponse.json(
         { error: 'User ID is required' }, 

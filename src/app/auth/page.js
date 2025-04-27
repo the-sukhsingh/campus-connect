@@ -14,21 +14,7 @@ export default function AuthPage() {
   const { theme } = useTheme();
   // const router = useRouter();
   
-  // Rotate through cards for automatic showcase animation
-  useEffect(() => {
-    const roles = ['student', 'faculty', 'hod'];
-    let currentIndex = 0;
-    
-    const interval = setInterval(() => {
-      setActiveCard(roles[currentIndex]);
-      currentIndex = (currentIndex + 1) % roles.length;
-    }, 3000);
-    
-    // Initial setting
-    setActiveCard('student');
-    
-    return () => clearInterval(interval);
-  }, []);
+
   
   const getCardStyles = (role) => {
     if (activeCard === role || hoveredCard === role) {
@@ -140,12 +126,18 @@ export default function AuthPage() {
       <div className="z-10 w-full max-w-5xl">
         <div className="text-center mb-10">
           <div className={`inline-flex items-center justify-center p-2 rounded-full ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-lg mb-6`}>
-            <div className="w-16 h-16 relative">
-              <BookOpen className={`w-16 h-16 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`} />
-            </div>
+          <div className="inline-block relative">
+                <div className="absolute inset-0 bg-blue-400 rounded-full blur-lg opacity-50 animate-pulse"></div>
+                <div className="relative w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-blue-400 flex items-center justify-center shadow-inner overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-[shimmer_2s_infinite]"></div>
+                  <svg className="h-10 w-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                  </svg>
+                </div>
+              </div>
           </div>
           <h1 className={`font-serif text-4xl font-bold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-            GNDU Smart Campus
+            Campus Connect
           </h1>
           <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} text-lg max-w-xl mx-auto`}>
             Welcome to the next generation campus management platform.
@@ -170,8 +162,8 @@ export default function AuthPage() {
                     <h2 className="text-xl font-serif font-semibold capitalize">{role} Portal</h2>
                     <p className={`text-sm mt-1 ${styles.highlight}`}>
                       {role === 'student' && "Access courses & campus resources"}
-                      {role === 'faculty' && "Manage classes & communications"}
-                      {role === 'hod' && "Oversee department operations"}
+                      {role === 'faculty' && "Manage classes, Study Material & communications"}
+                      {role === 'hod' && "Oversee departmental activities & announcements"}
                     </p>
                   </div>
                 </div>
@@ -194,7 +186,7 @@ export default function AuthPage() {
             Choose your role to access personalized campus features
           </p>
           <p className={`mt-4 text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
-            © {new Date().getFullYear()} GNDU Smart Campus | All rights reserved
+            © {new Date().getFullYear()} Campus Connect | All rights reserved
           </p>
         </div>
       </div>
@@ -215,6 +207,10 @@ export default function AuthPage() {
           .animate-fade-in {
             animation: fadeIn 0.6s ease-out forwards;
           }
+        }
+                  @keyframes shimmer {
+          0% { transform: translateX(-150%); }
+          100% { transform: translateX(150%); }
         }
       `}</style>
     </div>
