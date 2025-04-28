@@ -123,7 +123,7 @@ export async function GET(request) {
         margin: 25,
         size: 'A4',
         layout: 'portrait',
-        font: "./fonts/Helvetica.ttf"
+        font: "Helvetica",
       });
       
       // Store PDF in memory instead of creating a file

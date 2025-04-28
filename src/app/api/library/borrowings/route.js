@@ -71,19 +71,25 @@ export async function GET(request) {
     }
     else if (action === 'get-all-borrowings' && (dbUser.role === 'librarian' || dbUser.role === 'hod')) {
       // Get all borrowings for librarians but only from their college
-      const query = status ? { status } : {};
-      
+      const StatuToSet = (status) =>{
+        if (status === 'borrowed' || status === 'active') return 'borrowed';
+        if (status === 'return-requested') return 'return-requested';
+        if (status === 'returned') return 'returned';
+      }
+      const query = status === 'all' ? {} : { status: StatuToSet(status) };
       // Add college filter if the librarian is associated with a college
       if (dbUser.college) {
         // We need to find books that belong to librarian's college
         // First, query all books from the librarian's college
-        const bookIds = await Book.find({ college: dbUser.college }).distinct('_id');
-        
+        // console.log("DBUSER,", dbUser);
+        const bookIds = await Book.find({ college: dbUser.college.toString() }).distinct('_id');
+        // console.log('Book IDs:', bookIds);
         // Then filter the borrowings to only include those books
         query.book = { $in: bookIds };
       }
-      
+      console.log('Query:', query);
       const result = await getBorrowings(query, page, limit);
+      console.log('Result:', result);
       return NextResponse.json(result);
     }
     else if (action === 'count-current' && dbUser){

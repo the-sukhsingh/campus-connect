@@ -157,6 +157,7 @@ export async function GET(request) {
         margin: 50,
         size: 'A4',
         layout: 'landscape',
+        font: "Helvetica",
       });
       
       // Store PDF in memory instead of creating a file

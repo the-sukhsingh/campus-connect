@@ -28,7 +28,7 @@ function BorrowingHistoryPage() {
         setError('');
 
         const response = await fetch(
-          `/api/library/borrowings?uid=${user?.uid}&status=${activeTab}&page=${currentPage}&action=get-student-borrowings`,
+          `/api/library/borrowings?uid=${user?.uid}&status=${activeTab}&page=${currentPage}&action=get-all-borrowings`,
         );
 
         if (!response.ok) {

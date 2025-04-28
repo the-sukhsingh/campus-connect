@@ -4,7 +4,6 @@ import { withRoleProtection } from '@/utils/withRoleProtection';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 
 function ReturnRequestsPage() {
   const { user } = useAuth();
@@ -342,7 +341,7 @@ function ReturnRequestsPage() {
 
       {/* Approve Return Modal */}
       {showApproveModal && currentBorrowing && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-gray-600/50 bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl max-w-md w-full`}>
             <div className={`px-6 py-4 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
               <h3 className={`text-lg font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>Approve Book Return</h3>

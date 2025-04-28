@@ -109,7 +109,7 @@ export async function GET(request) {
         size: 'A4',
         layout: 'portrait',
         autoFirstPage: true,
-        font: './fonts/Helvetica.ttf'
+        font: "Helvetica",
       });
       
       // Store PDF in memory instead of creating a file

@@ -327,6 +327,17 @@ function BooksManagementPage() {
 
     if (!user) return;
 
+    // Check if we have books in multipleBooks array or if form data is valid
+    if (multipleBooks.length === 0 && (!formData.title || !formData.author || !formData.genre)) {
+      setError('Please fill in all required fields or upload a file with books.');
+      return;
+    }
+
+    // If there are books in the form data and books in multipleBooks, add current form to the list
+    if (multipleBooks.length > 0 && formData.title && formData.author && formData.genre) {
+      multipleBooks.push({ ...formData });
+    }
+
     const booksToSubmit = multipleBooks.length > 0 ? 
       multipleBooks : 
       [formData];

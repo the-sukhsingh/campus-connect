@@ -751,7 +751,7 @@ function LendBookPage() {
                             }}
                           />
                           {showStudentResults && studentResults.length > 0 && (
-                            <div className={`absolute z-10 mt-1 w-full border rounded-md max-h-60 overflow-auto shadow-lg ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                            <div className={`z-10 mt-1 w-full border rounded-md max-h-60 overflow-auto shadow-lg ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                               {studentResults.map((student) => (
                                 <div
                                   key={student._id}
@@ -770,7 +770,7 @@ function LendBookPage() {
                       <button
                         onClick={handleStudentSearch}
                         disabled={isSearchingStudent || !studentSearch.trim()}
-                        className={`px-4 py-2.5 border border-transparent rounded-md shadow-sm text-sm font-medium transition-colors duration-200 ${buttonPrimary} ${
+                        className={`h-fit px-4 py-2.5 border border-transparent rounded-md shadow-sm text-sm font-medium transition-colors duration-200 ${buttonPrimary} ${
                           isSearchingStudent || !studentSearch.trim() ? 'opacity-50 cursor-not-allowed' : ''
                         }`}
                       >

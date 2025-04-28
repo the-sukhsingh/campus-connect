@@ -14,7 +14,7 @@ export async function getBorrowings(
     
     // Count total matching documents
     const total = await BookBorrowing.countDocuments(query);
-    
+    console.log('Total borrowings:', total);
     // Calculate pagination
     const pages = Math.ceil(total / limit);
     const skip = (page - 1) * limit;

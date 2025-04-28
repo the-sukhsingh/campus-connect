@@ -50,7 +50,10 @@ export async function GET(request) {
     ];
     
     // Execute the search
-    const users = await User.find(searchQuery)
+    const users = await User.find({
+      ...searchQuery,
+      college: dbUser.college // Ensure the user is from the same college
+    })
       .select('_id displayName email rollNo department role')
       .limit(limit);
     
