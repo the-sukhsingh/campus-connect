@@ -33,9 +33,6 @@ const nextConfig = {
     ],
   },
   serverExternalPackages: ["pdfkit"],
-  experimental: {
-    appDir: true,
-  },
 };
 
 export default nextConfig;

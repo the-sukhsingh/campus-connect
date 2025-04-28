@@ -50,7 +50,7 @@ export async function GET(request) {
       if (dbUser.role !== 'student' && dbUser.role !== 'hod' && dbUser.role !== 'librarian') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
       }
-      
+      console.log("DBUSER", dbUser);
       // Get borrowings for the student
       const result = await getStudentBorrowings(dbUser._id, status, page, limit);
       return NextResponse.json(result);

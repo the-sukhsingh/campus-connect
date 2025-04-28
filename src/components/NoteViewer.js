@@ -25,7 +25,6 @@ export default function NoteViewer({ noteId }) {
   const documentNodeRef = useRef(null);
   // Content container reference - used to move the content between views
   const contentContainerRef = useRef(null);
-  const fullscreenContainerRef = useRef(null);
 
   // Check if IndexedDB is supported
   const isIndexedDBSupported = typeof indexedDB !== 'undefined';
@@ -52,7 +51,7 @@ export default function NoteViewer({ noteId }) {
     } finally {
       setLoading(false);
     }
-  }, [noteId, getIdToken, isIndexedDBSupported]);
+  }, [noteId, getIdToken]);
 
   // Only fetch the note when component mounts or noteId changes
   useEffect(() => {
@@ -64,7 +63,7 @@ export default function NoteViewer({ noteId }) {
     if (!viewUrl || !note || isTransitioning) return;
 
     const isPowerPoint = note.fileType?.includes('powerpoint') || note.fileType?.includes('ppt') || note.fileType?.includes('presentation');
-    const isPdf = note.fileType?.includes('pdf');``
+    const isPdf = note.fileType?.includes('pdf');
 
     let content;
 
@@ -135,7 +134,7 @@ export default function NoteViewer({ noteId }) {
     }
 
     documentContentRef.current = content;
-  }, [viewUrl, note, theme]);
+  }, [viewUrl, note]);
 
   // Handle fullscreen toggle with transition state
   const toggleFullScreen = useCallback(() => {

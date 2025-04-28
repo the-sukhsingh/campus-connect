@@ -28,7 +28,7 @@ export async function getBorrowings(
       .populate('bookCopy', 'copyNumber status condition')
       .populate('student', 'displayName email role department')
       .populate('approvedBy', 'displayName email');
-    
+    console.log('Borrowings:', borrowings);
     return { borrowings, total, pages };
   } catch (error ) {
     console.error('Error fetching borrowings:', error);
@@ -49,7 +49,7 @@ export async function getStudentBorrowings(
     if (status) {
       query.status = status;
     }
-    
+    console.log("Query is", query);
     return getBorrowings(query, page, limit);
   } catch (error ) {
     console.error('Error fetching student borrowings:', error);
