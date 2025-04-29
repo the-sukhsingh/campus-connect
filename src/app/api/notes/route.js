@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { getUserByFirebaseUid } from '@/services/userService';
 import { getNotes } from '@/services/noteService';
 import dbConnect from '@/lib/dbConnect';
+import Class from '@/models/Class'; // Import the Class model to register its schema
 
 // GET - Fetch notes with optional filtering
 export async function GET(request) {

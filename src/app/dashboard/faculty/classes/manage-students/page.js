@@ -680,8 +680,9 @@ function ManageStudentsPage() {
             
             <div className="px-6 pt-4 pb-2">
               <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
-                Add multiple students at once. All students will be enrolled in this class automatically.
-              </p>
+                Add multiple students at once. All students will be enrolled in this class automatically. <br />
+                The password of each student will be their Student Id or Roll No. or student@123 by default.
+               </p>
             </div>
             
             <form onSubmit={handleCreateBulkStudents} className="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
